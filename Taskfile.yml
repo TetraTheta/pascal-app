@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+env:
+  PAS_DIST: ../.dist
+  PAS_LAZBUILD: 'E:\lazarus\lazbuild.exe'
+  PAS_LAZARUS_CONFIG: '{{.LOCALAPPDATA}}\lazarus'
+
+tasks:
+  default:
+    cmds:
+      - task: build
+  build:
+    cmds:
+      - task: build:gmod-description-generator
+      - task: build:hammer-launcher
+      - task: build:rcalc
+  build:gmod-description-generator:
+    aliases: ["build:gdg", "build:gmod"]
+    dir: gmod-description-generator
+    cmds:
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default gmod_description_generator.lpi'
+      - 'mkdir "$PAS_DIST" 2> /dev/null'
+      - 'cp gmod_description_generator.exe "$PAS_DIST/GModDescriptionGenerator.exe"'
+  build:hammer-launcher:
+    aliases: ["build:hammer"]
+    dir: hammer-launcher
+    cmds:
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default hammer_launcher.lpi'
+      - 'mkdir "$PAS_DIST" 2> /dev/null'
+      - 'cp hammer_launcher.exe "$PAS_DIST/HammerLauncher.exe"'
+  build:rcalc:
+    dir: rcalc
+    cmds:
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default rcalc.lpi'
+      - 'mkdir "$PAS_DIST" 2> /dev/null'
+      - 'cp rcalc.exe "$PAS_DIST/rcalc.exe"'
