@@ -1,0 +1,399 @@
+object MainForm: TMainForm
+  Left = 332
+  Height = 769
+  Top = 250
+  Width = 984
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsSingle
+  Caption = 'Garry''s Mod Addon Description Generator'
+  ClientHeight = 769
+  ClientWidth = 984
+  Font.Height = -13
+  Font.Name = 'Segoe UI'
+  KeyPreview = True
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  object MenuStripPanel: TPanel
+    Left = 0
+    Height = 24
+    Top = 0
+    Width = 984
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 24
+    ClientWidth = 984
+    TabOrder = 5
+    object MenuFileButton: TSpeedButton
+      Left = 0
+      Height = 24
+      Top = 0
+      Width = 37
+      Align = alLeft
+      Caption = '&File'
+      Flat = True
+      OnClick = MenuFileButtonClick
+    end
+  end
+  object ButtonCopy: TButton
+    Left = 791
+    Height = 33
+    Top = 724
+    Width = 75
+    Caption = 'Copy'
+    OnClick = ButtonCopyClick
+    TabOrder = 2
+  end
+  object ButtonGenerate: TButton
+    Left = 872
+    Height = 33
+    Top = 724
+    Width = 100
+    Caption = 'Generate'
+    OnClick = ButtonGenerateClick
+    TabOrder = 3
+  end
+  object ButtonReset: TButton
+    Left = 12
+    Height = 33
+    Top = 724
+    Width = 75
+    Caption = 'Reset'
+    OnClick = ButtonResetClick
+    TabOrder = 4
+  end
+  object GroupBoxOption: TGroupBox
+    Left = 12
+    Height = 691
+    Top = 27
+    Width = 477
+    Caption = 'Option'
+    TabOrder = 0
+    object CheckBoxNoRD: TCheckBox
+      Left = 340
+      Height = 23
+      Top = 69
+      Width = 128
+      Caption = 'No Release Date'
+      TabOrder = 5
+    end
+    object CheckBoxCSS: TCheckBox
+      Left = 188
+      Height = 24
+      Top = 353
+      Width = 70
+      Caption = 'CS:S'
+      TabOrder = 8
+    end
+    object CheckBoxHL2: TCheckBox
+      Left = 112
+      Height = 24
+      Top = 353
+      Width = 70
+      Caption = 'HL2'
+      Checked = True
+      State = cbChecked
+      TabOrder = 7
+    end
+    object CheckBoxL4D2: TCheckBox
+      Left = 340
+      Height = 24
+      Top = 353
+      Width = 70
+      Caption = 'L4D2'
+      TabOrder = 10
+    end
+    object CheckBoxRecompiled: TCheckBox
+      Left = 112
+      Height = 24
+      Top = 536
+      Width = 150
+      Caption = 'Recompiled Map(s)'
+      TabOrder = 14
+    end
+    object CheckBoxSCTools: TCheckBox
+      Left = 213
+      Height = 24
+      Top = 506
+      Width = 150
+      Caption = 'Must Have SC Tools'
+      TabOrder = 13
+    end
+    object CheckBoxSubtitle: TCheckBox
+      Left = 132
+      Height = 24
+      Top = 506
+      Width = 75
+      Caption = 'Subtitle'
+      TabOrder = 12
+    end
+    object CheckBoxTF2: TCheckBox
+      Left = 264
+      Height = 24
+      Top = 353
+      Width = 70
+      Caption = 'TF2'
+      TabOrder = 9
+    end
+    object ComboBoxRDDate: TComboBox
+      Left = 112
+      Height = 25
+      Top = 69
+      Width = 70
+      AutoComplete = True
+      MaxLength = 2
+      TabOrder = 2
+      Items.Strings = (
+        '1'
+        '2'
+        '3'
+        '4'
+        '5'
+        '6'
+        '7'
+        '8'
+        '9'
+        '10'
+        '11'
+        '12'
+        '13'
+        '14'
+        '15'
+        '16'
+        '17'
+        '18'
+        '19'
+        '20'
+        '21'
+        '22'
+        '23'
+        '24'
+        '25'
+        '26'
+        '27'
+        '28'
+        '29'
+        '30'
+        '31'
+      )
+    end
+    object ComboBoxRDMonth: TComboBox
+      Left = 188
+      Height = 25
+      Top = 69
+      Width = 70
+      AutoComplete = True
+      MaxLength = 3
+      TabOrder = 3
+      Items.Strings = (
+        'Jan'
+        'Feb'
+        'Mar'
+        'Apr'
+        'May'
+        'Jun'
+        'Jul'
+        'Aug'
+        'Sep'
+        'Oct'
+        'Nov'
+        'Dec'
+      )
+    end
+    object ComboBoxRDYear: TComboBox
+      Left = 264
+      Height = 25
+      Top = 69
+      Width = 70
+      AutoComplete = True
+      MaxLength = 4
+      TabOrder = 4
+      Items.Strings = (
+        '2003'
+        '2004'
+        '2005'
+        '2006'
+        '2007'
+        '2008'
+        '2009'
+        '2010'
+        '2011'
+        '2012'
+        '2013'
+        '2014'
+        '2015'
+        '2016'
+        '2017'
+        '2018'
+        '2019'
+        '2020'
+        '2021'
+        '2022'
+        '2023'
+        '2024'
+        '2025'
+        '2026'
+        '2027'
+        '2028'
+        '2029'
+        '2030'
+      )
+    end
+    object LabelAuthor: TLabel
+      Left = 6
+      Height = 22
+      Top = 41
+      Width = 100
+      Caption = 'Author(s)'
+    end
+    object LabelDescription: TLabel
+      Left = 6
+      Height = 22
+      Top = 97
+      Width = 100
+      Caption = 'Description'
+    end
+    object LabelMapList: TLabel
+      Left = 6
+      Height = 22
+      Top = 375
+      Width = 100
+      Caption = 'Map List'
+    end
+    object LabelRecommendation: TLabel
+      Left = 6
+      Height = 22
+      Top = 506
+      Width = 120
+      Caption = 'Recommendations'
+    end
+    object LabelReleaseDate: TLabel
+      Left = 6
+      Height = 22
+      Top = 71
+      Width = 100
+      Caption = 'Release Date'
+    end
+    object LabelRequirements: TLabel
+      Left = 6
+      Height = 22
+      Top = 353
+      Width = 100
+      Caption = 'Requirements'
+    end
+    object LabelSynopsis: TLabel
+      Left = 6
+      Height = 22
+      Top = 225
+      Width = 100
+      Caption = 'Synopsis'
+    end
+    object LabelTitle: TLabel
+      Left = 6
+      Height = 22
+      Top = 10
+      Width = 100
+      Caption = 'Title'
+    end
+    object LabelWarning: TLabel
+      Left = 6
+      Height = 22
+      Top = 536
+      Width = 100
+      Caption = 'Warning'
+    end
+    object TextBoxAuthor: TEdit
+      Left = 112
+      Height = 25
+      Top = 38
+      Width = 359
+      TabOrder = 1
+    end
+    object TextBoxDescription: TMemo
+      Left = 6
+      Height = 100
+      Top = 122
+      Width = 465
+      ScrollBars = ssBoth
+      TabOrder = 6
+    end
+    object TextBoxMapList: TMemo
+      Left = 6
+      Height = 100
+      Top = 400
+      Width = 465
+      ScrollBars = ssBoth
+      TabOrder = 11
+    end
+    object TextBoxSynopsis: TMemo
+      Left = 6
+      Height = 100
+      Top = 250
+      Width = 465
+      ScrollBars = ssBoth
+      TabOrder = 15
+    end
+    object TextBoxTitle: TEdit
+      Left = 112
+      Height = 25
+      Top = 7
+      Width = 359
+      TabOrder = 0
+    end
+    object TextBoxWarning: TMemo
+      Left = 6
+      Height = 100
+      Top = 566
+      Width = 465
+      ScrollBars = ssBoth
+      TabOrder = 16
+    end
+  end
+  object GroupBoxPreview: TGroupBox
+    Left = 495
+    Height = 691
+    Top = 27
+    Width = 477
+    Caption = 'Preview'
+    TabOrder = 1
+    object TextBoxPreview: TMemo
+      Left = 6
+      Height = 664
+      Top = 7
+      Width = 465
+      BorderStyle = bsNone
+      ReadOnly = True
+      ScrollBars = ssBoth
+      TabOrder = 0
+      WordWrap = False
+    end
+  end
+  object FilePopupMenu: TPopupMenu
+    Left = 544
+    Top = 728
+    object MenuItemOpen: TMenuItem
+      Caption = '&Open'
+      OnClick = MenuItemOpenClick
+    end
+    object MenuItemSave: TMenuItem
+      Caption = '&Save'
+      OnClick = MenuItemSaveClick
+    end
+    object MenuItemSeparator: TMenuItem
+      Caption = '-'
+    end
+    object MenuItemExit: TMenuItem
+      Caption = 'E&xit'
+      OnClick = MenuItemExitClick
+    end
+  end
+  object OpenDialog: TOpenDialog
+    Left = 632
+    Top = 728
+  end
+  object SaveDialog: TSaveDialog
+    Left = 720
+    Top = 728
+  end
+end

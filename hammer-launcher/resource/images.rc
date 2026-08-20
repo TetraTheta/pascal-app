@@ -1,0 +1,7 @@
+GMOD RCDATA "resource/gmod.png"
+GMOD_GRAY RCDATA "resource/gmod_gray.png"
+HL2 RCDATA "resource/hl2.png"
+HL2_GRAY RCDATA "resource/hl2_gray.png"
+HAMMER_GMOD RCDATA "resource/hammer_gmod.png"
+HAMMER_HL2 RCDATA "resource/hammer_hl2.png"
+HAMMER_PLUSPLUS RCDATA "resource/hammer_plusplus.png"

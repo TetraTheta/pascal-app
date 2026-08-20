@@ -1,0 +1,91 @@
+object MainForm: TMainForm
+  Left = 332
+  Height = 176
+  Top = 250
+  Width = 186
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsDialog
+  Caption = 'Hammer Launcher'
+  ClientHeight = 176
+  ClientWidth = 186
+  Font.Height = -13
+  Font.Name = 'Segoe UI'
+  KeyPreview = True
+  Position = poScreenCenter
+  ShowHint = True
+  LCLVersion = '4.8.0.0'
+  OnCreate = FormCreate
+  OnKeyDown = LauncherKeyDown
+  object TextBoxTarget: TEdit
+    Left = 12
+    Height = 25
+    Top = 13
+    Width = 162
+    ReadOnly = True
+    TabOrder = 4
+  end
+  object ImageHL2: TImage
+    Left = 12
+    Height = 50
+    Top = 45
+    Width = 50
+    Center = True
+    Proportional = True
+  end
+  object ButtonHL2Hammer: TBitBtn
+    Left = 68
+    Height = 50
+    Top = 45
+    Width = 50
+    TabOrder = 0
+    OnClick = ButtonHL2HammerClick
+    OnMouseEnter = ButtonHL2HammerMouseEnter
+    OnMouseLeave = ButtonHL2HammerMouseLeave
+  end
+  object ButtonHL2HammerPP: TBitBtn
+    Left = 124
+    Height = 50
+    Top = 45
+    Width = 50
+    TabOrder = 1
+    OnClick = ButtonHL2HammerPPClick
+    OnMouseEnter = ButtonHL2HammerPPMouseEnter
+    OnMouseLeave = ButtonHL2HammerPPMouseLeave
+  end
+  object ImageGMod: TImage
+    Left = 12
+    Height = 50
+    Top = 101
+    Width = 50
+    Center = True
+    Proportional = True
+  end
+  object ButtonGModHammer: TBitBtn
+    Left = 68
+    Height = 50
+    Top = 101
+    Width = 50
+    TabOrder = 2
+    OnClick = ButtonGModHammerClick
+    OnMouseEnter = ButtonGModHammerMouseEnter
+    OnMouseLeave = ButtonGModHammerMouseLeave
+  end
+  object ButtonGModHammerPP: TBitBtn
+    Left = 124
+    Height = 50
+    Top = 101
+    Width = 50
+    TabOrder = 3
+    OnClick = ButtonGModHammerPPClick
+    OnMouseEnter = ButtonGModHammerPPMouseEnter
+    OnMouseLeave = ButtonGModHammerPPMouseLeave
+  end
+  object StatusBar: TStatusBar
+    Left = 0
+    Height = 22
+    Top = 154
+    Width = 186
+    Panels = <>
+    SimpleText = 'Hammer Launcher'
+  end
+end

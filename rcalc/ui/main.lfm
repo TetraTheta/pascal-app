@@ -1,0 +1,111 @@
+object MainForm: TMainForm
+  Left = 304
+  Height = 411
+  Top = 250
+  Width = 484
+  Caption = 'rcalc'
+  ClientHeight = 411
+  ClientWidth = 484
+  Font.CharSet = 4
+  Font.Height = -13
+  Font.Name = 'Segoe UI'
+  BorderStyle = bsSingle
+  Position = poDesktopCenter
+  SnapOptions.SnapToMonitor = True
+  LCLVersion = '5.0.0.0'
+  object buttonCalculate: TButton
+    Left = 341
+    Height = 58
+    Top = 7
+    Width = 131
+    Caption = 'Calculate'
+    OnClick = buttonCalculateClick
+    TabOrder = 4
+  end
+  object labelA: TLabel
+    Left = 12
+    Height = 17
+    Top = 42
+    Width = 9
+    Caption = 'A'
+  end
+  object labelB: TLabel
+    Left = 181
+    Height = 17
+    Top = 42
+    Width = 8
+    Caption = 'B'
+  end
+  object labelX: TLabel
+    Left = 12
+    Height = 17
+    Top = 9
+    Width = 8
+    Caption = 'X'
+  end
+  object labelY: TLabel
+    Left = 181
+    Height = 17
+    Top = 9
+    Width = 8
+    Caption = 'Y'
+  end
+  object listBoxResult: TListBox
+    Left = 10
+    Height = 293
+    Top = 105
+    Width = 462
+    ItemHeight = 17
+    OnDblClick = listBoxResultDblClick
+    TabOrder = 6
+  end
+  object numericUpDownA: TFloatSpinEdit
+    Left = 35
+    Height = 25
+    Top = 40
+    Width = 131
+    DecimalPlaces = 15
+    MaxValue = 1e18
+    MinValue = -1e18
+    TabOrder = 2
+  end
+  object numericUpDownB: TFloatSpinEdit
+    Left = 204
+    Height = 25
+    Top = 40
+    Width = 130
+    DecimalPlaces = 15
+    MaxValue = 1e18
+    MinValue = -1e18
+    ReadOnly = True
+    TabOrder = 3
+  end
+  object numericUpDownX: TFloatSpinEdit
+    Left = 35
+    Height = 25
+    Top = 7
+    Width = 131
+    DecimalPlaces = 15
+    MaxValue = 1e18
+    MinValue = -1e18
+    TabOrder = 0
+  end
+  object numericUpDownY: TFloatSpinEdit
+    Left = 204
+    Height = 25
+    Top = 7
+    Width = 131
+    DecimalPlaces = 15
+    MaxValue = 1e18
+    MinValue = -1e18
+    TabOrder = 1
+  end
+  object textBoxResult: TEdit
+    Left = 10
+    Height = 25
+    Top = 73
+    Width = 462
+    ReadOnly = True
+    TabOrder = 5
+  end
+end
