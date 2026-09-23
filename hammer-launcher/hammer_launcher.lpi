@@ -20,7 +20,8 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="2"/>
-      <StringTable CompanyName="TetraTheta" FileDescription="Open Hammer Editor" LegalCopyright="Copyright (c) TetraTheta All rights reserved" ProductName="HammerLauncher" ProductVersion="2.0.0.0"/>
+      <MinorVersionNr Value="1"/>
+      <StringTable CompanyName="TetraTheta" FileDescription="Open Hammer Editor" LegalCopyright="Copyright (c) TetraTheta All rights reserved" ProductName="HammerLauncher" ProductVersion="2.1.0.0"/>
     </VersionInfo>
     <BuildModes>
       <Item Name="Default" Default="True"/>

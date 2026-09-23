@@ -1,4 +1,5 @@
 unit main;
+{$warn 5024 off}
 
 {$mode objfpc}{$H+}
 
@@ -9,52 +10,71 @@ uses
   StdCtrls, ComCtrls, Process, Registry, Windows;
 
 type
+
+  { TMainForm }
+
   TMainForm = class(TForm)
-    ButtonGModHammer: TBitBtn;
-    ButtonGModHammerPP: TBitBtn;
     ButtonHL2Hammer: TBitBtn;
     ButtonHL2HammerPP: TBitBtn;
-    ImageGMod: TImage;
+    ButtonGModHammer: TBitBtn;
+    ButtonGModHammerPP: TBitBtn;
+    ButtonEZ2Hammer: TBitBtn;
+    ButtonEZ2HammerPP: TBitBtn;
     ImageHL2: TImage;
+    ImageGMod: TImage;
+    ImageEZ2: TImage;
     StatusBar: TStatusBar;
     TextBoxTarget: TEdit;
-    procedure ButtonGModHammerClick(Sender: TObject);
-    procedure ButtonGModHammerMouseEnter(Sender: TObject);
-    procedure ButtonGModHammerMouseLeave(Sender: TObject);
-    procedure ButtonGModHammerPPClick(Sender: TObject);
-    procedure ButtonGModHammerPPMouseEnter(Sender: TObject);
-    procedure ButtonGModHammerPPMouseLeave(Sender: TObject);
     procedure ButtonHL2HammerClick(Sender: TObject);
     procedure ButtonHL2HammerMouseEnter(Sender: TObject);
     procedure ButtonHL2HammerMouseLeave(Sender: TObject);
     procedure ButtonHL2HammerPPClick(Sender: TObject);
     procedure ButtonHL2HammerPPMouseEnter(Sender: TObject);
     procedure ButtonHL2HammerPPMouseLeave(Sender: TObject);
+    procedure ButtonGModHammerClick(Sender: TObject);
+    procedure ButtonGModHammerMouseEnter(Sender: TObject);
+    procedure ButtonGModHammerMouseLeave(Sender: TObject);
+    procedure ButtonGModHammerPPClick(Sender: TObject);
+    procedure ButtonGModHammerPPMouseEnter(Sender: TObject);
+    procedure ButtonGModHammerPPMouseLeave(Sender: TObject);
+    procedure ButtonEZ2HammerClick(Sender: TObject);
+    procedure ButtonEZ2HammerMouseEnter(Sender: TObject);
+    procedure ButtonEZ2HammerMouseLeave(Sender: TObject);
+    procedure ButtonEZ2HammerPPClick(Sender: TObject);
+    procedure ButtonEZ2HammerPPMouseEnter(Sender: TObject);
+    procedure ButtonEZ2HammerPPMouseLeave(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure LauncherKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
-    FGModHammer: string;
-    FGModHammerPP: string;
-    FGModInstallPath: string;
     FHL2Hammer: string;
     FHL2HammerPP: string;
     FHL2InstallPath: string;
+    FGModHammer: string;
+    FGModHammerPP: string;
+    FGModInstallPath: string;
+    FEZ2Hammer: string;
+    FEZ2HammerPP: string;
+    FEZ2InstallPath: string;
     FFilePath: string;
     procedure AssignKeyHandler(AControl: TControl);
     procedure ClearButtonStatus(Sender: TObject);
-    procedure DisableGMod;
     procedure DisableHL2;
-    function GetGModInstallPath: string;
+    procedure DisableGMod;
+    procedure DisableEZ2;
     function GetHL2InstallPath: string;
+    function GetGModInstallPath: string;
+    function GetEZ2InstallPath: string;
     function GetRegistryPath(const APath: string): string;
     procedure LaunchHammer(const AExecutable: string);
     procedure LoadButtonImage(AButton: TBitBtn; const AResourceName: string);
     procedure LoadImage(AImage: TImage; const AResourceName: string);
     procedure LoadPngResource(ABitmap: Graphics.TBitmap; const AResourceName: string);
-    function ResolveGModHammer: string;
-    function ResolveGModHammerPP: string;
     function ResolveHL2Hammer: string;
     function ResolveHL2HammerPP: string;
+    function ResolveGModHammer: string;
+    function ResolveGModHammerPP: string;
+    function ResolveEZ2Hammer: string;
+    function ResolveEZ2HammerPP: string;
     procedure SetButtonStatus(AButton: TBitBtn; const AText: string);
   public
     procedure InitializeTarget;
@@ -71,8 +91,9 @@ uses
   LCLType;
 
 const
-  RegistryGModPath = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 4000';
   RegistryHL2Path = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 220';
+  RegistryGModPath = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 4000';
+  RegistryEZ2Path = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1583720';
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
@@ -80,15 +101,21 @@ begin
   LoadButtonImage(ButtonHL2HammerPP, 'HAMMER_PLUSPLUS');
   LoadButtonImage(ButtonGModHammer, 'HAMMER_GMOD');
   LoadButtonImage(ButtonGModHammerPP, 'HAMMER_PLUSPLUS');
+  LoadButtonImage(ButtonEZ2Hammer, 'HAMMER_HL2');
+  LoadButtonImage(ButtonEZ2HammerPP, 'HAMMER_PLUSPLUS');
   LoadImage(ImageHL2, 'HL2');
   LoadImage(ImageGMod, 'GMOD');
+  LoadImage(ImageEZ2, 'EZ2');
 
   FHL2InstallPath := GetHL2InstallPath;
   FGModInstallPath := GetGModInstallPath;
+  FEZ2InstallPath := GetEZ2InstallPath;
   FHL2Hammer := ResolveHL2Hammer;
   FHL2HammerPP := ResolveHL2HammerPP;
   FGModHammer := ResolveGModHammer;
   FGModHammerPP := ResolveGModHammerPP;
+  FEZ2Hammer := ResolveEZ2Hammer;
+  FEZ2HammerPP := ResolveEZ2HammerPP;
 
   if FHL2InstallPath = '' then
     DisableHL2;
@@ -103,6 +130,13 @@ begin
     ButtonGModHammer.Enabled := False;
   if FGModHammerPP = '' then
     ButtonGModHammerPP.Enabled := False;
+
+  if FEZ2InstallPath = '' then
+    DisableEZ2;
+  if FEZ2Hammer = '' then
+    ButtonEZ2Hammer.Enabled := False;
+  if FEZ2HammerPP = '' then
+    ButtonEZ2HammerPP.Enabled := False;
 
   AssignKeyHandler(Self);
   SelectFirst;
@@ -136,6 +170,16 @@ end;
 procedure TMainForm.ButtonGModHammerPPClick(Sender: TObject);
 begin
   LaunchHammer(FGModHammerPP);
+end;
+
+procedure TMainForm.ButtonEZ2HammerClick(Sender: TObject);
+begin
+  LaunchHammer(FEZ2Hammer);
+end;
+
+procedure TMainForm.ButtonEZ2HammerPPClick(Sender: TObject);
+begin
+  LaunchHammer(FEZ2HammerPP);
 end;
 
 procedure TMainForm.ButtonHL2HammerMouseEnter(Sender: TObject);
@@ -178,6 +222,26 @@ begin
   ClearButtonStatus(Sender);
 end;
 
+procedure TMainForm.ButtonEZ2HammerMouseEnter(Sender: TObject);
+begin
+  SetButtonStatus(ButtonEZ2Hammer, 'Entropy: Zero 2 Hammer');
+end;
+
+procedure TMainForm.ButtonEZ2HammerMouseLeave(Sender: TObject);
+begin
+  ClearButtonStatus(Sender);
+end;
+
+procedure TMainForm.ButtonEZ2HammerPPMouseEnter(Sender: TObject);
+begin
+  SetButtonStatus(ButtonEZ2HammerPP, 'Entropy: Zero 2 Hammer++');
+end;
+
+procedure TMainForm.ButtonEZ2HammerPPMouseLeave(Sender: TObject);
+begin
+  ClearButtonStatus(Sender);
+end;
+
 procedure TMainForm.LauncherKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   case Key of
@@ -193,6 +257,12 @@ begin
     VK_4, VK_NUMPAD4:
       if ButtonGModHammerPP.Enabled then
         ButtonGModHammerPP.Click;
+    VK_5, VK_NUMPAD5:
+      if ButtonEZ2Hammer.Enabled then
+        ButtonEZ2Hammer.Click;
+    VK_6, VK_NUMPAD6:
+      if ButtonEZ2HammerPP.Enabled then
+        ButtonEZ2HammerPP.Click;
   end;
 end;
 
@@ -227,6 +297,13 @@ begin
   ButtonGModHammerPP.Enabled := False;
 end;
 
+procedure TMainForm.DisableEZ2;
+begin
+  LoadImage(ImageGMod, 'EZ2_GRAY');
+  ButtonEZ2Hammer.Enabled := False;
+  ButtonEZ2HammerPP.Enabled := False;
+end;
+
 function TMainForm.GetHL2InstallPath: string;
 begin
   Result := GetRegistryPath(RegistryHL2Path);
@@ -235,6 +312,11 @@ end;
 function TMainForm.GetGModInstallPath: string;
 begin
   Result := GetRegistryPath(RegistryGModPath);
+end;
+
+function TMainForm.GetEZ2InstallPath: string;
+begin
+  Result := GetRegistryPath(RegistryEZ2Path);
 end;
 
 function TMainForm.GetRegistryPath(const APath: string): string;
@@ -338,6 +420,20 @@ end;
 function TMainForm.ResolveGModHammerPP: string;
 begin
   Result := IncludeTrailingPathDelimiter(FGModInstallPath) + 'bin\win64\hammerplusplus.exe';
+  if not FileExists(Result) then
+    Result := '';
+end;
+
+function TMainForm.ResolveEZ2Hammer: string;
+begin
+  Result := IncludeTrailingPathDelimiter(FEZ2InstallPath) + 'bin\hammer.exe';
+  if not FileExists(Result) then
+    Result := '';
+end;
+
+function TMainForm.ResolveEZ2HammerPP: string;
+begin
+  Result := IncludeTrailingPathDelimiter(FEZ2InstallPath) + 'bin\hammerplusplus.exe';
   if not FileExists(Result) then
     Result := '';
 end;
