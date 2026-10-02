@@ -6,8 +6,8 @@ unit main;
 interface
 
 uses
-  Buttons, Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  StdCtrls, ComCtrls, Process, Registry, Windows;
+  Buttons, Classes, SysUtils, Forms, Controls, Graphics, ExtCtrls, StdCtrls,
+  ComCtrls, Process;
 
 type
 
@@ -48,33 +48,17 @@ type
   private
     FHL2Hammer: string;
     FHL2HammerPP: string;
-    FHL2InstallPath: string;
     FGModHammer: string;
     FGModHammerPP: string;
-    FGModInstallPath: string;
     FEZ2Hammer: string;
     FEZ2HammerPP: string;
-    FEZ2InstallPath: string;
     FFilePath: string;
     procedure AssignKeyHandler(AControl: TControl);
     procedure ClearButtonStatus(Sender: TObject);
-    procedure DisableHL2;
-    procedure DisableGMod;
-    procedure DisableEZ2;
-    function GetHL2InstallPath: string;
-    function GetGModInstallPath: string;
-    function GetEZ2InstallPath: string;
-    function GetRegistryPath(const APath: string): string;
     procedure LaunchHammer(const AExecutable: string);
     procedure LoadButtonImage(AButton: TBitBtn; const AResourceName: string);
     procedure LoadImage(AImage: TImage; const AResourceName: string);
     procedure LoadPngResource(ABitmap: Graphics.TBitmap; const AResourceName: string);
-    function ResolveHL2Hammer: string;
-    function ResolveHL2HammerPP: string;
-    function ResolveGModHammer: string;
-    function ResolveGModHammerPP: string;
-    function ResolveEZ2Hammer: string;
-    function ResolveEZ2HammerPP: string;
     procedure SetButtonStatus(AButton: TBitBtn; const AText: string);
   public
     procedure InitializeTarget;
@@ -88,14 +72,11 @@ implementation
 {$R *.lfm}
 
 uses
-  LCLType;
-
-const
-  RegistryHL2Path = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 220';
-  RegistryGModPath = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 4000';
-  RegistryEZ2Path = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1583720';
+  launcher_configuration, LCLType;
 
 procedure TMainForm.FormCreate(Sender: TObject);
+var
+  Configuration: TLauncherConfiguration;
 begin
   LoadButtonImage(ButtonHL2Hammer, 'HAMMER_HL2');
   LoadButtonImage(ButtonHL2HammerPP, 'HAMMER_PLUSPLUS');
@@ -107,36 +88,20 @@ begin
   LoadImage(ImageGMod, 'GMOD');
   LoadImage(ImageEZ2, 'EZ2');
 
-  FHL2InstallPath := GetHL2InstallPath;
-  FGModInstallPath := GetGModInstallPath;
-  FEZ2InstallPath := GetEZ2InstallPath;
-  FHL2Hammer := ResolveHL2Hammer;
-  FHL2HammerPP := ResolveHL2HammerPP;
-  FGModHammer := ResolveGModHammer;
-  FGModHammerPP := ResolveGModHammerPP;
-  FEZ2Hammer := ResolveEZ2Hammer;
-  FEZ2HammerPP := ResolveEZ2HammerPP;
+  Configuration := LoadLauncherConfiguration(Application.ExeName);
+  FHL2Hammer := Configuration.HL2Hammer;
+  FHL2HammerPP := Configuration.HL2HammerPP;
+  FGModHammer := Configuration.GModHammer;
+  FGModHammerPP := Configuration.GModHammerPP;
+  FEZ2Hammer := Configuration.EZ2Hammer;
+  FEZ2HammerPP := Configuration.EZ2HammerPP;
 
-  if FHL2InstallPath = '' then
-    DisableHL2;
-  if FHL2Hammer = '' then
-    ButtonHL2Hammer.Enabled := False;
-  if FHL2HammerPP = '' then
-    ButtonHL2HammerPP.Enabled := False;
-
-  if FGModInstallPath = '' then
-    DisableGMod;
-  if FGModHammer = '' then
-    ButtonGModHammer.Enabled := False;
-  if FGModHammerPP = '' then
-    ButtonGModHammerPP.Enabled := False;
-
-  if FEZ2InstallPath = '' then
-    DisableEZ2;
-  if FEZ2Hammer = '' then
-    ButtonEZ2Hammer.Enabled := False;
-  if FEZ2HammerPP = '' then
-    ButtonEZ2HammerPP.Enabled := False;
+  ButtonHL2Hammer.Enabled := FileExists(FHL2Hammer);
+  ButtonHL2HammerPP.Enabled := FileExists(FHL2HammerPP);
+  ButtonGModHammer.Enabled := FileExists(FGModHammer);
+  ButtonGModHammerPP.Enabled := FileExists(FGModHammerPP);
+  ButtonEZ2Hammer.Enabled := FileExists(FEZ2Hammer);
+  ButtonEZ2HammerPP.Enabled := FileExists(FEZ2HammerPP);
 
   AssignKeyHandler(Self);
   SelectFirst;
@@ -283,70 +248,11 @@ begin
   StatusBar.SimpleText := '';
 end;
 
-procedure TMainForm.DisableHL2;
-begin
-  LoadImage(ImageHL2, 'HL2_GRAY');
-  ButtonHL2Hammer.Enabled := False;
-  ButtonHL2HammerPP.Enabled := False;
-end;
-
-procedure TMainForm.DisableGMod;
-begin
-  LoadImage(ImageGMod, 'GMOD_GRAY');
-  ButtonGModHammer.Enabled := False;
-  ButtonGModHammerPP.Enabled := False;
-end;
-
-procedure TMainForm.DisableEZ2;
-begin
-  LoadImage(ImageGMod, 'EZ2_GRAY');
-  ButtonEZ2Hammer.Enabled := False;
-  ButtonEZ2HammerPP.Enabled := False;
-end;
-
-function TMainForm.GetHL2InstallPath: string;
-begin
-  Result := GetRegistryPath(RegistryHL2Path);
-end;
-
-function TMainForm.GetGModInstallPath: string;
-begin
-  Result := GetRegistryPath(RegistryGModPath);
-end;
-
-function TMainForm.GetEZ2InstallPath: string;
-begin
-  Result := GetRegistryPath(RegistryEZ2Path);
-end;
-
-function TMainForm.GetRegistryPath(const APath: string): string;
-var
-  Reg: TRegistry;
-begin
-  Result := '';
-  Reg := TRegistry.Create(KEY_READ or KEY_WOW64_64KEY);
-  try
-    try
-      Reg.RootKey := HKEY_LOCAL_MACHINE;
-      if Reg.OpenKeyReadOnly(APath) and Reg.ValueExists('InstallLocation') then
-        Result := Reg.ReadString('InstallLocation');
-    except
-      on E: Exception do
-      begin
-        MessageDlg(Format('Could not open ''%s'':%s%s', [APath, LineEnding, E.Message]), mtError, [mbOK], 0);
-        Result := '';
-      end;
-    end;
-  finally
-    Reg.Free;
-  end;
-end;
-
 procedure TMainForm.LaunchHammer(const AExecutable: string);
 var
   HammerProcess: TProcess;
 begin
-  if AExecutable = '' then
+  if not FileExists(AExecutable) then
     Exit;
 
   HammerProcess := TProcess.Create(nil);
@@ -394,48 +300,6 @@ begin
     Stream.Free;
     Png.Free;
   end;
-end;
-
-function TMainForm.ResolveHL2Hammer: string;
-begin
-  Result := IncludeTrailingPathDelimiter(FHL2InstallPath) + 'bin\hammer.exe';
-  if not FileExists(Result) then
-    Result := '';
-end;
-
-function TMainForm.ResolveHL2HammerPP: string;
-begin
-  Result := IncludeTrailingPathDelimiter(FHL2InstallPath) + 'bin\hammerplusplus.exe';
-  if not FileExists(Result) then
-    Result := '';
-end;
-
-function TMainForm.ResolveGModHammer: string;
-begin
-  Result := IncludeTrailingPathDelimiter(FGModInstallPath) + 'bin\hammer.exe';
-  if not FileExists(Result) then
-    Result := '';
-end;
-
-function TMainForm.ResolveGModHammerPP: string;
-begin
-  Result := IncludeTrailingPathDelimiter(FGModInstallPath) + 'bin\win64\hammerplusplus.exe';
-  if not FileExists(Result) then
-    Result := '';
-end;
-
-function TMainForm.ResolveEZ2Hammer: string;
-begin
-  Result := IncludeTrailingPathDelimiter(FEZ2InstallPath) + 'bin\hammer.exe';
-  if not FileExists(Result) then
-    Result := '';
-end;
-
-function TMainForm.ResolveEZ2HammerPP: string;
-begin
-  Result := IncludeTrailingPathDelimiter(FEZ2InstallPath) + 'bin\hammerplusplus.exe';
-  if not FileExists(Result) then
-    Result := '';
 end;
 
 procedure TMainForm.SetButtonStatus(AButton: TBitBtn; const AText: string);

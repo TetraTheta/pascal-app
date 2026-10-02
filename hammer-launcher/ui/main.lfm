@@ -101,9 +101,9 @@ object MainForm: TMainForm
   object ButtonEZ2HammerPP: TBitBtn
     Height = 50
     Left = 120
-    OnClick = ButtonGModHammerPPClick
-    OnMouseEnter = ButtonGModHammerPPMouseEnter
-    OnMouseLeave = ButtonGModHammerPPMouseLeave
+    OnClick = ButtonEZ2HammerPPClick
+    OnMouseEnter = ButtonEZ2HammerPPMouseEnter
+    OnMouseLeave = ButtonEZ2HammerPPMouseLeave
     TabOrder = 6
     Top = 152
     Width = 50

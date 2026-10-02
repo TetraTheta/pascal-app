@@ -11,6 +11,7 @@
       <UseXPManifest Value="True"/>
       <XPManifest>
         <DpiAware Value="True"/>
+        <LongPathAware Value="True"/>
         <AnsiUTF8 Value="True"/>
         <TextName Value="HammerLauncher"/>
         <TextDesc Value="Open Hammer Editor"/>
@@ -20,8 +21,8 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="2"/>
-      <MinorVersionNr Value="1"/>
-      <StringTable CompanyName="TetraTheta" FileDescription="Open Hammer Editor" LegalCopyright="Copyright (c) TetraTheta All rights reserved" ProductName="HammerLauncher" ProductVersion="2.1.0.0"/>
+      <MinorVersionNr Value="2"/>
+      <StringTable CompanyName="TetraTheta" FileDescription="Open Hammer Editor" LegalCopyright="Copyright (c) TetraTheta All rights reserved" ProductName="HammerLauncher" ProductVersion="2.2.0.0"/>
     </VersionInfo>
     <BuildModes>
       <Item Name="Default" Default="True"/>
@@ -53,6 +54,10 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
+      <Unit>
+        <Filename Value="configuration\launcher_configuration.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -63,7 +68,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="ui"/>
+      <OtherUnitFiles Value="ui;configuration"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
