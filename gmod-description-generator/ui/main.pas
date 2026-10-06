@@ -5,8 +5,7 @@ unit main;
 interface
 
 uses
-  Buttons, Classes, SysUtils, Forms, Controls, Dialogs, ExtCtrls, StdCtrls,
-  Menus;
+  Buttons, Classes, Controls, Dialogs, ExtCtrls, Forms, Menus, StdCtrls, SysUtils;
 
 type
   TMainForm = class(TForm)
@@ -54,6 +53,7 @@ type
     procedure ButtonCopyClick(Sender: TObject);
     procedure ButtonGenerateClick(Sender: TObject);
     procedure ButtonResetClick(Sender: TObject);
+    procedure ComboBoxRDMonthExit(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of string);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -63,23 +63,24 @@ type
     procedure MenuItemSaveClick(Sender: TObject);
   private
     FToday: TDateTime;
-    procedure ApplyDefaultDate;
     function BuildSettingsJson: string;
-    function ComboText(AComboBox: TComboBox): string;
     function GetJsonBool(AObject: TObject; const AName: string; ADefault: Boolean): Boolean;
-    function GetJsonInt(AObject: TObject; const AName: string; ADefault: Integer): Integer;
+    function GetJsonInt(AObject: TObject; const AName: string; AMinimum, AMaximum: Integer): Integer;
     function GetJsonString(AObject: TObject; const AName: string): string;
     function LoadTextFile(const AFilePath: string): string;
     function MemoTrimmedLines(AMemo: TMemo): TStringList;
     function NativeLine(const AText: string): string;
+    function ParseMonth(const AText: string): Integer;
+    function ReadReleaseDate: TDateTime;
+    function TrimmedText(AControl: TControl): string;
+    function UnixLine(const AText: string): string;
+    procedure ApplyDefaultDate;
     procedure OpenFile(const AFilePath: string);
     procedure RegisterDragDrop(AControl: TControl);
     procedure ResetFields;
-    procedure SetDialogDirectory(const AFilePath: string);
-    procedure SetSelectedIndex(AComboBox: TComboBox; AIndex: Integer);
     procedure SaveTextFile(const AFilePath: string; const AText: string);
-    function TrimmedText(AControl: TControl): string;
-    function UnixLine(const AText: string): string;
+    procedure SetDialogDirectory(const AFilePath: string);
+    procedure SetReleaseDate(const ADate: TDateTime);
   end;
 
 var
@@ -96,10 +97,9 @@ uses
 const
   JsonFilterAll = 'JSON 파일 (*.json)|*.json|모든 파일 (*.*)|*.*';
   JsonFilterOnly = 'JSON 파일 (*.json)|*.json';
-  MonthNames: array[1..12] of string = (
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  );
+  MaxReleaseYear = 2030;
+  MinReleaseYear = 2003;
+  MonthNames: array[1..12] of string = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
 
 function GetDocumentsDir: string;
 {$IFDEF MSWINDOWS}
@@ -121,6 +121,10 @@ procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FToday := Date;
   ApplyDefaultDate;
+
+  Assert((ParseMonth('No') = 11) and (ParseMonth('03') = 3));
+  Assert((FormatDateTime('m', EncodeDate(2021, 3, 1)) = '3') and (FormatDateTime('d', EncodeDate(2021, 3, 1)) = '1'));
+  Assert(FormatDateTime('yyyy.mm.dd', EncodeDate(2021, 11, 1)) = '2021.11.01');
 
   OpenDialog.InitialDir := GetDocumentsDir;
   SaveDialog.InitialDir := OpenDialog.InitialDir;
@@ -165,8 +169,7 @@ end;
 
 procedure TMainForm.ButtonResetClick(Sender: TObject);
 begin
-  if MessageDlg('Important Question', 'Are you sure want to reset?', mtConfirmation,
-    [mbYes, mbNo], 0) = mrYes then
+  if MessageDlg('Important Question', 'Are you sure want to reset?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     ResetFields;
 end;
 
@@ -189,11 +192,23 @@ var
   L4d2: Boolean;
   Lines: TStringList;
   Recompiled: Boolean;
+  ReleaseDate: TDateTime;
   Builder: TStringBuilder;
   Tf2: Boolean;
   Warning: string;
   I: Integer;
 begin
+  if not CheckBoxNoRD.Checked then
+    try
+      ReleaseDate := ReadReleaseDate;
+    except
+      on E: EConvertError do
+      begin
+        MessageDlg('ERROR', E.Message, mtError, [mbOK], 0);
+        Exit;
+      end;
+    end;
+
   Builder := TStringBuilder.Create;
   Lines := nil;
   try
@@ -201,8 +216,7 @@ begin
     Builder.Append(Format('[i]created by %s[/i]'#10, [TrimmedText(TextBoxAuthor)]));
 
     if not CheckBoxNoRD.Checked then
-      Builder.Append(Format(#10'Date of publish: %s %s %s'#10,
-        [ComboText(ComboBoxRDDate), ComboText(ComboBoxRDMonth), ComboText(ComboBoxRDYear)]));
+      Builder.Append(Format(#10'Date of publish: %s'#10, [FormatDateTime('yyyy.mm.dd', ReleaseDate)]));
 
     Builder.Append('[hr][/hr]');
 
@@ -243,7 +257,7 @@ begin
     Builder.Append('[h2]Recommendations[/h2]'#10);
     Builder.Append('To prevent or troubleshoot CTDs, frame drops, and add-on issues:'#10);
     Builder.Append('[olist]'#10);
-    Builder.Append('  [*]Use 64-bit GMod via the ''x86-64'' beta branch.'#10);
+    Builder.Append('  [*]Use 64-bit version of GMod. Either ''dev'' or ''x64-86'' branch is recommended.'#10);
     Builder.Append('  [*]Disable or unsubscribe from unnecessary add-ons.'#10);
     Builder.Append('  [*][Troubleshooting] Unsubscribe from all other add-ons (keep only this one).'#10);
     Builder.Append('  [*][Troubleshooting] Factory reset GMod using ''FactoryReset-GMod.bat''.'#10);
@@ -304,8 +318,7 @@ begin
     MessageDlg('SAVE SUCCESSFUL', 'Save complete', mtInformation, [mbOK], 0);
   except
     on E: Exception do
-      MessageDlg('ERROR', Format('Error occurred while saving file: %s', [E.Message]),
-        mtError, [mbOK], 0);
+      MessageDlg('ERROR', Format('Error occurred while saving file: %s', [E.Message]), mtError, [mbOK], 0);
   end;
 end;
 
@@ -320,29 +333,42 @@ begin
     OpenFile(FileNames[0]);
 end;
 
-procedure TMainForm.ApplyDefaultDate;
-var
-  Day: Word;
-  Month: Word;
-  Year: Word;
+procedure TMainForm.ComboBoxRDMonthExit(Sender: TObject);
 begin
-  DecodeDate(FToday, Year, Month, Day);
-  ComboBoxRDDate.ItemIndex := ComboBoxRDDate.Items.IndexOf(IntToStr(Day));
-  ComboBoxRDMonth.ItemIndex := ComboBoxRDMonth.Items.IndexOf(MonthNames[Month]);
-  ComboBoxRDYear.ItemIndex := ComboBoxRDYear.Items.IndexOf(IntToStr(Year));
+  try
+    ComboBoxRDMonth.Text := IntToStr(ParseMonth(ComboBoxRDMonth.Text));
+  except
+    on E: EConvertError do
+    begin
+      MessageDlg('ERROR', E.Message, mtError, [mbOK], 0);
+      ComboBoxRDMonth.SetFocus;
+    end;
+  end;
+end;
+
+procedure TMainForm.ApplyDefaultDate;
+begin
+  SetReleaseDate(FToday);
 end;
 
 function TMainForm.BuildSettingsJson: string;
 var
+  Day: Word;
   Json: TJSONObject;
+  Month: Word;
+  ReleaseDate: TDateTime;
+  Year: Word;
 begin
+  ReleaseDate := ReadReleaseDate;
+  DecodeDate(ReleaseDate, Year, Month, Day);
+
   Json := TJSONObject.Create;
   try
     Json.Add('Title', UnixLine(TrimmedText(TextBoxTitle)));
     Json.Add('Author', UnixLine(TrimmedText(TextBoxAuthor)));
-    Json.Add('RDDate', ComboBoxRDDate.ItemIndex);
-    Json.Add('RDMonth', ComboBoxRDMonth.ItemIndex);
-    Json.Add('RDYear', ComboBoxRDYear.ItemIndex);
+    Json.Add('RDYear', Integer(Year));
+    Json.Add('RDMonth', Integer(Month));
+    Json.Add('RDDate', Integer(Day));
     Json.Add('NoRD', CheckBoxNoRD.Checked);
     Json.Add('Description', UnixLine(TrimmedText(TextBoxDescription)));
     Json.Add('Synopsis', UnixLine(TrimmedText(TextBoxSynopsis)));
@@ -361,19 +387,24 @@ begin
   end;
 end;
 
-function TMainForm.ComboText(AComboBox: TComboBox): string;
-begin
-  Result := Trim(AComboBox.Text);
-end;
-
 function TMainForm.GetJsonBool(AObject: TObject; const AName: string; ADefault: Boolean): Boolean;
 begin
   Result := TJSONObject(AObject).Get(AName, ADefault);
 end;
 
-function TMainForm.GetJsonInt(AObject: TObject; const AName: string; ADefault: Integer): Integer;
+function TMainForm.GetJsonInt(AObject: TObject; const AName: string;
+  AMinimum, AMaximum: Integer): Integer;
+var
+  Data: TJSONData;
 begin
-  Result := TJSONObject(AObject).Get(AName, ADefault);
+  Data := TJSONObject(AObject).Find(AName);
+  if not ((Data is TJSONIntegerNumber) or (Data is TJSONInt64Number)) then
+    raise EReadError.CreateFmt('"%s" must be an integer', [AName]);
+
+  if (Data.AsInt64 < AMinimum) or (Data.AsInt64 > AMaximum) then
+    raise EReadError.CreateFmt('"%s" must be between %d and %d', [AName, AMinimum, AMaximum]);
+
+  Result := Data.AsInteger;
 end;
 
 function TMainForm.GetJsonString(AObject: TObject; const AName: string): string;
@@ -420,7 +451,11 @@ end;
 procedure TMainForm.OpenFile(const AFilePath: string);
 var
   Data: TJSONData;
+  Day: Integer;
   Json: TJSONObject;
+  Month: Integer;
+  ReleaseDate: TDateTime;
+  Year: Integer;
 begin
   Data := nil;
   try
@@ -429,11 +464,15 @@ begin
       raise EReadError.Create('Could not parse JSON file content');
 
     Json := TJSONObject(Data);
+    Year := GetJsonInt(Json, 'RDYear', MinReleaseYear, MaxReleaseYear);
+    Month := GetJsonInt(Json, 'RDMonth', 1, 12);
+    Day := GetJsonInt(Json, 'RDDate', 1, 31);
+    if not TryEncodeDate(Year, Month, Day, ReleaseDate) then
+      raise EReadError.Create('Release date is invalid');
+
     TextBoxTitle.Text := NativeLine(GetJsonString(Json, 'Title'));
     TextBoxAuthor.Text := NativeLine(GetJsonString(Json, 'Author'));
-    SetSelectedIndex(ComboBoxRDDate, GetJsonInt(Json, 'RDDate', 0));
-    SetSelectedIndex(ComboBoxRDMonth, GetJsonInt(Json, 'RDMonth', 0));
-    SetSelectedIndex(ComboBoxRDYear, GetJsonInt(Json, 'RDYear', 0));
+    SetReleaseDate(ReleaseDate);
     CheckBoxNoRD.Checked := GetJsonBool(Json, 'NoRD', False);
     TextBoxDescription.Text := NativeLine(GetJsonString(Json, 'Description'));
     TextBoxSynopsis.Text := NativeLine(GetJsonString(Json, 'Synopsis'));
@@ -451,10 +490,43 @@ begin
     SetDialogDirectory(AFilePath);
   except
     on E: Exception do
-      MessageDlg('ERROR', Format('Error occurred while opening file: %s', [E.Message]),
-        mtError, [mbOK], 0);
+      MessageDlg('ERROR', Format('Error occurred while opening file: %s', [E.Message]), mtError, [mbOK], 0);
   end;
   Data.Free;
+end;
+
+function TMainForm.ParseMonth(const AText: string): Integer;
+var
+  I: Integer;
+  InputText: string;
+begin
+  InputText := Trim(AText);
+  if TryStrToInt(InputText, Result) then
+  begin
+    if (Result >= Low(MonthNames)) and (Result <= High(MonthNames)) then
+      Exit;
+  end
+  else if InputText <> '' then
+    for I := Low(MonthNames) to High(MonthNames) do
+      if SameText(InputText, Copy(MonthNames[I], 1, Length(InputText))) then
+        Exit(I);
+
+  raise EConvertError.CreateFmt('Invalid release month: "%s"', [AText]);
+end;
+
+function TMainForm.ReadReleaseDate: TDateTime;
+var
+  Day: Integer;
+  Month: Integer;
+  Year: Integer;
+begin
+  if not TryStrToInt(Trim(ComboBoxRDYear.Text), Year) or (Year < MinReleaseYear) or (Year > MaxReleaseYear) then
+    raise EConvertError.CreateFmt('Release year must be between %d and %d',
+      [MinReleaseYear, MaxReleaseYear]);
+
+  Month := ParseMonth(ComboBoxRDMonth.Text);
+  if not TryStrToInt(Trim(ComboBoxRDDate.Text), Day) or (Day < 1) or (Day > 31) or not TryEncodeDate(Year, Month, Day, Result) then
+    raise EConvertError.Create('Release date is invalid');
 end;
 
 procedure TMainForm.RegisterDragDrop(AControl: TControl);
@@ -504,12 +576,11 @@ begin
   SaveDialog.InitialDir := Directory;
 end;
 
-procedure TMainForm.SetSelectedIndex(AComboBox: TComboBox; AIndex: Integer);
+procedure TMainForm.SetReleaseDate(const ADate: TDateTime);
 begin
-  if (AIndex >= 0) and (AIndex < AComboBox.Items.Count) then
-    AComboBox.ItemIndex := AIndex
-  else
-    AComboBox.ItemIndex := 0;
+  ComboBoxRDYear.Text := FormatDateTime('yyyy', ADate);
+  ComboBoxRDMonth.Text := FormatDateTime('m', ADate);
+  ComboBoxRDDate.Text := FormatDateTime('d', ADate);
 end;
 
 procedure TMainForm.SaveTextFile(const AFilePath: string; const AText: string);
