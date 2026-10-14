@@ -259,12 +259,12 @@ begin
     Builder.Append('[olist]'#10);
     Builder.Append('  [*]Use 64-bit version of GMod. Either ''dev'' or ''x64-86'' branch is recommended.'#10);
     Builder.Append('  [*]Disable or unsubscribe from unnecessary add-ons.'#10);
-    Builder.Append('  [*][Troubleshooting] Unsubscribe from all other add-ons (keep only this one).'#10);
-    Builder.Append('  [*][Troubleshooting] Factory reset GMod using ''FactoryReset-GMod.bat''.'#10);
+    Builder.Append('  [*][Troubleshooting] Unsubscribe from all other add-ons (keep only this one subscribed).'#10);
+    Builder.Append('  [*][Troubleshooting] Factory reset GMod using ''FactoryReset-GMod.bat'' in the GMod installation directory.'#10);
     Builder.Append('[/olist]'#10);
     Builder.Append('The maps tested fine without lags or CTDs. Any issues you encounter are likely system-specific, which unfortunately I can''t fix.'#10);
     if CheckBoxSCTools.Checked then
-      Builder.Append(#10'[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3207465120]SC Tools[/url] is required for level transitions and custom entities. You can still play without it, but many things won''t work.'#10)
+      Builder.Append(#10'[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3207465120]SC Tools[/url] is required for level transitions, custom entities, and more. You can still play without it, but many things won''t work.'#10)
     else
       Builder.Append(#10'I highly recommend subscribing to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3207465120]SC Tools[/url] for a [i]better[/i] experience.'#10);
 
@@ -290,7 +290,8 @@ begin
     end;
 
     Builder.Append('[h2]Disclaimer[/h2]'#10);
-    Builder.Append('Tested only in Singleplayer Sandbox on the ''x86-64'' beta branch. Compatibility with other gamemodes or Multiplayer is not guaranteed.'#10#10);
+    Builder.Append('Tested only in Singleplayer Sandbox on the ''dev'' beta branch. Compatibility with other gamemodes or Multiplayer is not guaranteed.'#10#10);
+    Builder.Append('Before reporting any issue, please follow all 4 (or at least the first 3) steps above. I cannot support and cover every environment, so a report from a ''clean state'' is crucial.'#10#10);
     Builder.Append('I did not create these maps; I only [i]ported[/i] them to Garry''s Mod. All credit goes to the original authors.'#10);
     Builder.Append('[hr][/hr]Search Tag: [spoiler]half life hl2 custom campaign[/spoiler]');
 
