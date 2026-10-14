@@ -1,9 +1,13 @@
 object MainForm: TMainForm
   BorderIcons = [biSystemMenu, biMinimize]
-  BorderStyle = bsDialog
+  BorderStyle = bsSizeable
   Caption = 'Hammer Launcher'
   ClientHeight = 230
   ClientWidth = 178
+  Constraints.MaxHeight = 230
+  Constraints.MaxWidth = 178
+  Constraints.MinHeight = 230
+  Constraints.MinWidth = 178
   Font.Height = -13
   Font.Name = 'Segoe UI'
   Height = 230

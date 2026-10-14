@@ -4,10 +4,14 @@ object MainForm: TMainForm
   Top = 250
   Width = 984
   BorderIcons = [biSystemMenu, biMinimize]
-  BorderStyle = bsSingle
+  BorderStyle = bsSizeable
   Caption = 'Garry''s Mod Addon Description Generator'
   ClientHeight = 769
   ClientWidth = 984
+  Constraints.MaxHeight = 769
+  Constraints.MaxWidth = 984
+  Constraints.MinHeight = 769
+  Constraints.MinWidth = 984
   Font.Height = -13
   Font.Name = 'Segoe UI'
   KeyPreview = True
