@@ -1,0 +1,79 @@
+object DataDirectoriesDialog: TDataDirectoriesDialog
+  Left = 260
+  Height = 378
+  Top = 180
+  Width = 620
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'Manage Data Folders'
+  ClientHeight = 378
+  ClientWidth = 620
+  Constraints.MaxHeight = 378
+  Constraints.MaxWidth = 620
+  Constraints.MinHeight = 378
+  Constraints.MinWidth = 620
+  Font.Name = 'Segoe UI'
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  object ButtonPanel1: TButtonPanel
+    Left = 6
+    Height = 34
+    Top = 338
+    Width = 608
+    OKButton.Name = 'OKButton'
+    OKButton.DefaultCaption = True
+    HelpButton.Name = 'HelpButton'
+    HelpButton.DefaultCaption = True
+    CloseButton.Name = 'CloseButton'
+    CloseButton.DefaultCaption = True
+    CancelButton.Name = 'CancelButton'
+    CancelButton.DefaultCaption = True
+    TabOrder = 2
+    ShowButtons = [pbClose]
+  end
+  object ControlsPanel: TPanel
+    Left = 0
+    Height = 44
+    Top = 288
+    Width = 620
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 44
+    ClientWidth = 620
+    TabOrder = 1
+    object AddButton: TButton
+      Left = 8
+      Height = 30
+      Top = 8
+      Width = 90
+      Caption = 'Add'
+      TabOrder = 0
+      OnClick = AddClick
+    end
+    object EditButton: TButton
+      Left = 104
+      Height = 30
+      Top = 8
+      Width = 90
+      Caption = 'Edit'
+      TabOrder = 1
+      OnClick = EditClick
+    end
+    object RemoveButton: TButton
+      Left = 200
+      Height = 30
+      Top = 8
+      Width = 90
+      Caption = 'Remove'
+      TabOrder = 2
+      OnClick = RemoveClick
+    end
+  end
+  object FList: TListBox
+    Left = 8
+    Height = 280
+    Top = 8
+    Width = 604
+    ItemHeight = 0
+    TabOrder = 0
+  end
+end

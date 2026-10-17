@@ -1,0 +1,162 @@
+object LaunchOptionsDialog: TLaunchOptionsDialog
+  Left = 330
+  Height = 410
+  Top = 180
+  Width = 450
+  BorderStyle = bsDialog
+  Caption = 'Launch Options'
+  ClientHeight = 410
+  ClientWidth = 450
+  Constraints.MaxHeight = 410
+  Constraints.MaxWidth = 450
+  Constraints.MinHeight = 410
+  Constraints.MinWidth = 450
+  Font.Name = 'Segoe UI'
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  object SkillLabel: TLabel
+    Left = 16
+    Height = 16
+    Top = 16
+    Width = 120
+    Caption = 'Skill'
+  end
+  object SkillComboBox: TComboBox
+    Left = 150
+    Height = 28
+    Top = 12
+    Width = 280
+    ItemHeight = 0
+    Items.Strings = (
+      'Default'
+      '1 — I''m too young to die'
+      '2 — Hey, not too rough'
+      '3 — Hurt me plenty'
+      '4 — Ultra-Violence'
+      '5 — Nightmare!'
+    )
+    ReadOnly = True
+    TabOrder = 0
+  end
+  object MapLabel: TLabel
+    Left = 16
+    Height = 16
+    Top = 54
+    Width = 120
+    Caption = 'Initial map'
+  end
+  object MapComboBox: TComboBox
+    Left = 150
+    Height = 27
+    Top = 50
+    Width = 280
+    ItemHeight = 0
+    TabOrder = 1
+  end
+  object NoMonstersCheckBox: TCheckBox
+    Left = 16
+    Height = 25
+    Top = 92
+    Width = 130
+    Caption = 'No monsters'
+    TabOrder = 2
+  end
+  object FastMonstersCheckBox: TCheckBox
+    Left = 150
+    Height = 25
+    Top = 92
+    Width = 130
+    Caption = 'Fast monsters'
+    TabOrder = 3
+  end
+  object RespawnMonstersCheckBox: TCheckBox
+    Left = 284
+    Height = 25
+    Top = 92
+    Width = 150
+    Caption = 'Respawn monsters'
+    TabOrder = 4
+  end
+  object EnableMultiplayerCheckBox: TCheckBox
+    Left = 16
+    Height = 25
+    Top = 138
+    Width = 200
+    Caption = 'Enable multiplayer'
+    TabOrder = 5
+  end
+  object HostRadioButton: TRadioButton
+    Left = 32
+    Height = 25
+    Top = 174
+    Width = 180
+    Caption = 'Host this game'
+    TabOrder = 6
+  end
+  object JoinRadioButton: TRadioButton
+    Left = 230
+    Height = 25
+    Top = 174
+    Width = 180
+    Caption = 'Join a game'
+    TabOrder = 7
+  end
+  object HostLabel: TLabel
+    Left = 32
+    Height = 16
+    Top = 212
+    Width = 140
+    Caption = 'Host / IP address'
+  end
+  object HostEdit: TEdit
+    Left = 180
+    Height = 27
+    Top = 208
+    Width = 250
+    TabOrder = 8
+  end
+  object PortLabel: TLabel
+    Left = 32
+    Height = 16
+    Top = 250
+    Width = 140
+    Caption = 'Port'
+  end
+  object PortEdit: TSpinEdit
+    Left = 180
+    Height = 27
+    Top = 246
+    Width = 120
+    MaxValue = 65535
+    MinValue = 1
+    TabOrder = 9
+    Value = 10666
+  end
+  object PlayerCountLabel: TLabel
+    Left = 32
+    Height = 16
+    Top = 288
+    Width = 140
+    Caption = 'Player slots'
+  end
+  object PlayerCountEdit: TSpinEdit
+    Left = 180
+    Height = 27
+    Top = 284
+    Width = 120
+    MaxValue = 64
+    MinValue = 1
+    TabOrder = 10
+    Value = 4
+  end
+  object ButtonPanel1: TButtonPanel
+    Left = 6
+    Height = 40
+    Top = 370
+    Width = 438
+    Align = alBottom
+    AutoSize = True
+    ShowButtons = [pbOK, pbCancel]
+    TabOrder = 11
+  end
+end

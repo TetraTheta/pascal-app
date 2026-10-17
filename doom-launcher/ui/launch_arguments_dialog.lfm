@@ -1,0 +1,47 @@
+object LaunchArgumentsDialog: TLaunchArgumentsDialog
+  Left = 260
+  Height = 360
+  Top = 180
+  Width = 700
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'Launch Arguments'
+  ClientHeight = 360
+  ClientWidth = 700
+  Constraints.MinHeight = 300
+  Constraints.MinWidth = 500
+  Font.Name = 'Segoe UI'
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  object ArgumentsMemo: TMemo
+    Left = 8
+    Height = 304
+    Top = 8
+    Width = 684
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 0
+    WordWrap = False
+  end
+  object CopyButton: TButton
+    Left = 508
+    Height = 30
+    Top = 322
+    Width = 88
+    Anchors = [akRight, akBottom]
+    Caption = 'Copy'
+    TabOrder = 1
+    OnClick = CopyClick
+  end
+  object OKButton: TButton
+    Left = 604
+    Height = 30
+    Top = 322
+    Width = 88
+    Anchors = [akRight, akBottom]
+    Caption = 'OK'
+    Default = True
+    ModalResult = 1
+    TabOrder = 2
+  end
+end

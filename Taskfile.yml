@@ -12,27 +12,43 @@ tasks:
       - task: build
   build:
     cmds:
+      - task: build:doom-launcher
       - task: build:gmod-description-generator
       - task: build:hammer-launcher
       - task: build:rcalc
+  build:doom-launcher:
+    aliases: ["build:doom", "doom"]
+    dir: doom-launcher
+    cmds:
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default doom_launcher.lpi'
+      - 'mkdir "$PAS_DIST" 2> /dev/null'
+      - 'mv doom-launcher.exe "$PAS_DIST/doom-launcher.exe"'
+  test:doom-launcher:
+    aliases: ["test:doom"]
+    dir: doom-launcher/tests
+    cmds:
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default doom_launcher_tests.lpi'
+      - './doom_launcher_tests.exe'
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default ui_form_smoke_tests.lpi'
+      - './ui_form_smoke_tests.exe'
   build:gmod-description-generator:
     aliases: ["build:gdg", "build:gmod", "gmod"]
     dir: gmod-description-generator
     cmds:
       - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default gmod_description_generator.lpi'
       - 'mkdir "$PAS_DIST" 2> /dev/null'
-      - 'cp gmod_description_generator.exe "$PAS_DIST/GModDescriptionGenerator.exe"'
+      - 'mv gmod_description_generator.exe "$PAS_DIST/GModDescriptionGenerator.exe"'
   build:hammer-launcher:
     aliases: ["build:hammer", "hammer"]
     dir: hammer-launcher
     cmds:
       - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default hammer_launcher.lpi'
       - 'mkdir "$PAS_DIST" 2> /dev/null'
-      - 'cp hammer_launcher.exe "$PAS_DIST/HammerLauncher.exe"'
+      - 'mv hammer_launcher.exe "$PAS_DIST/HammerLauncher.exe"'
   build:rcalc:
     aliases: ["rcalc"]
     dir: rcalc
     cmds:
       - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default rcalc.lpi'
       - 'mkdir "$PAS_DIST" 2> /dev/null'
-      - 'cp rcalc.exe "$PAS_DIST/rcalc.exe"'
+      - 'mv rcalc.exe "$PAS_DIST/rcalc.exe"'

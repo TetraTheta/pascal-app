@@ -1,0 +1,426 @@
+object MainForm: TMainForm
+  Left = 200
+  Height = 720
+  Top = 120
+  Width = 1100
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = 'Doom Launcher'
+  ClientHeight = 720
+  ClientWidth = 1100
+  Constraints.MaxHeight = 720
+  Constraints.MaxWidth = 1100
+  Constraints.MinHeight = 720
+  Constraints.MinWidth = 1100
+  Font.Name = 'Segoe UI'
+  Menu = MainMenu1
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  object FTopPanel: TPanel
+    Left = 0
+    Height = 210
+    Top = 0
+    Width = 1100
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 210
+    ClientWidth = 1100
+    TabOrder = 0
+    object EngineGroup: TGroupBox
+      Left = 8
+      Height = 194
+      Top = 8
+      Width = 350
+      Caption = '1. Engine'
+      ClientHeight = 174
+      ClientWidth = 346
+      TabOrder = 0
+      object FEngineList: TListBox
+        Left = 8
+        Height = 131
+        Top = 0
+        Width = 330
+        ItemHeight = 0
+        TabOrder = 0
+        OnClick = EngineSelectionChange
+      end
+      object AddEngineButton: TButton
+        Left = 8
+        Height = 30
+        Top = 138
+        Width = 76
+        Caption = 'Add'
+        TabOrder = 1
+        OnClick = AddEngineClick
+      end
+      object EditEngineButton: TButton
+        Left = 88
+        Height = 30
+        Top = 138
+        Width = 76
+        Caption = 'Edit'
+        TabOrder = 2
+        OnClick = EditEngineClick
+      end
+      object RemoveEngineButton: TButton
+        Left = 168
+        Height = 30
+        Top = 138
+        Width = 82
+        Caption = 'Remove'
+        TabOrder = 3
+        OnClick = RemoveEngineClick
+      end
+    end
+    object IWadGroup: TGroupBox
+      Left = 366
+      Height = 194
+      Top = 8
+      Width = 350
+      Caption = '2. Base Game (IWAD)'
+      ClientHeight = 174
+      ClientWidth = 346
+      TabOrder = 1
+      object FIWadList: TListBox
+        Left = 8
+        Height = 168
+        Top = 0
+        Width = 332
+        ItemHeight = 0
+        TabOrder = 0
+        OnClick = IWadSelectionChange
+      end
+    end
+    object ProfileGroup: TGroupBox
+      Left = 724
+      Height = 194
+      Top = 8
+      Width = 368
+      Caption = '3. Profile'
+      ClientHeight = 174
+      ClientWidth = 364
+      TabOrder = 2
+      object FProfileList: TListBox
+        Left = 8
+        Height = 131
+        Top = 0
+        Width = 348
+        ItemHeight = 0
+        TabOrder = 0
+        OnClick = ProfileSelectionChange
+      end
+      object NewProfileButton: TButton
+        Left = 8
+        Height = 30
+        Top = 138
+        Width = 70
+        Caption = 'New'
+        TabOrder = 1
+        OnClick = NewProfileClick
+      end
+      object RenameProfileButton: TButton
+        Left = 84
+        Height = 30
+        Top = 138
+        Width = 78
+        Caption = 'Rename'
+        TabOrder = 2
+        OnClick = RenameProfileClick
+      end
+      object RemoveProfileButton: TButton
+        Left = 168
+        Height = 30
+        Top = 137
+        Width = 78
+        Caption = 'Remove'
+        TabOrder = 3
+        OnClick = RemoveProfileClick
+      end
+      object FLockedCheckBox: TCheckBox
+        Left = 256
+        Height = 19
+        Top = 144
+        Width = 56
+        Caption = 'Locked'
+        TabOrder = 4
+        OnClick = LockProfileClick
+      end
+    end
+  end
+  object FStatusBar: TStatusBar
+    Left = 0
+    Height = 22
+    Top = 698
+    Width = 1100
+    Panels = <>
+  end
+  object BottomPanel: TPanel
+    Left = 0
+    Height = 78
+    Top = 620
+    Width = 1100
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 78
+    ClientWidth = 1100
+    TabOrder = 2
+    object ExtraArgumentsLabel: TLabel
+      Left = 8
+      Height = 15
+      Top = 8
+      Width = 144
+      Caption = 'Command Line Arguments'
+    end
+    object FExtraArguments: TEdit
+      Left = 8
+      Height = 23
+      Top = 28
+      Width = 760
+      TabOrder = 0
+      OnChange = TextProfileChange
+    end
+    object FSaveProfileButton: TButton
+      Left = 778
+      Height = 30
+      Top = 28
+      Width = 116
+      Caption = 'Save Profile'
+      TabOrder = 1
+      OnClick = SaveProfileClick
+    end
+    object FRunButton: TButton
+      Left = 900
+      Height = 30
+      Top = 28
+      Width = 130
+      Caption = 'Run'
+      TabOrder = 2
+      OnClick = RunClick
+      OnMouseDown = RunMouseDown
+    end
+    object LaunchOptionsButton: TButton
+      Left = 1036
+      Height = 30
+      Top = 28
+      Width = 56
+      Caption = '▼'
+      TabOrder = 3
+      OnClick = LaunchOptionsClick
+    end
+  end
+  object ContentPanel: TPanel
+    Left = 0
+    Height = 410
+    Top = 210
+    Width = 1100
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 410
+    ClientWidth = 1100
+    TabOrder = 1
+    object FAvailablePanel: TPanel
+      Left = 0
+      Height = 410
+      Top = 0
+      Width = 516
+      Align = alLeft
+      BevelOuter = bvNone
+      ClientHeight = 410
+      ClientWidth = 516
+      TabOrder = 0
+      object AvailableLabel: TLabel
+        Left = 8
+        Height = 15
+        Top = 8
+        Width = 83
+        Caption = 'Available WADs'
+      end
+      object FAvailableFilter: TEdit
+        Left = 8
+        Height = 23
+        Top = 30
+        Width = 500
+        TabOrder = 0
+        TextHint = 'Filter...'
+        OnChange = AvailableFilterChange
+      end
+      object FAvailableWads: TListView
+        Left = 8
+        Height = 338
+        Top = 64
+        Width = 500
+        BorderStyle = bsNone
+        Columns = <        
+          item
+            Caption = 'WAD'
+            Width = 150
+          end        
+          item
+            Caption = 'Maps'
+            Width = 60
+          end        
+          item
+            Caption = 'Path'
+            Width = 260
+          end>
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 1
+        ViewStyle = vsReport
+        OnDblClick = AddWadClick
+      end
+    end
+    object FTransferPanel: TPanel
+      Left = 516
+      Height = 410
+      Top = 0
+      Width = 68
+      Align = alLeft
+      BevelOuter = bvNone
+      ClientHeight = 410
+      ClientWidth = 68
+      TabOrder = 1
+      object RefreshWadsButton: TButton
+        Left = 8
+        Height = 30
+        Top = 161
+        Width = 52
+        Caption = '↻'
+        TabOrder = 0
+        OnClick = RefreshClick
+      end
+      object AddSelectedButton: TButton
+        Left = 8
+        Height = 30
+        Top = 199
+        Width = 52
+        Caption = '→'
+        TabOrder = 1
+        OnClick = AddWadClick
+      end
+      object RemoveSelectedButton: TButton
+        Left = 8
+        Height = 30
+        Top = 237
+        Width = 52
+        Caption = '←'
+        TabOrder = 2
+        OnClick = RemoveWadClick
+      end
+    end
+    object FSelectedPanel: TPanel
+      Left = 584
+      Height = 410
+      Top = 0
+      Width = 516
+      Align = alClient
+      BevelOuter = bvNone
+      ClientHeight = 410
+      ClientWidth = 516
+      TabOrder = 2
+      object SelectedLabel: TLabel
+        Left = 8
+        Height = 15
+        Top = 8
+        Width = 79
+        Caption = 'Selected WADs'
+      end
+      object FSelectedFilter: TEdit
+        Left = 8
+        Height = 23
+        Top = 30
+        Width = 500
+        TabOrder = 0
+        TextHint = 'Filter...'
+        OnChange = SelectedFilterChange
+      end
+      object FSelectedWads: TListView
+        Left = 8
+        Height = 300
+        Top = 64
+        Width = 500
+        BorderStyle = bsNone
+        Columns = <        
+          item
+            Caption = 'WAD'
+            Width = 150
+          end        
+          item
+            Caption = 'Maps'
+            Width = 60
+          end        
+          item
+            Caption = 'Path'
+            Width = 260
+          end>
+        HideSelection = False
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 1
+        ViewStyle = vsReport
+        OnDblClick = RemoveWadClick
+      end
+      object UpButton: TButton
+        Left = 8
+        Height = 30
+        Top = 372
+        Width = 72
+        Caption = 'Up'
+        TabOrder = 2
+        OnClick = MoveWadUpClick
+      end
+      object DownButton: TButton
+        Left = 86
+        Height = 30
+        Top = 372
+        Width = 72
+        Caption = 'Down'
+        TabOrder = 3
+        OnClick = MoveWadDownClick
+      end
+    end
+  end
+  object MainMenu1: TMainMenu
+    Left = 512
+    Top = 240
+    object FileMenu: TMenuItem
+      Caption = '&File'
+      object ManageDataFoldersMenuItem: TMenuItem
+        Caption = 'Manage &Data Folders...'
+        OnClick = DataDirectoriesClick
+      end
+      object RefreshMenuItem: TMenuItem
+        Caption = '&Refresh WADs'
+        OnClick = RefreshClick
+      end
+      object MenuSeparator1: TMenuItem
+        Caption = '-'
+      end
+      object ImportProfileMenuItem: TMenuItem
+        Caption = '&Import Profile...'
+        OnClick = ImportProfileClick
+      end
+      object ExportProfileMenuItem: TMenuItem
+        Caption = '&Export Profile...'
+        OnClick = ExportProfileClick
+      end
+      object MenuSeparator2: TMenuItem
+        Caption = '-'
+      end
+      object ExitAfterLaunchMenuItem: TMenuItem
+        AutoCheck = True
+        Caption = 'E&xit after launch'
+        OnClick = ExitAfterLaunchClick
+      end
+      object MenuSeparator3: TMenuItem
+        Caption = '-'
+      end
+      object ExitMenuItem: TMenuItem
+        Caption = 'E&xit'
+        OnClick = ExitClick
+      end
+    end
+  end
+end

@@ -1,0 +1,72 @@
+object PathItemDialog: TPathItemDialog
+  Left = 300
+  Height = 180
+  Top = 220
+  Width = 520
+  BorderStyle = bsDialog
+  Caption = 'Path Item'
+  ClientHeight = 180
+  ClientWidth = 520
+  Constraints.MaxHeight = 180
+  Constraints.MaxWidth = 520
+  Constraints.MinHeight = 180
+  Constraints.MinWidth = 520
+  Font.Name = 'Segoe UI'
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  object DisplayNameLabel: TLabel
+    Left = 12
+    Height = 16
+    Top = 12
+    Width = 496
+    Caption = 'Display name'
+  end
+  object DisplayNameEdit: TEdit
+    Left = 12
+    Height = 27
+    Top = 32
+    Width = 496
+    TabOrder = 0
+  end
+  object PathLabel: TLabel
+    Left = 12
+    Height = 16
+    Top = 68
+    Width = 496
+    Caption = 'Path'
+  end
+  object PathEdit: TEdit
+    Left = 12
+    Height = 27
+    Top = 88
+    Width = 456
+    TabOrder = 1
+  end
+  object BrowseButton: TButton
+    Left = 474
+    Height = 27
+    Top = 88
+    Width = 34
+    Caption = '...'
+    OnClick = BrowseClick
+    TabOrder = 2
+  end
+  object AbsoluteCheckBox: TCheckBox
+    Left = 12
+    Height = 25
+    Top = 118
+    Width = 240
+    Caption = 'Store as absolute path'
+    TabOrder = 3
+  end
+  object ButtonPanel1: TButtonPanel
+    Left = 6
+    Height = 36
+    Top = 144
+    Width = 508
+    Align = alBottom
+    AutoSize = True
+    ShowButtons = [pbOK, pbCancel]
+    TabOrder = 4
+  end
+end
