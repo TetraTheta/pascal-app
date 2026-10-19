@@ -224,7 +224,7 @@ begin
   end;
 end;
 
-procedure AddDirectoryWads(const ABaseDirectory: string; ADirectory: TDataDirectory; ACache, AResults: TObjectList; ASeen: TStrings; var ACacheChanged: Boolean);
+procedure AddDirectoryWads(const ABaseDirectory, APath: string; ADirectory: TDataDirectory; ACache, AResults: TObjectList; ASeen: TStrings; var ACacheChanged: Boolean);
 var
   AbsoluteFileName: string;
   Cached: TWadMetadata;
@@ -235,16 +235,21 @@ var
   Size: Int64;
   StoreAbsolute: Boolean;
 begin
-  if FindFirst(IncludeTrailingPathDelimiter(ResolveStoredPath(ABaseDirectory, ADirectory.DirectoryName)) + '*', faAnyFile, SearchRecord) <> 0 then
+  if FindFirst(IncludeTrailingPathDelimiter(APath) + '*', faAnyFile, SearchRecord) <> 0 then
     Exit;
   try
     repeat
-      if (SearchRecord.Attr and faDirectory = 0) then
+      if (SearchRecord.Attr and faDirectory <> 0) then
+      begin
+        if (SearchRecord.Name <> '.') and (SearchRecord.Name <> '..') and (SearchRecord.Attr and faSymLink = 0) then
+          AddDirectoryWads(ABaseDirectory, IncludeTrailingPathDelimiter(APath) + SearchRecord.Name, ADirectory, ACache, AResults, ASeen, ACacheChanged);
+      end
+      else
       begin
         Extension := LowerCase(ExtractFileExt(SearchRecord.Name));
         if (Extension = '.wad') or (Extension = '.pk3') or (Extension = '.zip') then
         begin
-          AbsoluteFileName := ExpandFileName(IncludeTrailingPathDelimiter(ResolveStoredPath(ABaseDirectory, ADirectory.DirectoryName)) + SearchRecord.Name);
+          AbsoluteFileName := ExpandFileName(IncludeTrailingPathDelimiter(APath) + SearchRecord.Name);
           if ASeen.IndexOf(AbsoluteFileName) < 0 then
           begin
             ASeen.Add(AbsoluteFileName);
@@ -314,10 +319,10 @@ begin
     Seen.Sorted := True;
     Seen.Duplicates := dupIgnore;
     for DirectoryIndex := 0 to ASettings.DataDirectories.Count - 1 do
-      AddDirectoryWads(ABaseDirectory, TDataDirectory(ASettings.DataDirectories[DirectoryIndex]), ASettings.WadCache, Result, Seen, ACacheChanged);
+      AddDirectoryWads(ABaseDirectory, ResolveStoredPath(ABaseDirectory, TDataDirectory(ASettings.DataDirectories[DirectoryIndex]).DirectoryName), TDataDirectory(ASettings.DataDirectories[DirectoryIndex]), ASettings.WadCache, Result, Seen, ACacheChanged);
     AddEnvironmentDirectories(EnvironmentDirectories);
     for DirectoryIndex := 0 to EnvironmentDirectories.Count - 1 do
-      AddDirectoryWads(ABaseDirectory, TDataDirectory(EnvironmentDirectories[DirectoryIndex]), ASettings.WadCache, Result, Seen, ACacheChanged);
+      AddDirectoryWads(ABaseDirectory, ResolveStoredPath(ABaseDirectory, TDataDirectory(EnvironmentDirectories[DirectoryIndex]).DirectoryName), TDataDirectory(EnvironmentDirectories[DirectoryIndex]), ASettings.WadCache, Result, Seen, ACacheChanged);
   finally
     EnvironmentDirectories.Free;
     Seen.Free;

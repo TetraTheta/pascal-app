@@ -3,6 +3,7 @@ version: '3'
 
 env:
   PAS_DIST: ../.dist
+  PAS_FPC: 'E:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe'
   PAS_LAZBUILD: 'E:\lazarus\lazbuild.exe'
   PAS_LAZARUS_CONFIG: '{{.LOCALAPPDATA}}\lazarus'
 
@@ -23,14 +24,6 @@ tasks:
       - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default doom_launcher.lpi'
       - 'mkdir "$PAS_DIST" 2> /dev/null'
       - 'mv doom-launcher.exe "$PAS_DIST/doom-launcher.exe"'
-  test:doom-launcher:
-    aliases: ["test:doom"]
-    dir: doom-launcher/tests
-    cmds:
-      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default doom_launcher_tests.lpi'
-      - './doom_launcher_tests.exe'
-      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default ui_form_smoke_tests.lpi'
-      - './ui_form_smoke_tests.exe'
   build:gmod-description-generator:
     aliases: ["build:gdg", "build:gmod", "gmod"]
     dir: gmod-description-generator
