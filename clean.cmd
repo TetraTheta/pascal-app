@@ -28,3 +28,10 @@ for /f "delims=" %%d in ('dir /s /b /ad ^| findstr /vi "\\.git\\" ^| sort /r') d
     rd "%%d"
   )
 )
+
+if exist "%~dp0file-optimizer\FileOptimizer.ini" (
+  echo Deleting %~dp0file-optimizer\FileOptimizer.ini
+  del /f /q "%~dp0file-optimizer\FileOptimizer.ini"
+)
+
+pause

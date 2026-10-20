@@ -303,3 +303,4 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/git,linux,macos,archive,lazarus,windows,archives,notepadpp,freepascal,intellij+all,visualstudiocode
 
 .dist/
+file-optimizer/*.ini
