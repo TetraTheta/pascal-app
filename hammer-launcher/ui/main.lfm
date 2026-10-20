@@ -28,7 +28,9 @@ object MainForm: TMainForm
     Top = 8
     Width = 162
   end
-  object ImageHL2: TImage
+  object ImageHL2: TRuntimeResourceImage
+    ResourceName = 'HL2'
+    SourceFile = 'resource/hl2.png'
     Center = True
     Height = 50
     Left = 8
@@ -36,7 +38,9 @@ object MainForm: TMainForm
     Top = 40
     Width = 50
   end
-  object ButtonHL2Hammer: TBitBtn
+  object ButtonHL2Hammer: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_HL2'
+    SourceFile = 'resource/hammer_hl2.png'
     Height = 50
     Left = 64
     OnClick = ButtonHL2HammerClick
@@ -46,7 +50,9 @@ object MainForm: TMainForm
     Top = 40
     Width = 50
   end
-  object ButtonHL2HammerPP: TBitBtn
+  object ButtonHL2HammerPP: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_PLUSPLUS'
+    SourceFile = 'resource/hammer_plusplus.png'
     Height = 50
     Left = 120
     OnClick = ButtonHL2HammerPPClick
@@ -56,7 +62,9 @@ object MainForm: TMainForm
     Top = 40
     Width = 50
   end
-  object ImageGMod: TImage
+  object ImageGMod: TRuntimeResourceImage
+    ResourceName = 'GMOD'
+    SourceFile = 'resource/gmod.png'
     Center = True
     Height = 50
     Left = 8
@@ -64,7 +72,9 @@ object MainForm: TMainForm
     Top = 96
     Width = 50
   end
-  object ButtonGModHammer: TBitBtn
+  object ButtonGModHammer: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_GMOD'
+    SourceFile = 'resource/hammer_gmod.png'
     Height = 50
     Left = 64
     OnClick = ButtonGModHammerClick
@@ -74,7 +84,9 @@ object MainForm: TMainForm
     Top = 96
     Width = 50
   end
-  object ButtonGModHammerPP: TBitBtn
+  object ButtonGModHammerPP: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_PLUSPLUS'
+    SourceFile = 'resource/hammer_plusplus.png'
     Height = 50
     Left = 120
     OnClick = ButtonGModHammerPPClick
@@ -84,7 +96,9 @@ object MainForm: TMainForm
     Top = 96
     Width = 50
   end
-  object ImageEZ2: TImage
+  object ImageEZ2: TRuntimeResourceImage
+    ResourceName = 'EZ2'
+    SourceFile = 'resource/ez2.png'
     Center = True
     Height = 50
     Left = 8
@@ -92,7 +106,9 @@ object MainForm: TMainForm
     Top = 152
     Width = 50
   end
-  object ButtonEZ2Hammer: TBitBtn
+  object ButtonEZ2Hammer: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_HL2'
+    SourceFile = 'resource/hammer_hl2.png'
     Height = 50
     Left = 64
     OnClick = ButtonEZ2HammerClick
@@ -102,7 +118,9 @@ object MainForm: TMainForm
     Top = 152
     Width = 50
   end
-  object ButtonEZ2HammerPP: TBitBtn
+  object ButtonEZ2HammerPP: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_PLUSPLUS'
+    SourceFile = 'resource/hammer_plusplus.png'
     Height = 50
     Left = 120
     OnClick = ButtonEZ2HammerPPClick

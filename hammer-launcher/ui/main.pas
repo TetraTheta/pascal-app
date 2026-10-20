@@ -6,23 +6,22 @@ unit main;
 interface
 
 uses
-  Buttons, Classes, SysUtils, Forms, Controls, Graphics, ExtCtrls, StdCtrls,
-  ComCtrls, Process;
+  Buttons, Classes, SysUtils, Forms, Controls, StdCtrls, ComCtrls, Process, runtime_resource;
 
 type
 
   { TMainForm }
 
   TMainForm = class(TForm)
-    ButtonHL2Hammer: TBitBtn;
-    ButtonHL2HammerPP: TBitBtn;
-    ButtonGModHammer: TBitBtn;
-    ButtonGModHammerPP: TBitBtn;
-    ButtonEZ2Hammer: TBitBtn;
-    ButtonEZ2HammerPP: TBitBtn;
-    ImageHL2: TImage;
-    ImageGMod: TImage;
-    ImageEZ2: TImage;
+    ButtonHL2Hammer: TRuntimeResourceBitBtn;
+    ButtonHL2HammerPP: TRuntimeResourceBitBtn;
+    ButtonGModHammer: TRuntimeResourceBitBtn;
+    ButtonGModHammerPP: TRuntimeResourceBitBtn;
+    ButtonEZ2Hammer: TRuntimeResourceBitBtn;
+    ButtonEZ2HammerPP: TRuntimeResourceBitBtn;
+    ImageHL2: TRuntimeResourceImage;
+    ImageGMod: TRuntimeResourceImage;
+    ImageEZ2: TRuntimeResourceImage;
     StatusBar: TStatusBar;
     TextBoxTarget: TEdit;
     procedure ButtonHL2HammerClick(Sender: TObject);
@@ -56,9 +55,6 @@ type
     procedure AssignKeyHandler(AControl: TControl);
     procedure ClearButtonStatus(Sender: TObject);
     procedure LaunchHammer(const AExecutable: string);
-    procedure LoadButtonImage(AButton: TBitBtn; const AResourceName: string);
-    procedure LoadImage(AImage: TImage; const AResourceName: string);
-    procedure LoadPngResource(ABitmap: Graphics.TBitmap; const AResourceName: string);
     procedure SetButtonStatus(AButton: TBitBtn; const AText: string);
   public
     procedure InitializeTarget;
@@ -78,16 +74,6 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   Configuration: TLauncherConfiguration;
 begin
-  LoadButtonImage(ButtonHL2Hammer, 'HAMMER_HL2');
-  LoadButtonImage(ButtonHL2HammerPP, 'HAMMER_PLUSPLUS');
-  LoadButtonImage(ButtonGModHammer, 'HAMMER_GMOD');
-  LoadButtonImage(ButtonGModHammerPP, 'HAMMER_PLUSPLUS');
-  LoadButtonImage(ButtonEZ2Hammer, 'HAMMER_HL2');
-  LoadButtonImage(ButtonEZ2HammerPP, 'HAMMER_PLUSPLUS');
-  LoadImage(ImageHL2, 'HL2');
-  LoadImage(ImageGMod, 'GMOD');
-  LoadImage(ImageEZ2, 'EZ2');
-
   Configuration := LoadLauncherConfiguration(Application.ExeName);
   FHL2Hammer := Configuration.HL2Hammer;
   FHL2HammerPP := Configuration.HL2HammerPP;
@@ -266,40 +252,6 @@ begin
   end;
 
   Application.Terminate;
-end;
-
-procedure TMainForm.LoadButtonImage(AButton: TBitBtn; const AResourceName: string);
-var
-  Bitmap: Graphics.TBitmap;
-begin
-  Bitmap := Graphics.TBitmap.Create;
-  try
-    LoadPngResource(Bitmap, AResourceName);
-    AButton.Glyph.Assign(Bitmap);
-  finally
-    Bitmap.Free;
-  end;
-end;
-
-procedure TMainForm.LoadImage(AImage: TImage; const AResourceName: string);
-begin
-  LoadPngResource(AImage.Picture.Bitmap, AResourceName);
-end;
-
-procedure TMainForm.LoadPngResource(ABitmap: Graphics.TBitmap; const AResourceName: string);
-var
-  Png: TPortableNetworkGraphic;
-  Stream: TResourceStream;
-begin
-  Png := TPortableNetworkGraphic.Create;
-  Stream := TResourceStream.Create(HInstance, AResourceName, RT_RCDATA);
-  try
-    Png.LoadFromStream(Stream);
-    ABitmap.Assign(Png);
-  finally
-    Stream.Free;
-    Png.Free;
-  end;
 end;
 
 procedure TMainForm.SetButtonStatus(AButton: TBitBtn; const AText: string);
