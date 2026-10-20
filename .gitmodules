@@ -1,0 +1,3 @@
+[submodule "package/dark-theme"]
+	path = package/dark-theme
+	url = https://github.com/zamtmn/metadarkstyle

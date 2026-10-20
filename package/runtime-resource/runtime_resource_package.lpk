@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <Name Value="runtime_resource_package"/>
+    <Type Value="RunAndDesignTime"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)/$(LCLWidgetType)"/>
+      </SearchPaths>
+    </CompilerOptions>
+    <Description Value="Project image previews backed by runtime RCDATA resources"/>
+    <Version Major="1"/>
+    <Files>
+      <Item>
+        <Filename Value="runtime_resource.pas"/>
+        <UnitName Value="runtime_resource"/>
+      </Item>
+      <Item>
+        <Filename Value="register_runtime_resource.pas"/>
+        <HasRegisterProc Value="True"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="register_runtime_resource"/>
+      </Item>
+    </Files>
+    <RequiredPkgs>
+      <Item>
+        <PackageName Value="IDEIntf"/>
+      </Item>
+      <Item>
+        <PackageName Value="LCL"/>
+      </Item>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
