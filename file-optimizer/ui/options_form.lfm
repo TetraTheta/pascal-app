@@ -1,0 +1,1028 @@
+object OptionsForm: TOptionsForm
+  Left = 300
+  Height = 540
+  Top = 180
+  Width = 650
+  Caption = 'Options'
+  ClientHeight = 540
+  ClientWidth = 650
+  Constraints.MinHeight = 360
+  Constraints.MinWidth = 480
+  Font.Name = 'Segoe UI'
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  object FPages: TPageControl
+    Left = 0
+    Height = 492
+    Top = 0
+    Width = 650
+    ActivePage = PageGeneral
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 0
+    object PageGeneral: TTabSheet
+      Caption = 'General'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollGeneral: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Label0: TLabel
+          Left = 16
+          Height = 17
+          Top = 17
+          Width = 210
+          Caption = 'Language'
+        end
+        object Option0: TComboBox
+          Left = 240
+          Height = 27
+          Top = 12
+          Width = 320
+          ItemHeight = 0
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object Label1: TLabel
+          Left = 16
+          Height = 17
+          Top = 49
+          Width = 210
+          Caption = 'Level'
+        end
+        object Option1: TComboBox
+          Left = 240
+          Height = 27
+          Top = 44
+          Width = 320
+          ItemHeight = 0
+          Style = csDropDownList
+          TabOrder = 1
+        end
+        object Option2: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 76
+          Width = 460
+          Caption = 'Parallel Enabled'
+          TabOrder = 2
+        end
+        object Label3: TLabel
+          Left = 16
+          Height = 17
+          Top = 113
+          Width = 210
+          Caption = 'Parallel Count'
+        end
+        object Option3: TSpinEdit
+          Left = 240
+          Height = 27
+          Top = 108
+          Width = 320
+          MaxValue = 64
+          MinValue = 1
+          TabOrder = 3
+          Value = 1
+        end
+        object Option4: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 140
+          Width = 460
+          Caption = 'Allow Duplicates'
+          TabOrder = 4
+        end
+        object Option5: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 172
+          Width = 460
+          Caption = 'Allow Multiple Instances'
+          TabOrder = 5
+        end
+        object Option6: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 204
+          Width = 460
+          Caption = 'Always On Top'
+          TabOrder = 6
+        end
+        object Option7: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 236
+          Width = 460
+          Caption = 'Beep When Done'
+          TabOrder = 7
+        end
+        object Option8: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 268
+          Width = 460
+          Caption = 'Clear When Complete'
+          TabOrder = 8
+        end
+        object Option9: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 300
+          Width = 460
+          Caption = 'Debug'
+          TabOrder = 9
+        end
+        object Label10: TLabel
+          Left = 16
+          Height = 17
+          Top = 337
+          Width = 210
+          Caption = 'Disable Plugin Mask'
+        end
+        object Option10: TEdit
+          Left = 240
+          Height = 27
+          Top = 332
+          Width = 320
+          TabOrder = 10
+        end
+        object Option11: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 364
+          Width = 460
+          Caption = 'Disable Sleep'
+          TabOrder = 11
+        end
+        object Option12: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 396
+          Width = 460
+          Caption = 'Do Not Create Backups'
+          TabOrder = 12
+        end
+        object Option13: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 428
+          Width = 460
+          Caption = 'Do Not Use Recycle Bin'
+          TabOrder = 13
+        end
+        object Option14: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 460
+          Width = 460
+          Caption = 'Enable Cache'
+          TabOrder = 14
+        end
+        object Label15: TLabel
+          Left = 16
+          Height = 17
+          Top = 497
+          Width = 210
+          Caption = 'Exclude Mask'
+        end
+        object Option15: TEdit
+          Left = 240
+          Height = 27
+          Top = 492
+          Width = 320
+          TabOrder = 15
+        end
+        object Label16: TLabel
+          Left = 16
+          Height = 17
+          Top = 529
+          Width = 210
+          Caption = 'Filename Format'
+        end
+        object Option16: TComboBox
+          Left = 240
+          Height = 27
+          Top = 524
+          Width = 320
+          ItemHeight = 0
+          Style = csDropDownList
+          TabOrder = 16
+        end
+        object Label17: TLabel
+          Left = 16
+          Height = 17
+          Top = 561
+          Width = 210
+          Caption = 'Include Mask'
+        end
+        object Option17: TEdit
+          Left = 240
+          Height = 27
+          Top = 556
+          Width = 320
+          TabOrder = 17
+        end
+        object Option18: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 588
+          Width = 460
+          Caption = 'Keep Attributes'
+          TabOrder = 18
+        end
+        object Label19: TLabel
+          Left = 16
+          Height = 17
+          Top = 625
+          Width = 210
+          Caption = 'Leanify Iterations'
+        end
+        object Option19: TSpinEdit
+          Left = 240
+          Height = 27
+          Top = 620
+          Width = 320
+          MaxValue = 100000
+          MinValue = -1
+          TabOrder = 19
+        end
+        object Label20: TLabel
+          Left = 16
+          Height = 17
+          Top = 657
+          Width = 210
+          Caption = 'Log Level'
+        end
+        object Option20: TComboBox
+          Left = 240
+          Height = 27
+          Top = 652
+          Width = 320
+          ItemHeight = 0
+          Style = csDropDownList
+          TabOrder = 20
+        end
+        object Option21: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 684
+          Width = 460
+          Caption = 'Persistent Grid'
+          TabOrder = 21
+        end
+        object Label22: TLabel
+          Left = 16
+          Height = 17
+          Top = 721
+          Width = 210
+          Caption = 'PNGWolf Iterations'
+        end
+        object Option22: TSpinEdit
+          Left = 240
+          Height = 27
+          Top = 716
+          Width = 320
+          MaxValue = 100000
+          MinValue = -1
+          TabOrder = 22
+        end
+        object Label23: TLabel
+          Left = 16
+          Height = 17
+          Top = 753
+          Width = 210
+          Caption = 'Process Priority'
+        end
+        object Option23: TComboBox
+          Left = 240
+          Height = 27
+          Top = 748
+          Width = 320
+          ItemHeight = 0
+          Style = csDropDownList
+          TabOrder = 23
+        end
+        object Option25: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 812
+          Width = 460
+          Caption = 'Shutdown When Done'
+          TabOrder = 25
+        end
+        object Label26: TLabel
+          Left = 16
+          Height = 17
+          Top = 849
+          Width = 210
+          Caption = 'Startup Delay'
+        end
+        object Option26: TSpinEdit
+          Left = 240
+          Height = 27
+          Top = 844
+          Width = 320
+          MaxValue = 29000
+          MinValue = 1000
+          TabOrder = 26
+          Value = 1000
+        end
+        object Label27: TLabel
+          Left = 16
+          Height = 17
+          Top = 881
+          Width = 210
+          Caption = 'Temp Directory'
+        end
+        object Option27: TEdit
+          Left = 240
+          Height = 27
+          Top = 876
+          Width = 320
+          TabOrder = 27
+        end
+      end
+    end
+    object PageBMP: TTabSheet
+      Caption = 'BMP'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollBMP: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option28: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageCSS: TTabSheet
+      Caption = 'CSS'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollCSS: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option29: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Enable Tidy'
+          TabOrder = 0
+        end
+        object Label30: TLabel
+          Left = 16
+          Height = 17
+          Top = 49
+          Width = 210
+          Caption = 'Template'
+        end
+        object Option30: TComboBox
+          Left = 240
+          Height = 27
+          Top = 44
+          Width = 320
+          ItemHeight = 0
+          Style = csDropDownList
+          TabOrder = 1
+        end
+      end
+    end
+    object PageEXE: TTabSheet
+      Caption = 'EXE'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollEXE: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option31: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Disable PETrim'
+          TabOrder = 0
+        end
+        object Option32: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Enable UPX'
+          TabOrder = 1
+        end
+      end
+    end
+    object PageGIF: TTabSheet
+      Caption = 'GIF'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollGIF: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option33: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Allow Lossy'
+          TabOrder = 0
+        end
+        object Option34: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 1
+        end
+      end
+    end
+    object PageGZ: TTabSheet
+      Caption = 'GZ'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollGZ: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option35: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageHTML: TTabSheet
+      Caption = 'HTML'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollHTML: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option36: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Enable Tidy'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageJPEG: TTabSheet
+      Caption = 'JPEG'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollJPEG: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option37: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Allow Lossy'
+          TabOrder = 0
+        end
+        object Option38: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 1
+        end
+        object Option39: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 76
+          Width = 460
+          Caption = 'Use Arithmetic Encoding'
+          TabOrder = 2
+        end
+      end
+    end
+    object PageJS: TTabSheet
+      Caption = 'JS'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollJS: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Label40: TLabel
+          Left = 16
+          Height = 17
+          Top = 17
+          Width = 210
+          Caption = 'Additional Extensions'
+        end
+        object Option40: TEdit
+          Left = 240
+          Height = 27
+          Top = 12
+          Width = 320
+          TabOrder = 0
+        end
+        object Option41: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Enable JSMin'
+          TabOrder = 1
+        end
+      end
+    end
+    object PageLUA: TTabSheet
+      Caption = 'LUA'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollLUA: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option42: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Enable Leanify'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageMisc: TTabSheet
+      Caption = 'Misc'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollMisc: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option43: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+        object Option44: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Disable'
+          TabOrder = 1
+        end
+      end
+    end
+    object PageMP3: TTabSheet
+      Caption = 'MP3'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollMP3: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option45: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageMP4: TTabSheet
+      Caption = 'MP4'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollMP4: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option46: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+      end
+    end
+    object PagePCX: TTabSheet
+      Caption = 'PCX'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollPCX: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option47: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+      end
+    end
+    object PagePDF: TTabSheet
+      Caption = 'PDF'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollPDF: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Label48: TLabel
+          Left = 16
+          Height = 17
+          Top = 17
+          Width = 210
+          Caption = 'Custom DPI'
+        end
+        object Option48: TSpinEdit
+          Left = 240
+          Height = 27
+          Top = 12
+          Width = 320
+          MaxValue = 3000
+          MinValue = 50
+          TabOrder = 0
+          Value = 50
+        end
+        object Label49: TLabel
+          Left = 16
+          Height = 17
+          Top = 49
+          Width = 210
+          Caption = 'Profile'
+        end
+        object Option49: TComboBox
+          Left = 240
+          Height = 27
+          Top = 44
+          Width = 320
+          ItemHeight = 0
+          Style = csDropDownList
+          TabOrder = 1
+        end
+        object Option50: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 76
+          Width = 460
+          Caption = 'Skip Layered'
+          TabOrder = 2
+        end
+      end
+    end
+    object PagePNG: TTabSheet
+      Caption = 'PNG'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollPNG: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option51: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Allow Lossy'
+          TabOrder = 0
+        end
+        object Option52: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 1
+        end
+      end
+    end
+    object PageTGA: TTabSheet
+      Caption = 'TGA'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollTGA: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option53: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageTIFF: TTabSheet
+      Caption = 'TIFF'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollTIFF: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option54: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageWAV: TTabSheet
+      Caption = 'WAV'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollWAV: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option55: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+        object Option56: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Strip Silence'
+          TabOrder = 1
+        end
+      end
+    end
+    object PageWEBP: TTabSheet
+      Caption = 'WEBP'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollWEBP: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option57: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Allow Lossy'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageXML: TTabSheet
+      Caption = 'XML'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollXML: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option58: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Enable Leanify'
+          TabOrder = 0
+        end
+      end
+    end
+    object PageZIP: TTabSheet
+      Caption = 'ZIP'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ScrollZIP: TScrollBox
+        Left = 0
+        Height = 462
+        Top = 0
+        Width = 642
+        Align = alClient
+        BorderStyle = bsNone
+        ClientHeight = 462
+        ClientWidth = 642
+        TabOrder = 0
+        object Option59: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 12
+          Width = 460
+          Caption = 'Copy Metadata'
+          TabOrder = 0
+        end
+        object Option60: TCheckBox
+          Left = 16
+          Height = 25
+          Top = 44
+          Width = 460
+          Caption = 'Recurse'
+          TabOrder = 1
+        end
+      end
+    end
+  end
+  object BottomPanel: TPanel
+    Left = 0
+    Height = 52
+    Top = 488
+    Width = 650
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 52
+    ClientWidth = 650
+    TabOrder = 1
+    object RestoreButton: TButton
+      Left = 8
+      Height = 30
+      Top = 11
+      Width = 120
+      Anchors = [akLeft, akBottom]
+      Caption = 'Restore defaults'
+      TabOrder = 2
+      OnClick = RestoreClick
+    end
+    object SaveButton: TButton
+      Left = 450
+      Height = 30
+      Top = 11
+      Width = 90
+      Anchors = [akRight, akBottom]
+      Caption = 'Save'
+      Default = True
+      TabOrder = 0
+      OnClick = SaveClick
+    end
+    object CancelButton: TButton
+      Left = 550
+      Height = 30
+      Top = 11
+      Width = 90
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      Caption = 'Cancel'
+      ModalResult = 2
+      TabOrder = 1
+    end
+  end
+end

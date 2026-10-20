@@ -14,6 +14,7 @@ tasks:
   build:
     cmds:
       - task: build:doom-launcher
+      - task: build:file-optimizer
       - task: build:gmod-description-generator
       - task: build:hammer-launcher
       - task: build:rcalc
@@ -24,6 +25,13 @@ tasks:
       - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default doom_launcher.lpi'
       - 'mkdir "$PAS_DIST" 2> /dev/null'
       - 'mv doom-launcher.exe "$PAS_DIST/doom-launcher.exe"'
+  build:file-optimizer:
+    aliases: ["build:file", "build:fo", "build:optimizer", "file", "fo", "optimizer"]
+    dir: file-optimizer
+    cmds:
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default file_optimizer.lpi'
+      - 'mkdir "$PAS_DIST" 2> /dev/null'
+      - 'mv FileOptimizer.exe "$PAS_DIST/FileOptimizer.exe"'
   build:gmod-description-generator:
     aliases: ["build:gdg", "build:gmod", "gmod"]
     dir: gmod-description-generator

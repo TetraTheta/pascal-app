@@ -1,0 +1,7 @@
+ARROW_IN RCDATA "resource/silkicons/arrow_in.png"
+BIN_EMPTY RCDATA "resource/silkicons/bin_empty.png"
+CANCEL RCDATA "resource/silkicons/cancel.png"
+COG RCDATA "resource/silkicons/cog.png"
+FOLDER_ADD RCDATA "resource/silkicons/folder_add.png"
+PAGE_ADD RCDATA "resource/silkicons/page_add.png"
+PAGE_DELETE RCDATA "resource/silkicons/page_delete.png"

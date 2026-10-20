@@ -1,0 +1,283 @@
+object MainForm: TMainForm
+  Left = 220
+  Height = 600
+  Top = 160
+  Width = 900
+  Caption = 'FileOptimizer'
+  ClientHeight = 600
+  ClientWidth = 900
+  Constraints.MinHeight = 280
+  Constraints.MinWidth = 480
+  Font.Name = 'Segoe UI'
+  KeyPreview = True
+  Menu = MainMenu
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  OnCloseQuery = FormCloseQuery
+  OnKeyDown = FormKeyDown
+  object FToolBar: TPanel
+    Left = 0
+    Height = 36
+    Top = 0
+    Width = 900
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 36
+    ClientWidth = 900
+    TabOrder = 0
+    object AddFilesButton: TRuntimeResourceSpeedButton
+      Left = 0
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = AddFilesClick
+      ResourceName = 'PAGE_ADD'
+      SourceFile = 'resource/silkicons/page_add.png'
+    end
+    object AddFolderButton: TRuntimeResourceSpeedButton
+      Left = 36
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = AddFolderClick
+      ResourceName = 'FOLDER_ADD'
+      SourceFile = 'resource/silkicons/folder_add.png'
+    end
+    object RemoveButton: TRuntimeResourceSpeedButton
+      Left = 72
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = RemoveClick
+      ResourceName = 'PAGE_DELETE'
+      SourceFile = 'resource/silkicons/page_delete.png'
+    end
+    object ClearButton: TRuntimeResourceSpeedButton
+      Left = 108
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = ClearClick
+      ResourceName = 'BIN_EMPTY'
+      SourceFile = 'resource/silkicons/bin_empty.png'
+    end
+    object OptimizeButton: TRuntimeResourceSpeedButton
+      Left = 144
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = OptimizeClick
+      ResourceName = 'ARROW_IN'
+      SourceFile = 'resource/silkicons/arrow_in.png'
+    end
+    object StopButton: TRuntimeResourceSpeedButton
+      Left = 180
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = StopClick
+      ResourceName = 'CANCEL'
+      SourceFile = 'resource/silkicons/cancel.png'
+    end
+    object OptionsButton: TRuntimeResourceSpeedButton
+      Left = 216
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = OptionsClick
+      ResourceName = 'COG'
+      SourceFile = 'resource/silkicons/cog.png'
+    end
+  end
+  object BottomPanel: TPanel
+    Left = 0
+    Height = 38
+    Top = 562
+    Width = 900
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 38
+    ClientWidth = 900
+    TabOrder = 1
+    object FStatus: TLabel
+      Left = 0
+      Height = 1
+      Top = 0
+      Width = 900
+      Align = alTop
+    end
+    object FProgress: TProgressBar
+      Left = 0
+      Height = 17
+      Top = 21
+      Width = 900
+      Align = alBottom
+      TabOrder = 0
+    end
+  end
+  object FGrid: TStringGrid
+    Left = 0
+    Height = 526
+    Top = 36
+    Width = 900
+    Align = alClient
+    FixedCols = 0
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goRowSelect, goThumbTracking, goDblClickAutoSize]
+    ParentShowHint = False
+    PopupMenu = ContextMenu
+    RowCount = 2
+    ShowHint = True
+    TabOrder = 2
+    OnHeaderClick = GridHeaderClick
+    OnDblClick = GridDblClick
+    OnMouseMove = GridMouseMove
+    OnResize = GridResize
+    ColWidths = (
+      150
+      75
+      115
+      115
+      150
+    )
+  end
+  object MainMenu: TMainMenu
+    Left = 728
+    Top = 8
+    object FileMenu: TMenuItem
+      Caption = 'File'
+      object AddFilesItem: TMenuItem
+        Caption = 'Add files...'
+        OnClick = AddFilesClick
+      end
+      object AddFolderItem: TMenuItem
+        Caption = 'Add folder...'
+        OnClick = AddFolderClick
+      end
+      object OpenItem: TMenuItem
+        Caption = 'Open selected file'
+        OnClick = OpenClick
+      end
+      object OpenFolderItem: TMenuItem
+        Caption = 'Open containing folder'
+        OnClick = OpenFolderClick
+      end
+      object RemoveItem: TMenuItem
+        Caption = 'Remove selected'
+        OnClick = RemoveClick
+      end
+      object ClearItem: TMenuItem
+        Caption = 'Clear list'
+        OnClick = ClearClick
+      end
+      object ExitItem: TMenuItem
+        Caption = 'Exit'
+        OnClick = ExitClick
+      end
+    end
+    object OptimizeMenu: TMenuItem
+      Caption = 'Optimize'
+      object OptimizeItem: TMenuItem
+        Caption = 'Optimize all'
+        OnClick = OptimizeClick
+      end
+      object StopItem: TMenuItem
+        Caption = 'Stop'
+        OnClick = StopClick
+      end
+    end
+    object OptionsMenu: TMenuItem
+      Caption = 'Options'
+      object OptionsItem: TMenuItem
+        Caption = 'Options...'
+        OnClick = OptionsClick
+      end
+    end
+    object HelpMenu: TMenuItem
+      Caption = 'Help'
+      object InformationItem: TMenuItem
+        Caption = 'Information...'
+        OnClick = InformationClick
+      end
+      object AboutItem: TMenuItem
+        Caption = 'About...'
+        OnClick = AboutClick
+      end
+    end
+  end
+  object ContextMenu: TPopupMenu
+    Left = 800
+    Top = 8
+    object ContextOptimizeItem: TMenuItem
+      Caption = 'Optimize all'
+      OnClick = OptimizeClick
+    end
+    object ContextStopItem: TMenuItem
+      Caption = 'Stop'
+      OnClick = StopClick
+    end
+    object ContextOptionsItem: TMenuItem
+      Caption = 'Options...'
+      OnClick = OptionsClick
+    end
+    object ContextSeparator1: TMenuItem
+      Caption = '-'
+    end
+    object ContextRemoveItem: TMenuItem
+      Caption = 'Remove selected'
+      OnClick = RemoveClick
+    end
+    object ContextClearItem: TMenuItem
+      Caption = 'Clear list'
+      OnClick = ClearClick
+    end
+    object ContextSeparator2: TMenuItem
+      Caption = '-'
+    end
+    object ContextAboutItem: TMenuItem
+      Caption = 'About...'
+      OnClick = AboutClick
+    end
+    object ContextInformationItem: TMenuItem
+      Caption = 'Information...'
+      OnClick = InformationClick
+    end
+    object ContextSeparator3: TMenuItem
+      Caption = '-'
+    end
+    object ContextOpenItem: TMenuItem
+      Caption = 'Open selected file'
+      OnClick = OpenClick
+    end
+    object ContextOpenFolderItem: TMenuItem
+      Caption = 'Open containing folder'
+      OnClick = OpenFolderClick
+    end
+  end
+  object FTimer: TTimer
+    Interval = 200
+    OnTimer = RefreshGrid
+    Left = 864
+    Top = 8
+  end
+end
