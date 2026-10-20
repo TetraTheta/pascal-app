@@ -10,8 +10,7 @@ uses
 type
   { TFloatSpinEdit }
 
-  // Lazarus 디자이너에는 기본 TFloatSpinEdit로 보이게 두되,
-  // 이 유닛 안에서는 같은 이름의 클래스로 가로채 표시 형식만 바꾼다.
+  // Lazarus 디자이너에는 기본 TFloatSpinEdit로 보이게 두되, 이 유닛 안에서는 같은 이름의 클래스로 가로채 표시 형식만 바꾼다.
   // 이런 패턴을 interposer class라고 부른다.
   TFloatSpinEdit = class(Spin.TFloatSpinEdit)
   public
@@ -64,8 +63,7 @@ end;
 { TFloatSpinEdit }
 
 // Spin.TFloatSpinEdit의 virtual 메서드를 override한다.
-// LCL이 컨트롤 텍스트를 갱신할 때 이 메서드를 호출하므로,
-// 이벤트에서 Text를 고치는 것보다 안정적으로 trailing zero를 제거할 수 있다.
+// LCL이 컨트롤 텍스트를 갱신할 때 이 메서드를 호출하므로, 이벤트에서 Text를 고치는 것보다 안정적으로 trailing zero를 제거할 수 있다.
 function TFloatSpinEdit.ValueToStr(const AValue: Double): string;
 begin
   Result := CleanFloat(GetLimitedValue(AValue));
@@ -135,12 +133,7 @@ begin
   end;
 
   B := Y / X * A;
-  ResultText :=
-    'Result: ' + CleanFloat(B) +
-    ' / Equation: [' + CleanFloat(X) +
-    ' : ' + CleanFloat(Y) +
-    '] = [' + CleanFloat(A) +
-    ' : ' + CleanFloat(B) + ']';
+  ResultText := 'Result: ' + CleanFloat(B) + ' / Equation: [' + CleanFloat(X) + ' : ' + CleanFloat(Y) + '] = [' + CleanFloat(A) + ' : ' + CleanFloat(B) + ']';
 
   numericUpDownB.Value := B;
   textBoxResult.Text := ResultText;
@@ -163,10 +156,7 @@ function TMainForm.TryReadResult(const S: string; out X, Y, A, B: Double): Boole
     ColonPos: SizeInt;
   begin
     ColonPos := Pos(':', Pair);
-    Result :=
-      (ColonPos > 0) and
-      TryStrToFloat(Trim(Copy(Pair, 1, ColonPos - 1)), First) and
-      TryStrToFloat(Trim(Copy(Pair, ColonPos + 1, Length(Pair))), Second);
+    Result := (ColonPos > 0) and TryStrToFloat(Trim(Copy(Pair, 1, ColonPos - 1)), First) and TryStrToFloat(Trim(Copy(Pair, ColonPos + 1, Length(Pair))), Second);
   end;
 
 var
@@ -178,17 +168,14 @@ begin
   LeftOpen := Pos('[', S);
   LeftClose := Pos(']', S);
   RightOpen := Pos('[', Copy(S, LeftClose + 1, Length(S)));
-  if RightOpen > 0 then Inc(RightOpen, LeftClose);
+  if RightOpen > 0 then
+    Inc(RightOpen, LeftClose);
   RightClose := Pos(']', Copy(S, RightOpen + 1, Length(S)));
-  if RightClose > 0 then Inc(RightClose, RightOpen);
+  if RightClose > 0 then
+    Inc(RightClose, RightOpen);
 
-  Result :=
-    (LeftOpen > 0) and
-    (LeftClose > LeftOpen) and
-    (RightOpen > LeftClose) and
-    (RightClose > RightOpen) and
-    TryReadPair(Copy(S, LeftOpen + 1, LeftClose - LeftOpen - 1), X, Y) and
-    TryReadPair(Copy(S, RightOpen + 1, RightClose - RightOpen - 1), A, B);
+  Result := (LeftOpen > 0) and (LeftClose > LeftOpen) and (RightOpen > LeftClose) and (RightClose > RightOpen) and
+            TryReadPair(Copy(S, LeftOpen + 1, LeftClose - LeftOpen - 1), X, Y) and TryReadPair(Copy(S, RightOpen + 1, RightClose - RightOpen - 1), A, B);
 end;
 
 procedure TMainForm.InitializeValues(const X, Y, A: Double);
@@ -201,4 +188,3 @@ begin
 end;
 
 end.
-

@@ -25,8 +25,7 @@ type
     procedure Populate;
   end;
 
-function ShowDataDirectoriesDialog(const ABaseDirectory: string;
-  ASettings: TLauncherSettings): Boolean;
+function ShowDataDirectoriesDialog(const ABaseDirectory: string; ASettings: TLauncherSettings): Boolean;
 
 var
   DataDirectoriesDialog: TDataDirectoriesDialog;

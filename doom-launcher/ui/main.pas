@@ -618,8 +618,7 @@ begin
   ApplyWorkingProfile;
 end;
 
-function TMainForm.UniqueProfileName(const AName: string;
-  AExceptIndex: Integer): Boolean;
+function TMainForm.UniqueProfileName(const AName: string; AExceptIndex: Integer): Boolean;
 var
   Index: Integer;
   SanitizedName: string;

@@ -31,10 +31,10 @@ var
 begin
   UpperValue := UpperCase(AValue);
   Result := ((Length(UpperValue) = 5) and (Copy(UpperValue, 1, 3) = 'MAP') and
-    (UpperValue[4] in ['0'..'9']) and (UpperValue[5] in ['0'..'9'])) or
-    ((Length(UpperValue) = 4) and (UpperValue[1] = 'E') and
-    (UpperValue[2] in ['0'..'9']) and (UpperValue[3] = 'M') and
-    (UpperValue[4] in ['0'..'9']));
+            (UpperValue[4] in ['0'..'9']) and (UpperValue[5] in ['0'..'9'])) or
+            ((Length(UpperValue) = 4) and (UpperValue[1] = 'E') and
+            (UpperValue[2] in ['0'..'9']) and (UpperValue[3] = 'M') and
+            (UpperValue[4] in ['0'..'9']));
 end;
 
 procedure ReadFileInformation(const AFileName: string; out ASize: Int64; out AModifiedAt: TDateTime);
@@ -119,14 +119,12 @@ begin
   FMetadata := AMetadata;
 end;
 
-procedure TEmbeddedWadAnalyzer.CreateStream(Sender: TObject;
-  var AStream: TStream; AItem: TFullZipFileEntry);
+procedure TEmbeddedWadAnalyzer.CreateStream(Sender: TObject; var AStream: TStream; AItem: TFullZipFileEntry);
 begin
   AStream := TMemoryStream.Create;
 end;
 
-procedure TEmbeddedWadAnalyzer.DoneStream(Sender: TObject;
-  var AStream: TStream; AItem: TFullZipFileEntry);
+procedure TEmbeddedWadAnalyzer.DoneStream(Sender: TObject; var AStream: TStream; AItem: TFullZipFileEntry);
 begin
   try
     try

@@ -78,8 +78,7 @@ begin
   end;
 end;
 
-function ValidateLaunchOptions(const AOptions: TLaunchOptions;
-  out AError: string): Boolean;
+function ValidateLaunchOptions(const AOptions: TLaunchOptions; out AError: string): Boolean;
 begin
   AError := '';
   if (AOptions.Skill < 0) or (AOptions.Skill > 5) then

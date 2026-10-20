@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Lazarus 4.8 LCL의 ICO 로더는 기본 설치 상태에서 PNG-compressed ICO 엔트리를
-# 256x256 크기일 때만 PNG로 검사한다. 그래서 16/32/48/64/128 같은 non-256 PNG
-# 엔트리는 DIB/BMP로 잘못 읽히고, 앱 아이콘 로딩 중 "Bitmap with unknown
-# compression" 같은 예외가 날 수 있다.
+# Lazarus 4.8 LCL의 ICO 로더는 기본 설치 상태에서 PNG-compressed ICO 엔트리를 256x256 크기일 때만 PNG로 검사한다.
+# 그래서 16/32/48/64/128 같은 non-256 PNG 엔트리는 DIB/BMP로 잘못 읽히고, 앱 아이콘 로딩 중
+# "Bitmap with unknown compression" 같은 예외가 날 수 있다.
 #
 # 이 스크립트는 LCL 소스의 좁은 한 지점만 패치한다:
 #   lcl/include/icon.inc
@@ -60,7 +59,7 @@ fi
 +++ lcl/include/icon.inc
 @@ -877,23 +877,17 @@ begin
        AStream.Seek(StreamStart + IconDir[n].dwImageOffset, soBeginning);
-       
+
        ImgReader := nil;
 -      if (IconDir[n].bWidth = 0) or (IconDir[n].bHeight = 0)
 +      // PNG or DIB image
@@ -74,7 +73,7 @@ fi
 -        // PNG or DIB image
 -        // Vista icons are PNG in this case, but there exist also "old style" icons
 -        // with DIB image
--        
+-
 -        // don't use PNGReader.CheckContents(AStream) since it uses internally
 -        // an exception for checking, which is not "nice" when debugging.
 -        AStream.Read(PNGSig, SizeOf(PNGSig));
@@ -90,7 +89,7 @@ fi
 +        then PNGReader := TLazReaderPNG.Create;
 +        ImgReader := PNGReader;
        end;
-       
+
        if ImgReader = nil
 PATCH
 )

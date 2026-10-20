@@ -522,8 +522,7 @@ var
   Year: Integer;
 begin
   if not TryStrToInt(Trim(ComboBoxRDYear.Text), Year) or (Year < MinReleaseYear) or (Year > MaxReleaseYear) then
-    raise EConvertError.CreateFmt('Release year must be between %d and %d',
-      [MinReleaseYear, MaxReleaseYear]);
+    raise EConvertError.CreateFmt('Release year must be between %d and %d', [MinReleaseYear, MaxReleaseYear]);
 
   Month := ParseMonth(ComboBoxRDMonth.Text);
   if not TryStrToInt(Trim(ComboBoxRDDate.Text), Day) or (Day < 1) or (Day > 31) or not TryEncodeDate(Year, Month, Day, Result) then

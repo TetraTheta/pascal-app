@@ -109,16 +109,14 @@ begin
   Result.IsAbsolute := AIsAbsolute;
 end;
 
-constructor TEngine.Create(const ADisplayName: string;
-  const AFileName: TStoredPath);
+constructor TEngine.Create(const ADisplayName: string; const AFileName: TStoredPath);
 begin
   inherited Create;
   DisplayName := ADisplayName;
   FileName := AFileName;
 end;
 
-constructor TDataDirectory.Create(const ADisplayName: string;
-  const ADirectoryName: TStoredPath; AIsReadOnly: Boolean);
+constructor TDataDirectory.Create(const ADisplayName: string; const ADirectoryName: TStoredPath; AIsReadOnly: Boolean);
 begin
   inherited Create;
   DisplayName := ADisplayName;

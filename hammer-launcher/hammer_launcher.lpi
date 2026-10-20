@@ -36,6 +36,9 @@
     </RunParams>
     <RequiredPackages>
       <Item>
+        <PackageName Value="runtime_resource_package"/>
+      </Item>
+      <Item>
         <PackageName Value="MetaDarkStyle"/>
       </Item>
       <Item>

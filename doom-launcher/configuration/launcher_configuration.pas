@@ -33,22 +33,19 @@ begin
     raise EConvertError.CreateFmt('Invalid item count in [%s].', [ASection]);
 end;
 
-function ReadStoredPath(AIni: TCustomIniFile; const ASection,
-  APrefix: string): TStoredPath;
+function ReadStoredPath(AIni: TCustomIniFile; const ASection, APrefix: string): TStoredPath;
 begin
   Result.Value := AIni.ReadString(ASection, APrefix + 'Path', '');
   Result.IsAbsolute := AIni.ReadBool(ASection, APrefix + 'Absolute', False);
 end;
 
-procedure WriteStoredPath(AIni: TCustomIniFile; const ASection,
-  APrefix: string; const APath: TStoredPath);
+procedure WriteStoredPath(AIni: TCustomIniFile; const ASection, APrefix: string; const APath: TStoredPath);
 begin
   AIni.WriteString(ASection, APrefix + 'Path', APath.Value);
   AIni.WriteBool(ASection, APrefix + 'Absolute', APath.IsAbsolute);
 end;
 
-procedure ReadLaunchOptions(AIni: TCustomIniFile; const ASection: string;
-  out AOptions: TLaunchOptions);
+procedure ReadLaunchOptions(AIni: TCustomIniFile; const ASection: string; out AOptions: TLaunchOptions);
 begin
   AOptions := DefaultLaunchOptions;
   AOptions.EnableMultiplayer := AIni.ReadBool(ASection, 'Multiplayer', False);
