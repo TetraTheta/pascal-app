@@ -769,9 +769,9 @@ begin
       SetThreadExecutionState(ES_CONTINUOUS);
     if FConfiguration.GetBoolean('General', 'BeepWhenDone') and not FCommandLineMode then
     begin
-      MessageDlg(Summary, mtInformation, [mbOK], 0);
-      FlashWindow(Handle, False);
       MessageBeep($FFFFFFFF);
+      FlashWindow(Handle, False);
+      MessageDlg(Summary, mtInformation, [mbOK], 0);
     end;
     if FConfiguration.GetBoolean('General', 'ShutdownWhenDone') then
       if not ShutdownWindows then
