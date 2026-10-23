@@ -26,9 +26,9 @@ If the PNG is missing, the form designer shows no preview. Reopen the form to re
 ## Build
 
 ```powershell
-E:\lazarus\lazbuild.exe runtime_resource_package.lpk
+E:\lazarus\lazbuild.exe runtimeresource.lpk
 ```
 
-Install the package in Lazarus separately. Add it to each project's required packages so the form designer can recognize the component classes.
+Install `RuntimeResource` from this repository in Lazarus. Add it to each project's required packages so the form designer can recognize the component classes.
 
 Automated tests are not included in this package yet.
