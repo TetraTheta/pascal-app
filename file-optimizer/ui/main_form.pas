@@ -1,11 +1,25 @@
 unit main_form;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, Forms, Controls, StdCtrls, Grids, ComCtrls, ExtCtrls, Menus, Dialogs, ShlObj, optimizer_configuration, language_service, optimizer_service, runtime_resource;
+  Classes,
+  Forms,
+  Controls,
+  StdCtrls,
+  Grids,
+  ComCtrls,
+  ExtCtrls,
+  Menus,
+  Dialogs,
+  ShlObj,
+  optimizer_configuration,
+  language_service,
+  optimizer_service,
+  runtime_resource;
 
 type
   TMainForm = class(TForm)
@@ -104,7 +118,16 @@ implementation
 {$R ../resource/images.rc}
 
 uses
-  SysUtils, Windows, FileUtil, LCLIntf, IniFiles, Clipbrd, options_form, ComObj, ActiveX, ShellApi;
+  SysUtils,
+  Windows,
+  FileUtil,
+  LCLIntf,
+  IniFiles,
+  Clipbrd,
+  options_form,
+  ComObj,
+  ActiveX,
+  ShellApi;
 
 type
   TOptimizerHintWindow = class(THintWindow)
@@ -122,8 +145,7 @@ var
 begin
   Result := IntToStr(AValue);
   Position := Length(Result) - 2;
-  while Position > 1 do
-  begin
+  while Position > 1 do begin
     Insert(',', Result, Position);
     Dec(Position, 3);
   end;
@@ -145,16 +167,14 @@ var
 begin
   Result := inherited CalcHintRect(MaxWidth, AHint, AData);
   TextSize := Canvas.TextExtent(AHint);
-  if TextSize.CX + 16 <= MaxWidth then
-  begin
+  if TextSize.CX + 16 <= MaxWidth then begin
     // LCL can measure a wrapped hint narrower than the text drawn on Win32.
     Result.Right := Max(Result.Right, TextSize.CX + 16);
     Result.Bottom := TextSize.CY + 8;
   end;
 end;
 
-function SetThreadExecutionState(AFlags: DWORD): DWORD;
-  stdcall; external 'kernel32.dll' name 'SetThreadExecutionState';
+function SetThreadExecutionState(AFlags: DWORD): DWORD; stdcall; external 'kernel32.dll' name 'SetThreadExecutionState';
 
 function ShutdownWindows: Boolean;
 var
@@ -184,8 +204,7 @@ var
   ArgumentIndex, OptionIndex, Separator, Number: Integer;
   Spec: TOptionSpec;
 begin
-  for ArgumentIndex := 1 to ParamCount do
-  begin
+  for ArgumentIndex := 1 to ParamCount do begin
     Argument := ParamStr(ArgumentIndex);
     if (Length(Argument) < 3) or (Argument[1] <> '/') then
       Continue;
@@ -194,12 +213,11 @@ begin
       Continue;
     Key := Copy(Argument, 2, Separator - 2);
     Value := Copy(Argument, Separator + 1, MaxInt);
-    for OptionIndex := 0 to OptionCount - 1 do
-    begin
+    for OptionIndex := 0 to OptionCount - 1 do begin
       Spec := OptionSpec(OptionIndex);
-      if SameText(Key, Spec.Name) or SameText(Key, Spec.Section + Spec.Name) then
-      begin
-        if ((Spec.Kind = okBoolean) and not (SameText(Value, 'true') or SameText(Value, 'false'))) or ((Spec.Kind = okInteger) and not TryStrToInt(Value, Number)) then
+      if SameText(Key, Spec.Name) or SameText(Key, Spec.Section + Spec.Name) then begin
+        if ((Spec.Kind = okBoolean) and not (SameText(Value, 'true') or SameText(Value, 'false')))
+            or ((Spec.Kind = okInteger) and not TryStrToInt(Value, Number)) then
           raise EConvertError.CreateFmt('Invalid command-line value: %s', [Argument]);
         FConfiguration.SetText(Spec.Section, Spec.Name, Value);
         Break;
@@ -221,13 +239,12 @@ begin
   FConfiguration := TOptimizerConfiguration.Create(ParamStr(0));
   ApplyCommandLineOptions;
   FLanguage := TLanguageService.Create(ParamStr(0), FConfiguration.GetText('General', 'Language'));
-  if not FConfiguration.GetBoolean('General', 'AllowMultipleInstances') then
-  begin
+  if not FConfiguration.GetBoolean('General', 'AllowMultipleInstances') then begin
     SetLastError(0);
     FInstanceMutex := CreateMutexW(nil, False, 'FileOptimizer');
-    if ((FInstanceMutex <> 0) and (GetLastError = ERROR_ALREADY_EXISTS)) or ((FInstanceMutex = 0) and (GetLastError = ERROR_ACCESS_DENIED)) then
-    begin
-      if MessageDlg(FLanguage.Text('AlreadyRunning', 'FileOptimizer is already running. Open another window?'), mtConfirmation, [mbYes, mbNo], 0) = mrNo then
+    if ((FInstanceMutex <> 0) and (GetLastError = ERROR_ALREADY_EXISTS)) or ((FInstanceMutex = 0) and (GetLastError = ERROR_ACCESS_DENIED)) then begin
+      if MessageDlg(FLanguage.Text('AlreadyRunning', 'FileOptimizer is already running. Open another window?'), mtConfirmation, [mbYes, mbNo], 0)
+          = mrNo then
         Application.Terminate;
     end;
   end;
@@ -245,8 +262,7 @@ begin
   Height := Max(280, FConfiguration.GetInteger('Window', 'Height'));
   LeftPosition := FConfiguration.GetInteger('Window', 'Left');
   TopPosition := FConfiguration.GetInteger('Window', 'Top');
-  if (LeftPosition <> -1) and (TopPosition <> -1) then
-  begin
+  if (LeftPosition <> -1) and (TopPosition <> -1) then begin
     Left := LeftPosition;
     Top := TopPosition;
   end
@@ -312,15 +328,21 @@ end;
 
 procedure TMainForm.InformationClick(Sender: TObject);
 begin
-  MessageDlg(FLanguage.Text('Information', 'Supported formats') + LineEnding + 'AVIF, BMP, CSS, DLL, EXE, FLAC, GIF, GZ, HTML, ICO, JPEG, JP2, JXL, JS, LUA, MIME, MKV, MNG, MP3, MP4, OBJ, OGG, OGV, OLE, PCX, PDF, PNG, SQLite, SWF, TAR, TGA, TIFF, WAV, WEBP, XML, ZIP, 7Z', mtInformation, [mbOK], 0);
+  MessageDlg(
+      FLanguage.Text('Information', 'Supported formats')
+          + LineEnding
+          + 'AVIF, BMP, CSS, DLL, EXE, FLAC, GIF, GZ, HTML, ICO, JPEG, JP2, JXL, JS, LUA, MIME, MKV, MNG, MP3, MP4, OBJ, OGG, OGV, OLE, PCX, PDF, PNG, SQLite, SWF, TAR, TGA, TIFF, WAV, WEBP, XML, ZIP, 7Z',
+      mtInformation,
+      [mbOK],
+      0
+  );
 end;
 
 procedure TMainForm.AddPath(const APath: string);
 var
   Search: TSearchRec;
 begin
-  if FileExists(APath) then
-  begin
+  if FileExists(APath) then begin
     FService.AddFile(APath);
     FSummary := '';
     Exit;
@@ -398,23 +420,19 @@ begin
     Exit;
   if (Key = VK_DELETE) and (Shift = []) then
     RemoveClick(Sender)
-  else if (Key = VK_F5) and (Shift = [ssCtrl]) then
-  begin
+  else if (Key = VK_F5) and (Shift = [ssCtrl]) then begin
     FService.RemoveDone;
     FService.RefreshSizes;
     FSummary := '';
   end
   else if (Key = VK_F5) and (Shift = []) then
     FService.RefreshSizes
-  else if (ssCtrl in Shift) and not (ssAlt in Shift) and (Key in [Ord('C'), Ord('X'), Ord('V')]) then
-  begin
-    if Key = Ord('V') then
-    begin
+  else if (ssCtrl in Shift) and not (ssAlt in Shift) and (Key in [Ord('C'), Ord('X'), Ord('V')]) then begin
+    if Key = Ord('V') then begin
       Lines := TStringList.Create;
       try
         Lines.Text := Clipboard.AsText;
-        if Lines.Count > 0 then
-        begin
+        if Lines.Count > 0 then begin
           FService.Clear;
           FSummary := '';
           for Index := 0 to Lines.Count - 1 do
@@ -424,8 +442,7 @@ begin
         Lines.Free;
       end;
     end
-    else
-    begin
+    else begin
       Lines := TStringList.Create;
       try
         for Index := 0 to FService.Count - 1 do
@@ -434,8 +451,7 @@ begin
       finally
         Lines.Free;
       end;
-      if Key = Ord('X') then
-      begin
+      if Key = Ord('X') then begin
         FService.Clear;
         FSummary := '';
       end;
@@ -452,8 +468,7 @@ begin
   if not FOptimizing then
     Exit;
   CanClose := MessageDlg(FLanguage.Text('StopAndExit', 'Optimization is still running. Stop and exit?'), mtConfirmation, [mbYes, mbNo], 0) = mrYes;
-  if CanClose then
-  begin
+  if CanClose then begin
     FService.Stop;
     FOptimizing := False;
     if FConfiguration.GetBoolean('General', 'DisableSleep') then
@@ -508,7 +523,17 @@ end;
 
 procedure TMainForm.GridResize(Sender: TObject);
 begin
-  FGrid.ColWidths[0] := Max(120, FGrid.ClientWidth - FGrid.ColWidths[1] - FGrid.ColWidths[2] - FGrid.ColWidths[3] - FGrid.ColWidths[4] - FGrid.ColCount * FGrid.GridLineWidth - 2);
+  FGrid.ColWidths[0] :=
+      Max(
+          120,
+          FGrid.ClientWidth
+              - FGrid.ColWidths[1]
+              - FGrid.ColWidths[2]
+              - FGrid.ColWidths[3]
+              - FGrid.ColWidths[4]
+              - FGrid.ColCount * FGrid.GridLineWidth
+              - 2
+      );
 end;
 
 procedure TMainForm.OptimizeClick(Sender: TObject);
@@ -517,14 +542,17 @@ var
 begin
   if FOptimizing or (FService.Count = 0) then
     Exit;
-  if not DirectoryExists(FService.PluginDirectory) then
-  begin
+  if not DirectoryExists(FService.PluginDirectory) then begin
     MessageDlg(FLanguage.Text('NoPlugins', 'The plugin folder was not found.'), mtError, [mbOK], 0);
     Exit;
   end;
-  if FindFirst(IncludeTrailingPathDelimiter(FService.PluginDirectory) + '*.exe', faAnyFile, Search) <> 0 then
-  begin
-    MessageDlg(FLanguage.Text('NoPluginPrograms', 'No plugin programs were found in the plugin folder.') + LineEnding + FService.PluginDirectory, mtError, [mbOK], 0);
+  if FindFirst(IncludeTrailingPathDelimiter(FService.PluginDirectory) + '*.exe', faAnyFile, Search) <> 0 then begin
+    MessageDlg(
+        FLanguage.Text('NoPluginPrograms', 'No plugin programs were found in the plugin folder.') + LineEnding + FService.PluginDirectory,
+        mtError,
+        [mbOK],
+        0
+    );
     Exit;
   end;
   SysUtils.FindClose(Search);
@@ -542,8 +570,7 @@ var
 begin
   Dialog := TOptionsForm.CreateOptions(Self, FConfiguration, FLanguage, FOptimizing);
   try
-    if (Dialog.ShowModal = mrOk) and not FOptimizing then
-    begin
+    if (Dialog.ShowModal = mrOk) and not FOptimizing then begin
       FLanguage.Free;
       FLanguage := TLanguageService.Create(ParamStr(0), FConfiguration.GetText('General', 'Language'));
       RefreshCaptions;
@@ -607,23 +634,23 @@ var
   SavedBytes, TotalBytes: Int64;
   StatusText, Summary, TitleText: string;
 begin
-  if FCommandLineMode and not FOptimizing and (FStartupTick > 0) and (GetTickCount64 - FStartupTick >= QWord(Max(0, FConfiguration.GetInteger('General', 'StartupDelay')))) then
+  if FCommandLineMode
+      and not FOptimizing
+      and (FStartupTick > 0)
+      and (GetTickCount64 - FStartupTick >= QWord(Max(0, FConfiguration.GetInteger('General', 'StartupDelay')))) then
   begin
     FStartupTick := 0;
     HasPathArgument := False;
     for Index := 1 to ParamCount do
-      if (ParamStr(Index) <> '') and (ParamStr(Index)[1] <> '/') then
-      begin
+      if (ParamStr(Index) <> '') and (ParamStr(Index)[1] <> '/') then begin
         HasPathArgument := True;
         AddPath(ParamStr(Index));
       end;
     if FService.Count > 0 then
       OptimizeClick(Sender)
-    else
-    begin
+    else begin
       FCommandLineMode := False;
-      if HasPathArgument then
-      begin
+      if HasPathArgument then begin
         MessageDlg(FLanguage.Text('NoSupportedFiles', 'No supported files were found in the command-line paths.'), mtInformation, [mbOK], 0);
         Close;
         Exit;
@@ -636,8 +663,7 @@ begin
   Completed := 0;
   SavedBytes := 0;
   TotalBytes := 0;
-  for Index := 0 to FService.Count - 1 do
-  begin
+  for Index := 0 to FService.Count - 1 do begin
     Entry := FService.Item(Index);
     if FConfiguration.GetInteger('General', 'FilenameFormat') = 1 then
       FGrid.Cells[0, Index + 1] := ExtractFileName(Entry.FileName)
@@ -654,11 +680,15 @@ begin
     case Entry.State of
       fsPending: StatusText := FLanguage.Text('Pending', 'Pending');
       fsRunning: StatusText := FLanguage.Text('Running', 'Running');
-      fsDone:
-      begin
+      fsDone: begin
         StatusText := FLanguage.Text('Done', 'Done');
         if Entry.OriginalSize > 0 then
-          StatusText := StatusText + Format(' (%3d%%) ', [Trunc(Entry.OptimizedSize / Entry.OriginalSize * 100)]) + FLanguage.Text('In', 'in') + ' ' + ElapsedText(Entry.ElapsedMilliseconds);
+          StatusText :=
+              StatusText
+                  + Format(' (%3d%%) ', [Trunc(Entry.OptimizedSize / Entry.OriginalSize * 100)])
+                  + FLanguage.Text('In', 'in')
+                  + ' '
+                  + ElapsedText(Entry.ElapsedMilliseconds);
       end;
       fsSkipped: StatusText := FLanguage.Text('Skipped', 'Skipped');
       fsFailed: StatusText := FLanguage.Text('Failed', 'Failed');
@@ -676,8 +706,7 @@ begin
     FGrid.Cells[4, Index + 1] := StatusText;
     if Entry.State in [fsDone, fsSkipped, fsFailed, fsCached] then
       Inc(Completed);
-    if Entry.PluginRuns > 0 then
-    begin
+    if Entry.PluginRuns > 0 then begin
       Inc(TotalBytes, Entry.OriginalSize);
       if Entry.State = fsDone then
         Inc(SavedBytes, Entry.OriginalSize - Entry.OptimizedSize);
@@ -689,41 +718,46 @@ begin
     Percent := Trunc((TotalBytes - SavedBytes) / TotalBytes * 100)
   else
     Percent := 0;
-  if Assigned(FTaskbar) then
-  begin
+  if Assigned(FTaskbar) then begin
     if FService.Count = 0 then
       FTaskbar.SetProgressState(Handle, TBPF_NOPROGRESS)
-    else
-    begin
+    else begin
       FTaskbar.SetProgressState(Handle, TBPF_NORMAL);
       FTaskbar.SetProgressValue(Handle, Completed, FService.Count);
     end;
   end;
   LatestStarted := FService.LatestStartedIndex;
-  if FOptimizing then
-  begin
-    if LatestStarted >= 0 then
-    begin
+  if FOptimizing then begin
+    if LatestStarted >= 0 then begin
       FStatus.Caption := Format(FLanguage.Text('Processing', 'Processing %s...'), [FService.Item(LatestStarted).FileName]);
       if FGrid.Row <> LatestStarted + 1 then
         FGrid.Row := LatestStarted + 1;
     end
     else
       FStatus.Caption := NumberText(Completed) + ' / ' + NumberText(FService.Count) + ' ' + FLanguage.Text('Files', 'files');
-    TitleText := NumberText(Completed) + ' / ' + NumberText(FService.Count) + ' ' + FLanguage.Text('Files', 'files') + '. ' + NumberText(SavedBytes) + ' ' + FLanguage.Text('BytesSaved', 'bytes saved') + ' (' + NumberText(Percent) + '%)';
+    TitleText :=
+        NumberText(Completed)
+            + ' / '
+            + NumberText(FService.Count)
+            + ' '
+            + FLanguage.Text('Files', 'files')
+            + '. '
+            + NumberText(SavedBytes)
+            + ' '
+            + FLanguage.Text('BytesSaved', 'bytes saved')
+            + ' ('
+            + NumberText(Percent)
+            + '%)';
   end
-  else if FSummary <> '' then
-  begin
+  else if FSummary <> '' then begin
     FStatus.Caption := FSummary;
     TitleText := FSummary;
   end
-  else if FService.Count > 0 then
-  begin
+  else if FService.Count > 0 then begin
     FStatus.Caption := '0 / ' + NumberText(FService.Count) + ' ' + FLanguage.Text('Files', 'files');
     TitleText := FStatus.Caption;
   end
-  else
-  begin
+  else begin
     FStatus.Caption := '';
     TitleText := '';
   end;
@@ -756,9 +790,12 @@ begin
   StopItem.Enabled := FOptimizing;
   if AllowDropFiles = FOptimizing then
     AllowDropFiles := not FOptimizing;
-  if FOptimizing and FService.Finished then
-  begin
-    Summary := Format(FLanguage.Text('Summary', '%s files processed. %s bytes saved (%s%%). Elapsed time %s'), [NumberText(Completed), NumberText(SavedBytes), NumberText(Percent), ElapsedText(GetTickCount64 - FStartedTick)]);
+  if FOptimizing and FService.Finished then begin
+    Summary :=
+        Format(
+            FLanguage.Text('Summary', '%s files processed. %s bytes saved (%s%%). Elapsed time %s'),
+            [NumberText(Completed), NumberText(SavedBytes), NumberText(Percent), ElapsedText(GetTickCount64 - FStartedTick)]
+        );
     FSummary := Summary;
     FStatus.Caption := Summary;
     Caption := Summary + ' - FileOptimizer';
@@ -767,8 +804,7 @@ begin
     FService.Stop;
     if FConfiguration.GetBoolean('General', 'DisableSleep') then
       SetThreadExecutionState(ES_CONTINUOUS);
-    if FConfiguration.GetBoolean('General', 'BeepWhenDone') and not FCommandLineMode then
-    begin
+    if FConfiguration.GetBoolean('General', 'BeepWhenDone') and not FCommandLineMode then begin
       MessageBeep($FFFFFFFF);
       FlashWindow(Handle, False);
       MessageDlg(Summary, mtInformation, [mbOK], 0);
@@ -776,8 +812,7 @@ begin
     if FConfiguration.GetBoolean('General', 'ShutdownWhenDone') then
       if not ShutdownWindows then
         MessageDlg(FLanguage.Text('ShutdownFailed', 'Unable to shut down Windows.'), mtError, [mbOK], 0);
-    if FConfiguration.GetBoolean('General', 'ClearWhenComplete') then
-    begin
+    if FConfiguration.GetBoolean('General', 'ClearWhenComplete') then begin
       FService.Clear;
       FSummary := '';
     end;
@@ -790,8 +825,7 @@ procedure TMainForm.RemoveClick(Sender: TObject);
 var
   Index: Integer;
 begin
-  if not FOptimizing then
-  begin
+  if not FOptimizing then begin
     for Index := FGrid.Selection.Bottom downto FGrid.Selection.Top do
       if Index > 0 then
         FService.RemoveItem(Index - 1);
@@ -801,8 +835,7 @@ end;
 
 procedure TMainForm.ClearClick(Sender: TObject);
 begin
-  if not FOptimizing then
-  begin
+  if not FOptimizing then begin
     FService.Clear;
     FSummary := '';
   end;
@@ -819,15 +852,13 @@ var
   Index: Integer;
   Saved: TMemIniFile;
 begin
-  if WindowState = wsNormal then
-  begin
+  if WindowState = wsNormal then begin
     FConfiguration.SetInteger('Window', 'Left', Left);
     FConfiguration.SetInteger('Window', 'Top', Top);
     FConfiguration.SetInteger('Window', 'Width', Width);
     FConfiguration.SetInteger('Window', 'Height', Height);
   end;
-  if WindowState = wsMaximized then
-  begin
+  if WindowState = wsMaximized then begin
     FConfiguration.SetInteger('Window', 'Left', RestoredLeft);
     FConfiguration.SetInteger('Window', 'Top', RestoredTop);
     FConfiguration.SetInteger('Window', 'Width', RestoredWidth);
@@ -838,8 +869,7 @@ begin
   Saved := TMemIniFile.Create(FConfiguration.Path);
   try
     Saved.EraseSection('Grid');
-    if FConfiguration.GetBoolean('General', 'PersistentGrid') then
-    begin
+    if FConfiguration.GetBoolean('General', 'PersistentGrid') then begin
       Saved.WriteInteger('Grid', 'Count', FService.Count);
       for Index := 0 to FService.Count - 1 do
         Saved.WriteString('Grid', 'File' + IntToStr(Index + 1), FService.Item(Index).FileName);

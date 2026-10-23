@@ -1,11 +1,14 @@
 unit runtime_resource;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Buttons, Classes, ExtCtrls;
+  Buttons,
+  Classes,
+  ExtCtrls;
 
 type
   TResourceFileResolver = function(const AFileName: string): string;
@@ -64,7 +67,9 @@ var
 implementation
 
 uses
-  Graphics, SysUtils, Windows;
+  Graphics,
+  SysUtils,
+  Windows;
 
 function LoadPng(const ASourceFile, AResourceName: string; const ADesigning: Boolean): TPortableNetworkGraphic;
 var
@@ -72,8 +77,7 @@ var
   Resource: TResourceStream;
 begin
   Result := nil;
-  if ADesigning then
-  begin
+  if ADesigning then begin
     if (ASourceFile = '') or not Assigned(DesignFileResolver) then
       Exit;
     FileName := DesignFileResolver(ASourceFile);
@@ -87,8 +91,7 @@ begin
       raise;
     end;
   end
-  else if AResourceName <> '' then
-  begin
+  else if AResourceName <> '' then begin
     Resource := TResourceStream.Create(HInstance, AResourceName, RT_RCDATA);
     try
       Result := TPortableNetworkGraphic.Create;

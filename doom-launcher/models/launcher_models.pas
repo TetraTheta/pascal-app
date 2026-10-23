@@ -1,11 +1,14 @@
 unit launcher_models;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, Contnrs, SysUtils;
+  Classes,
+  Contnrs,
+  SysUtils;
 
 type
   TStoredPath = record

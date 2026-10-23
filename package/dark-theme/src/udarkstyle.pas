@@ -1,17 +1,19 @@
 unit uDarkStyle;
 
-{$mode delphi}
+{$MODE delphi}
 
 interface
 
 uses
-  Classes, SysUtils, Windows;
+  Classes,
+  SysUtils,
+  Windows;
 
 var
   g_buildNumber: DWORD = 0;
-  //g_darkModeEnabled: bool = false;
+  // g_darkModeEnabled: bool = false;
   g_darkModeSupported: bool = false;
-  //gAppMode: integer = 1;
+// gAppMode: integer = 1;
 
 {$IF DEFINED(LCLQT5) OR DEFINED(LCLQT6)}
 procedure ApplyDarkStyle;
@@ -24,14 +26,19 @@ procedure InitDarkMode;
 implementation
 
 uses
-  UxTheme, JwaWinUser, FileInfo, uDarkStyleParams
-  {$IF DEFINED(LCLQT5)}
-  ,Qt5
-  {$ENDIF}
-  {$IF DEFINED(LCLQT6)}
-  ,Qt6
-  {$ENDIF}
-  ;
+  UxTheme,
+  JwaWinUser,
+  FileInfo,
+  uDarkStyleParams
+{$IF DEFINED(LCLQT5)}
+  ,
+  Qt5
+{$ENDIF}
+{$IF DEFINED(LCLQT6)}
+  ,
+  Qt6
+{$ENDIF}
+      ;
 
 var
   AppMode: TPreferredAppMode;
@@ -51,28 +58,28 @@ var
 function AllowDarkModeForWindow(hWnd: HWND; allow: bool): bool;
 begin
   if (g_darkModeSupported) then
-    Result:= _AllowDarkModeForWindow(hWnd, allow)
+    Result := _AllowDarkModeForWindow(hWnd, allow)
   else
-    Result:= false;
+    Result := false;
 end;
 
 function IsHighContrast(): bool;
 var
   highContrast: HIGHCONTRASTW;
 begin
-  highContrast.cbSize:= SizeOf(HIGHCONTRASTW);
+  highContrast.cbSize := SizeOf(HIGHCONTRASTW);
   if (SystemParametersInfoW(SPI_GETHIGHCONTRAST, SizeOf(highContrast), @highContrast, 0)) then
-    Result:= (highContrast.dwFlags and HCF_HIGHCONTRASTON <> 0)
+    Result := (highContrast.dwFlags and HCF_HIGHCONTRASTON <> 0)
   else
-    Result:= false;
+    Result := false;
 end;
 
 function ShouldAppsUseDarkMode: Boolean;
 var
-  bb:bool;
+  bb: bool;
 begin
-  bb:=_ShouldAppsUseDarkMode();
-  Result:= (_ShouldAppsUseDarkMode() or (AppMode = pamForceDark)) and not IsHighContrast();
+  bb := _ShouldAppsUseDarkMode();
+  Result := (_ShouldAppsUseDarkMode() or (AppMode = pamForceDark)) and not IsHighContrast();
 end;
 
 procedure RefreshTitleBarThemeColor(hWnd: HWND);
@@ -83,13 +90,12 @@ var
   dark: BOOL;
   dwAttribute: DWORD;
 begin
-  dark:= (_IsDarkModeAllowedForWindow(hWnd) and ShouldAppsUseDarkMode);
+  dark := (_IsDarkModeAllowedForWindow(hWnd) and ShouldAppsUseDarkMode);
 
   if (Win32BuildNumber < 19041) then
-    dwAttribute:= DWMWA_USE_IMMERSIVE_DARK_MODE_OLD
-  else
-  begin
-    dwAttribute:= DWMWA_USE_IMMERSIVE_DARK_MODE_NEW;
+    dwAttribute := DWMWA_USE_IMMERSIVE_DARK_MODE_OLD
+  else begin
+    dwAttribute := DWMWA_USE_IMMERSIVE_DARK_MODE_NEW;
   end;
 
   DwmSetWindowAttribute(hwnd, dwAttribute, @dark, SizeOf(dark));
@@ -99,8 +105,7 @@ procedure AllowDarkModeForApp(allow: bool);
 begin
   if Assigned(_AllowDarkModeForApp) then
     _AllowDarkModeForApp(allow)
-  else if Assigned(_SetPreferredAppMode) then
-  begin
+  else if Assigned(_SetPreferredAppMode) then begin
     if (allow) then
       _SetPreferredAppMode(AppMode)
     else
@@ -118,20 +123,19 @@ var
 
   function QColor(R: Integer; G: Integer; B: Integer; A: Integer = 255): PQColor;
   begin
-    Result:= @AColor;
+    Result := @AColor;
     QColor_fromRgb(Result, R, G, B, A);
   end;
 
 begin
-  //g_darkModeEnabled:= True;
+  // g_darkModeEnabled:= True;
 
   QApplication_setStyle(QStyleFactory_create(@StyleName));
 
-  APalette:= QPalette_Create();
+  APalette := QPalette_Create();
 
   // Modify palette to dark
-  if (AppMode = pamForceDark) then
-  begin
+  if (AppMode = pamForceDark) then begin
     // DarkMode Pallete
     QPalette_setColor(APalette, QPaletteWindow, QColor(53, 53, 53));
     QPalette_setColor(APalette, QPaletteWindowText, QColor(255, 255, 255));
@@ -155,8 +159,7 @@ begin
     QPalette_setColor(APalette, QPaletteHighlightedText, QColor(255, 255, 255));
     QPalette_setColor(APalette, QPaletteDisabled, QPaletteHighlightedText, QColor(127, 127, 127));
   end
-  else
-  begin
+  else begin
     // LightMode Pallete
     QPalette_setColor(APalette, QPaletteWindow, QColor(240, 240, 240));
     QPalette_setColor(APalette, QPaletteWindowText, QColor(0, 0, 0));
@@ -190,23 +193,28 @@ const
 
 function CheckBuildNumber(buildNumber: DWORD): Boolean; inline;
 begin
-  Result := (buildNumber = 17763) or // Win 10: 1809
-            (buildNumber = 18362) or // Win 10: 1903 & 1909
-            (buildNumber = 19041) or // Win 10: 2004 & 20H2 & 21H1 & 21H2
-            (buildNumber = 22000) or // Win 11: 21H2
-            (buildNumber > 22000);   // Win 11: Insider Preview
+  Result :=
+      (buildNumber = 17763)
+          or // Win 10: 1809
+          (buildNumber = 18362)
+          or // Win 10: 1903 & 1909
+          (buildNumber = 19041)
+          or // Win 10: 2004 & 20H2 & 21H1 & 21H2
+          (buildNumber = 22000)
+          or // Win 11: 21H2
+          (buildNumber > 22000); // Win 11: Insider Preview
 end;
 
 function GetBuildNumber(Instance: THandle): DWORD;
 begin
   try
     with TVersionInfo.Create do
-    try
-      Load(Instance);
-      Result:= FixedInfo.FileVersion[2];
-    finally
-      Free;
-    end;
+      try
+        Load(Instance);
+        Result := FixedInfo.FileVersion[2];
+      finally
+        Free;
+      end;
   except
     Exit(0);
   end;
@@ -218,19 +226,15 @@ var
   major, minor, build: DWORD;
 begin
   @RtlGetNtVersionNumbers := GetProcAddress(GetModuleHandleW('ntdll.dll'), 'RtlGetNtVersionNumbers');
-  if Assigned(RtlGetNtVersionNumbers) then
-  begin
+  if Assigned(RtlGetNtVersionNumbers) then begin
     RtlGetNtVersionNumbers(@major, @minor, @build);
 
-    if (major = 10) and (minor = 0) then
-    begin
+    if (major = 10) and (minor = 0) then begin
       hUxtheme := LoadLibraryExW('uxtheme.dll', 0, LOAD_LIBRARY_SEARCH_SYSTEM32);
-      if (hUxtheme <> 0) then
-      begin
-        g_buildNumber:= GetBuildNumber(hUxtheme);
+      if (hUxtheme <> 0) then begin
+        g_buildNumber := GetBuildNumber(hUxtheme);
 
-        if CheckBuildNumber(g_buildNumber) then
-        begin
+        if CheckBuildNumber(g_buildNumber) then begin
           @_RefreshImmersiveColorPolicyState := GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104));
           @_ShouldAppsUseDarkMode := GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132));
           @_AllowDarkModeForWindow := GetProcAddress(hUxtheme, MAKEINTRESOURCEA(133));
@@ -244,16 +248,20 @@ begin
 
           @DwmSetWindowAttribute := GetProcAddress(LoadLibrary('dwmapi.dll'), 'DwmSetWindowAttribute');
 
-          if Assigned(_RefreshImmersiveColorPolicyState) and Assigned(_ShouldAppsUseDarkMode) and Assigned(_AllowDarkModeForWindow) and (Assigned(_AllowDarkModeForApp) or Assigned(_SetPreferredAppMode)) and Assigned(_IsDarkModeAllowedForWindow) then
+          if Assigned(_RefreshImmersiveColorPolicyState)
+              and Assigned(_ShouldAppsUseDarkMode)
+              and Assigned(_AllowDarkModeForWindow)
+              and (Assigned(_AllowDarkModeForApp) or Assigned(_SetPreferredAppMode))
+              and Assigned(_IsDarkModeAllowedForWindow) then
           begin
             g_darkModeSupported := true;
             AppMode := PreferredAppMode;
-            if AppMode <> pamForceLight then
-            begin
+            if AppMode <> pamForceLight then begin
               AllowDarkModeForApp(true);
               _RefreshImmersiveColorPolicyState();
               IsDarkModeEnabled := ShouldAppsUseDarkMode;
-              if IsDarkModeEnabled then AppMode := pamForceDark;
+              if IsDarkModeEnabled then
+                AppMode := pamForceDark;
             end;
           end;
         end;

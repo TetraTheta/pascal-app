@@ -1,6 +1,7 @@
 unit launcher_configuration;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
@@ -14,7 +15,9 @@ procedure SaveLauncherSettings(const AFileName: string; ASettings: TLauncherSett
 implementation
 
 uses
-  Classes, IniFiles, SysUtils;
+  Classes,
+  IniFiles,
+  SysUtils;
 
 const
   CurrentFormatVersion = 1;
@@ -101,24 +104,21 @@ begin
       ASettings.SelectedProfileIndex := Ini.ReadInteger('Application', 'SelectedProfile', -1);
 
       Count := ReadCount(Ini, 'Engines', 'Count');
-      for Index := 0 to Count - 1 do
-      begin
+      for Index := 0 to Count - 1 do begin
         Section := IndexedSection('Engine', Index);
         Engine := TEngine.Create(Ini.ReadString(Section, 'Name', ''), ReadStoredPath(Ini, Section, ''));
         ASettings.Engines.Add(Engine);
       end;
 
       Count := ReadCount(Ini, 'DataDirectories', 'Count');
-      for Index := 0 to Count - 1 do
-      begin
+      for Index := 0 to Count - 1 do begin
         Section := IndexedSection('DataDirectory', Index);
         DataDirectory := TDataDirectory.Create(Ini.ReadString(Section, 'Name', ''), ReadStoredPath(Ini, Section, ''), False);
         ASettings.DataDirectories.Add(DataDirectory);
       end;
 
       Count := ReadCount(Ini, 'Profiles', 'Count');
-      for Index := 0 to Count - 1 do
-      begin
+      for Index := 0 to Count - 1 do begin
         Section := IndexedSection('Profile', Index);
         Profile := TProfile.Create;
         try
@@ -131,8 +131,8 @@ begin
           Count := ReadCount(Ini, Section, 'ModCount');
           for ModIndex := 0 to Count - 1 do
             Profile.Mods.AddObject(
-              Ini.ReadString(Section, 'Mod' + IntToStr(ModIndex) + 'Path', ''),
-              TObject(PtrInt(Ord(Ini.ReadBool(Section, 'Mod' + IntToStr(ModIndex) + 'Absolute', False))))
+                Ini.ReadString(Section, 'Mod' + IntToStr(ModIndex) + 'Path', ''),
+                TObject(PtrInt(Ord(Ini.ReadBool(Section, 'Mod' + IntToStr(ModIndex) + 'Absolute', False))))
             );
           ASettings.Profiles.Add(Profile);
           Profile := nil;
@@ -144,12 +144,9 @@ begin
       if ASettings.SelectedProfileIndex >= ASettings.Profiles.Count then
         ASettings.SelectedProfileIndex := -1;
 
-      if Ini.ReadInteger('WadCache', 'Version', 0) =
-        CurrentWadCacheVersion then
-      begin
+      if Ini.ReadInteger('WadCache', 'Version', 0) = CurrentWadCacheVersion then begin
         Count := ReadCount(Ini, 'WadCache', 'Count');
-        for Index := 0 to Count - 1 do
-        begin
+        for Index := 0 to Count - 1 do begin
           Section := IndexedSection('WadCache', Index);
           Wad := TWadMetadata.Create;
           try
@@ -168,8 +165,7 @@ begin
       end;
       Result := True;
     except
-      on E: Exception do
-      begin
+      on E: Exception do begin
         ASettings.DataDirectories.Clear;
         ASettings.Engines.Clear;
         ASettings.Profiles.Clear;
@@ -199,8 +195,7 @@ begin
   AIni.WriteInteger('Application', 'SelectedProfile', ASettings.SelectedProfileIndex);
 
   AIni.WriteInteger('Engines', 'Count', ASettings.Engines.Count);
-  for Index := 0 to ASettings.Engines.Count - 1 do
-  begin
+  for Index := 0 to ASettings.Engines.Count - 1 do begin
     Engine := TEngine(ASettings.Engines[Index]);
     Section := IndexedSection('Engine', Index);
     AIni.WriteString(Section, 'Name', Engine.DisplayName);
@@ -208,8 +203,7 @@ begin
   end;
 
   AIni.WriteInteger('DataDirectories', 'Count', ASettings.DataDirectories.Count);
-  for Index := 0 to ASettings.DataDirectories.Count - 1 do
-  begin
+  for Index := 0 to ASettings.DataDirectories.Count - 1 do begin
     DataDirectory := TDataDirectory(ASettings.DataDirectories[Index]);
     Section := IndexedSection('DataDirectory', Index);
     AIni.WriteString(Section, 'Name', DataDirectory.DisplayName);
@@ -217,8 +211,7 @@ begin
   end;
 
   AIni.WriteInteger('Profiles', 'Count', ASettings.Profiles.Count);
-  for Index := 0 to ASettings.Profiles.Count - 1 do
-  begin
+  for Index := 0 to ASettings.Profiles.Count - 1 do begin
     Profile := TProfile(ASettings.Profiles[Index]);
     Section := IndexedSection('Profile', Index);
     AIni.WriteString(Section, 'Name', Profile.Name);
@@ -228,8 +221,7 @@ begin
     AIni.WriteString(Section, 'ExtraArguments', Profile.ExtraArguments);
     WriteLaunchOptions(AIni, Section, Profile.Options);
     AIni.WriteInteger(Section, 'ModCount', Profile.Mods.Count);
-    for ModIndex := 0 to Profile.Mods.Count - 1 do
-    begin
+    for ModIndex := 0 to Profile.Mods.Count - 1 do begin
       AIni.WriteString(Section, 'Mod' + IntToStr(ModIndex) + 'Path', Profile.Mods[ModIndex]);
       AIni.WriteBool(Section, 'Mod' + IntToStr(ModIndex) + 'Absolute', PtrInt(Profile.Mods.Objects[ModIndex]) <> 0);
     end;
@@ -237,8 +229,7 @@ begin
 
   AIni.WriteInteger('WadCache', 'Version', CurrentWadCacheVersion);
   AIni.WriteInteger('WadCache', 'Count', ASettings.WadCache.Count);
-  for Index := 0 to ASettings.WadCache.Count - 1 do
-  begin
+  for Index := 0 to ASettings.WadCache.Count - 1 do begin
     Wad := TWadMetadata(ASettings.WadCache[Index]);
     Section := IndexedSection('WadCache', Index);
     WriteStoredPath(AIni, Section, '', Wad.FileName);
@@ -266,25 +257,21 @@ begin
     Ini.Free;
   end;
 
-  if FileExists(AFileName) then
-  begin
+  if FileExists(AFileName) then begin
     BackupFileName := AFileName + '.replace-backup';
     SysUtils.DeleteFile(BackupFileName);
-    if not RenameFile(AFileName, BackupFileName) then
-    begin
+    if not RenameFile(AFileName, BackupFileName) then begin
       SysUtils.DeleteFile(TemporaryFileName);
       raise EFCreateError.CreateFmt('Unable to replace %s.', [AFileName]);
     end;
-    if not RenameFile(TemporaryFileName, AFileName) then
-    begin
+    if not RenameFile(TemporaryFileName, AFileName) then begin
       RenameFile(BackupFileName, AFileName);
       SysUtils.DeleteFile(TemporaryFileName);
       raise EFCreateError.CreateFmt('Unable to replace %s.', [AFileName]);
     end;
     SysUtils.DeleteFile(BackupFileName);
   end
-  else if not RenameFile(TemporaryFileName, AFileName) then
-  begin
+  else if not RenameFile(TemporaryFileName, AFileName) then begin
     SysUtils.DeleteFile(TemporaryFileName);
     raise EFCreateError.CreateFmt('Unable to create %s.', [AFileName]);
   end;

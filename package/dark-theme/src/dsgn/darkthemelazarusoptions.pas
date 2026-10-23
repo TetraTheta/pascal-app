@@ -1,65 +1,71 @@
 unit DarkThemeLazarusOptions;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, SysUtils,
-  LazConfigStorage, LazFileUtils, LazFileCache,
-  LazLoggerBase, ComCtrls, Graphics,
+  Classes,
+  SysUtils,
+  LazConfigStorage,
+  LazFileUtils,
+  LazFileCache,
+  LazLoggerBase,
+  ComCtrls,
+  Graphics,
   BaseIDEIntf;
 
 const
-  amOptAllowDarkName='Allow dark';
-  amOptForceDarkName='Force dark';
-  amOptForceLightName='Force light';
+  amOptAllowDarkName = 'Allow dark';
+  amOptForceDarkName = 'Force dark';
+  amOptForceLightName = 'Force light';
 resourcestring
-  RSamOptAllowDarkName=amOptAllowDarkName;
-  RSamOptForceDarkName=amOptForceDarkName;
-  RSamOptForceLightName=amOptForceLightName;
+  RSamOptAllowDarkName = amOptAllowDarkName;
+  RSamOptForceDarkName = amOptForceDarkName;
+  RSamOptForceLightName = amOptForceLightName;
 
 type
-  TAppModeOpt=(amOptAllowDark,amOptForceDark,amOptForceLight);
+  TAppModeOpt = (amOptAllowDark, amOptForceDark, amOptForceLight);
 
 const
-  AppModeOptStr:array[TAppModeOpt] of String=(amOptAllowDarkName,amOptForceDarkName,amOptForceLightName);
-  AppModeOptLocalizedStr:array[TAppModeOpt] of String=(RSamOptAllowDarkName,RSamOptForceDarkName,RSamOptForceLightName);
+  AppModeOptStr: array[TAppModeOpt] of string = (amOptAllowDarkName, amOptForceDarkName, amOptForceLightName);
+  AppModeOptLocalizedStr: array[TAppModeOpt] of string = (RSamOptAllowDarkName, RSamOptForceDarkName, RSamOptForceLightName);
 
 type
 
-  TDarkThemeLazarusOptions=class
+  TDarkThemeLazarusOptions = class
   private
     const
-      DefaultAppMode:TAppModeOpt=amOptAllowDark;
-      DefaultColorScheme:String='Dark';
+      DefaultAppMode: TAppModeOpt = amOptAllowDark;
+      DefaultColorScheme: string = 'Dark';
     var
-      FAppMode:TAppModeOpt;
-      FColorScheme:String;
-      FChangeStamp:Integer;
-      FLastSavedChangeStamp:Integer;
-    procedure SetAppMode(AValue:TAppModeOpt);
-    procedure SetColorScheme(AValue:String);
-    function GetModified:Boolean;
+      FAppMode: TAppModeOpt;
+      FColorScheme: string;
+      FChangeStamp: Integer;
+      FLastSavedChangeStamp: Integer;
+    procedure SetAppMode(AValue: TAppModeOpt);
+    procedure SetColorScheme(AValue: string);
+    function GetModified: Boolean;
     procedure SetModified(AValue: Boolean);
-    function Str2AppModeOpt(str:string):TAppModeOpt;
+    function Str2AppModeOpt(str: string): TAppModeOpt;
   public
     constructor Create;
     procedure SaveSafe;
     procedure LoadSafe;
-    procedure SaveToFile(AFilename:String);
-    procedure LoadFromFile(AFilename:String);
+    procedure SaveToFile(AFilename: string);
+    procedure LoadFromFile(AFilename: string);
     procedure IncreaseChangeStamp;
   public
-    property ChangeStamp:Integer read FChangeStamp;
-    property Modified:Boolean read GetModified write SetModified;
+    property ChangeStamp: Integer read FChangeStamp;
+    property Modified: Boolean read GetModified write SetModified;
 
-    property AppMode:TAppModeOpt read FAppMode write SetAppMode;
-    property ColorScheme:String  read FColorScheme write SetColorScheme;
+    property AppMode: TAppModeOpt read FAppMode write SetAppMode;
+    property ColorScheme: string read FColorScheme write SetColorScheme;
   end;
 
 const
-  DarkThemeLazarusFileName='darkthemelazarusoptions.xml';
+  DarkThemeLazarusFileName = 'darkthemelazarusoptions.xml';
 
 var
   DarkThemeLazarusOpt: TDarkThemeLazarusOptions = nil;
@@ -68,45 +74,47 @@ implementation
 
 { TDockedOptions }
 
-function TDarkThemeLazarusOptions.GetModified:Boolean;
+function TDarkThemeLazarusOptions.GetModified: Boolean;
 begin
-  Result:=FLastSavedChangeStamp<>FChangeStamp;
+  Result := FLastSavedChangeStamp <> FChangeStamp;
 end;
 
-procedure TDarkThemeLazarusOptions.SetModified(AValue:Boolean);
+procedure TDarkThemeLazarusOptions.SetModified(AValue: Boolean);
 begin
   if AValue then
     IncreaseChangeStamp
   else
-    FLastSavedChangeStamp:=FChangeStamp;
+    FLastSavedChangeStamp := FChangeStamp;
 end;
 
-procedure TDarkThemeLazarusOptions.SetAppMode(AValue:TAppModeOpt);
+procedure TDarkThemeLazarusOptions.SetAppMode(AValue: TAppModeOpt);
 begin
-  if FAppMode=AValue then Exit;
-  FAppMode:=AValue;
+  if FAppMode = AValue then
+    Exit;
+  FAppMode := AValue;
   IncreaseChangeStamp;
 end;
 
-procedure TDarkThemeLazarusOptions.SetColorScheme(AValue:String);
+procedure TDarkThemeLazarusOptions.SetColorScheme(AValue: string);
 begin
-  if FColorScheme=AValue then Exit;
-  FColorScheme:=AValue;
+  if FColorScheme = AValue then
+    Exit;
+  FColorScheme := AValue;
   IncreaseChangeStamp;
 end;
 
 constructor TDarkThemeLazarusOptions.Create;
 begin
-  FAppMode:=DefaultAppMode;
-  FChangeStamp:=LUInvalidChangeStamp+1;
-  FLastSavedChangeStamp:=FChangeStamp;
+  FAppMode := DefaultAppMode;
+  FChangeStamp := LUInvalidChangeStamp + 1;
+  FLastSavedChangeStamp := FChangeStamp;
 end;
 
 procedure TDarkThemeLazarusOptions.SaveSafe;
 begin
   try
     SaveToFile(DarkThemeLazarusFileName);
-    Modified:=False;
+    Modified := False;
   except
     on E: Exception do
       DebugLn(['Error: (lazarus) [TDarkThemeLazarusOptions.SaveSafe] ', E.Message]);
@@ -121,40 +129,40 @@ begin
     on E: Exception do
       DebugLn(['Error: (lazarus) [TDarkThemeLazarusOptions.LoadSafe] ', E.Message]);
   end;
-  Modified:=False;
+  Modified := False;
 end;
 
-procedure TDarkThemeLazarusOptions.SaveToFile(AFilename: String);
+procedure TDarkThemeLazarusOptions.SaveToFile(AFilename: string);
 var
   Cfg: TConfigStorage;
 begin
-  Cfg:=GetIDEConfigStorage(AFilename,False);
+  Cfg := GetIDEConfigStorage(AFilename, False);
   try
-    Cfg.SetDeleteValue('AppMode/Value',AppModeOptStr[AppMode],AppModeOptStr[DefaultAppMode]);
-    Cfg.SetDeleteValue('ColorScheme/Value',ColorScheme,DefaultColorScheme);
+    Cfg.SetDeleteValue('AppMode/Value', AppModeOptStr[AppMode], AppModeOptStr[DefaultAppMode]);
+    Cfg.SetDeleteValue('ColorScheme/Value', ColorScheme, DefaultColorScheme);
   finally
     Cfg.Free;
   end;
 end;
 
-function TDarkThemeLazarusOptions.Str2AppModeOpt(str:string):TAppModeOpt;
+function TDarkThemeLazarusOptions.Str2AppModeOpt(str: string): TAppModeOpt;
 var
-  i:TAppModeOpt;
+  i: TAppModeOpt;
 begin
-  for i:=low(AppModeOptStr) to high(AppModeOptStr) do
-    if AppModeOptStr[i]=str then
+  for i := low(AppModeOptStr) to high(AppModeOptStr) do
+    if AppModeOptStr[i] = str then
       exit(i);
-  result:=DefaultAppMode;
+  result := DefaultAppMode;
 end;
 
-procedure TDarkThemeLazarusOptions.LoadFromFile(AFilename: String);
+procedure TDarkThemeLazarusOptions.LoadFromFile(AFilename: string);
 var
   Cfg: TConfigStorage;
 begin
-  Cfg := GetIDEConfigStorage(AFilename,True);
+  Cfg := GetIDEConfigStorage(AFilename, True);
   try
-    AppMode:= Str2AppModeOpt(Cfg.GetValue('AppMode/Value',AppModeOptStr[DefaultAppMode]));
-    ColorScheme:= Cfg.GetValue('ColorScheme/Value',DefaultColorScheme);
+    AppMode := Str2AppModeOpt(Cfg.GetValue('AppMode/Value', AppModeOptStr[DefaultAppMode]));
+    ColorScheme := Cfg.GetValue('ColorScheme/Value', DefaultColorScheme);
   finally
     Cfg.Free;
   end;
@@ -166,4 +174,3 @@ begin
 end;
 
 end.
-

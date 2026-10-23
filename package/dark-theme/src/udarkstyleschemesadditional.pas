@@ -1,6 +1,7 @@
 unit uDarkStyleSchemesAdditional;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
@@ -10,5 +11,5 @@ uses
 implementation
 
 initialization
-{$I CustomDark.lrs}
+  {$I CustomDark.lrs}
 end.

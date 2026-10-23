@@ -1,6 +1,7 @@
 unit language_service;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
@@ -21,7 +22,8 @@ type
 implementation
 
 uses
-  SysUtils, Windows;
+  SysUtils,
+  Windows;
 
 constructor TLanguageService.Create(const AExecutablePath, ALanguage: string);
 var
@@ -30,15 +32,13 @@ var
 begin
   inherited Create;
   Language := ALanguage;
-  if SameText(Language, 'auto') then
-  begin
+  if SameText(Language, 'auto') then begin
     if (GetUserDefaultLangID and $3FF) = LANG_KOREAN then
       Language := 'ko'
     else
       Language := 'en';
   end;
-  if SameText(Language, 'ko') then
-  begin
+  if SameText(Language, 'ko') then begin
     LanguagePath := IncludeTrailingPathDelimiter(ExtractFilePath(AExecutablePath)) + 'lang' + PathDelim + 'ko.ini';
     if FileExists(LanguagePath) then
       FFile := TMemIniFile.Create(LanguagePath);
@@ -54,8 +54,7 @@ end;
 function TLanguageService.Text(const AKey, AEnglish: string): string;
 begin
   Result := AEnglish;
-  if Assigned(FFile) then
-  begin
+  if Assigned(FFile) then begin
     Result := FFile.ReadString('Strings', AKey, AEnglish);
     if Result = '' then
       Result := AEnglish;

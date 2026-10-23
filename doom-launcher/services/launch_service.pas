@@ -1,11 +1,13 @@
 unit launch_service;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, launcher_models;
+  Classes,
+  launcher_models;
 
 function BuildLaunchArguments(const ABaseDirectory, ASaveDirectory: string; AProfile: TProfile): TStringList;
 function LaunchProfile(const ABaseDirectory: string; AProfile: TProfile; out AError: string): Boolean;
@@ -15,7 +17,9 @@ function ValidateLaunchOptions(const AOptions: TLaunchOptions; out AError: strin
 implementation
 
 uses
-  path_service, Process, SysUtils;
+  path_service,
+  Process,
+  SysUtils;
 
 function ParseWindowsArguments(const AArguments: string): TStringList;
 var
@@ -27,8 +31,7 @@ begin
   Result := TStringList.Create;
   CharacterIndex := 1;
   try
-    while CharacterIndex <= Length(AArguments) do
-    begin
+    while CharacterIndex <= Length(AArguments) do begin
       while (CharacterIndex <= Length(AArguments)) and (AArguments[CharacterIndex] in [' ', #9]) do
         Inc(CharacterIndex);
       if CharacterIndex > Length(AArguments) then
@@ -36,20 +39,17 @@ begin
 
       Argument := '';
       InQuotes := False;
-      while CharacterIndex <= Length(AArguments) do
-      begin
+      while CharacterIndex <= Length(AArguments) do begin
         if (not InQuotes) and (AArguments[CharacterIndex] in [' ', #9]) then
           Break;
 
         BackslashCount := 0;
-        while (CharacterIndex <= Length(AArguments)) and (AArguments[CharacterIndex] = '\') do
-        begin
+        while (CharacterIndex <= Length(AArguments)) and (AArguments[CharacterIndex] = '\') do begin
           Inc(BackslashCount);
           Inc(CharacterIndex);
         end;
 
-        if (CharacterIndex <= Length(AArguments)) and (AArguments[CharacterIndex] = '"') then
-        begin
+        if (CharacterIndex <= Length(AArguments)) and (AArguments[CharacterIndex] = '"') then begin
           Argument := Argument + StringOfChar('\', BackslashCount div 2);
           if Odd(BackslashCount) then
             Argument := Argument + '"'
@@ -57,11 +57,9 @@ begin
             InQuotes := not InQuotes;
           Inc(CharacterIndex);
         end
-        else
-        begin
+        else begin
           Argument := Argument + StringOfChar('\', BackslashCount);
-          if CharacterIndex <= Length(AArguments) then
-          begin
+          if CharacterIndex <= Length(AArguments) then begin
             Argument := Argument + AArguments[CharacterIndex];
             Inc(CharacterIndex);
           end;
@@ -106,11 +104,9 @@ begin
   try
     Result.Add('-iwad');
     Result.Add(ResolveStoredPath(ABaseDirectory, AProfile.IWadPath));
-    if AProfile.Mods.Count > 0 then
-    begin
+    if AProfile.Mods.Count > 0 then begin
       Result.Add('-file');
-      for Index := 0 to AProfile.Mods.Count - 1 do
-      begin
+      for Index := 0 to AProfile.Mods.Count - 1 do begin
         ModPath := StoredPath(AProfile.Mods[Index], PtrInt(AProfile.Mods.Objects[Index]) <> 0);
         Result.Add(ResolveStoredPath(ABaseDirectory, ModPath));
       end;
@@ -118,10 +114,8 @@ begin
     Result.Add('-savedir');
     Result.Add(ExpandFileName(ASaveDirectory));
 
-    if Trim(AProfile.Options.StartMap) <> '' then
-    begin
-      if AProfile.Options.Skill > 0 then
-      begin
+    if Trim(AProfile.Options.StartMap) <> '' then begin
+      if AProfile.Options.Skill > 0 then begin
         Result.Add('-skill');
         Result.Add(IntToStr(AProfile.Options.Skill));
       end;
@@ -134,18 +128,15 @@ begin
       Result.Add('-fast');
     if AProfile.Options.RespawnMonsters then
       Result.Add('-respawn');
-    if AProfile.Options.EnableMultiplayer then
-    begin
+    if AProfile.Options.EnableMultiplayer then begin
       Result.Add('-net');
-      if AProfile.Options.HostGame then
-      begin
+      if AProfile.Options.HostGame then begin
         Result.Add('-host');
         Result.Add(IntToStr(AProfile.Options.PlayerCount));
         Result.Add('-port');
         Result.Add(IntToStr(AProfile.Options.Port));
       end
-      else
-      begin
+      else begin
         Result.Add('-join');
         Result.Add(Trim(AProfile.Options.HostName) + ':' + IntToStr(AProfile.Options.Port));
       end;
@@ -184,19 +175,16 @@ begin
   if AError <> '' then
     Exit;
 
-  for Index := 0 to AProfile.Mods.Count - 1 do
-  begin
+  for Index := 0 to AProfile.Mods.Count - 1 do begin
     ModPath := StoredPath(AProfile.Mods[Index], PtrInt(AProfile.Mods.Objects[Index]) <> 0);
-    if not FileExists(ResolveStoredPath(ABaseDirectory, ModPath)) then
-    begin
+    if not FileExists(ResolveStoredPath(ABaseDirectory, ModPath)) then begin
       AError := 'A selected mod does not exist: ' + ModPath.Value;
       Exit;
     end;
   end;
 
   SaveDirectory := IncludeTrailingPathDelimiter(ABaseDirectory) + 'saves' + DirectorySeparator + SanitizeDirectoryName(AProfile.Name);
-  if not ForceDirectories(SaveDirectory) then
-  begin
+  if not ForceDirectories(SaveDirectory) then begin
     AError := 'Unable to create the save directory.';
     Exit;
   end;

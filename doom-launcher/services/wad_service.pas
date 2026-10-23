@@ -1,11 +1,14 @@
 unit wad_service;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, Contnrs, launcher_models;
+  Classes,
+  Contnrs,
+  launcher_models;
 
 function AnalyzeWadFile(const ABaseDirectory, AFileName: string; AStoreAbsolute: Boolean): TWadMetadata;
 function ScanWads(const ABaseDirectory: string; ASettings: TLauncherSettings; out ACacheChanged: Boolean): TObjectList;
@@ -13,7 +16,11 @@ function ScanWads(const ABaseDirectory: string; ASettings: TLauncherSettings; ou
 implementation
 
 uses
-  DateUtils, path_service, StrUtils, SysUtils, zipper;
+  DateUtils,
+  path_service,
+  StrUtils,
+  SysUtils,
+  zipper;
 
 type
   TEmbeddedWadAnalyzer = class
@@ -30,11 +37,13 @@ var
   UpperValue: string;
 begin
   UpperValue := UpperCase(AValue);
-  Result := ((Length(UpperValue) = 5) and (Copy(UpperValue, 1, 3) = 'MAP') and
-            (UpperValue[4] in ['0'..'9']) and (UpperValue[5] in ['0'..'9'])) or
-            ((Length(UpperValue) = 4) and (UpperValue[1] = 'E') and
-            (UpperValue[2] in ['0'..'9']) and (UpperValue[3] = 'M') and
-            (UpperValue[4] in ['0'..'9']));
+  Result :=
+      ((Length(UpperValue) = 5) and (Copy(UpperValue, 1, 3) = 'MAP') and (UpperValue[4] in ['0'..'9']) and (UpperValue[5] in ['0'..'9']))
+          or ((Length(UpperValue) = 4)
+              and (UpperValue[1] = 'E')
+              and (UpperValue[2] in ['0'..'9'])
+              and (UpperValue[3] = 'M')
+              and (UpperValue[4] in ['0'..'9']));
 end;
 
 procedure ReadFileInformation(const AFileName: string; out ASize: Int64; out AModifiedAt: TDateTime);
@@ -67,8 +76,7 @@ begin
   Result := TrimRightSet(Result, [#0, ' ']);
 end;
 
-procedure AnalyzeWadStream(AStream: TStream; AMetadata: TWadMetadata;
-  ASetArchiveType: Boolean);
+procedure AnalyzeWadStream(AStream: TStream; AMetadata: TWadMetadata; ASetArchiveType: Boolean);
 var
   DirectoryOffset: LongInt;
   EntryIndex: LongInt;
@@ -91,8 +99,7 @@ begin
   if (LumpCount < 0) or (DirectoryOffset < 12) or (Int64(DirectoryOffset) + Int64(LumpCount) * 16 > AStream.Size) then
     raise EReadError.Create('WAD directory is outside the file.');
   AStream.Position := DirectoryOffset;
-  for EntryIndex := 0 to LumpCount - 1 do
-  begin
+  for EntryIndex := 0 to LumpCount - 1 do begin
     AStream.Seek(8, soCurrent);
     LumpName := UpperCase(ReadFixedString(AStream, 8));
     if IsMapId(LumpName) then
@@ -153,8 +160,7 @@ begin
   try
     UnZipper.FileName := AFileName;
     UnZipper.Examine;
-    for EntryIndex := 0 to UnZipper.Entries.Count - 1 do
-    begin
+    for EntryIndex := 0 to UnZipper.Entries.Count - 1 do begin
       EntryName := StringReplace(UnZipper.Entries[EntryIndex].ArchiveFileName, '\', '/', [rfReplaceAll]);
       MapName := UpperCase(ChangeFileExt(ExtractFileName(EntryName), ''));
       if IsMapId(MapName) and (StartsText('maps/', EntryName) or SameText(ExtractFileExt(EntryName), '.wad')) then
@@ -162,8 +168,7 @@ begin
       if SameText(ExtractFileExt(EntryName), '.wad') then
         EmbeddedWads.Add(UnZipper.Entries[EntryIndex].ArchiveFileName);
     end;
-    if EmbeddedWads.Count > 0 then
-    begin
+    if EmbeddedWads.Count > 0 then begin
       UnZipper.OnCreateStream := @Analyzer.CreateStream;
       UnZipper.OnDoneStream := @Analyzer.DoneStream;
       UnZipper.UnZipFiles(EmbeddedWads);
@@ -214,15 +219,22 @@ var
   Index: Integer;
 begin
   Result := nil;
-  for Index := 0 to ACache.Count - 1 do
-  begin
+  for Index := 0 to ACache.Count - 1 do begin
     Cached := TWadMetadata(ACache[Index]);
-    if SameFileName(ResolveStoredPath(ABaseDirectory, Cached.FileName), AFileName) and (Cached.FileSize = ASize) and (Abs(Cached.ModifiedAt - AModifiedAt) < (1 / SecsPerDay)) then
+    if SameFileName(ResolveStoredPath(ABaseDirectory, Cached.FileName), AFileName)
+        and (Cached.FileSize = ASize)
+        and (Abs(Cached.ModifiedAt - AModifiedAt) < (1 / SecsPerDay)) then
       Exit(Cached);
   end;
 end;
 
-procedure AddDirectoryWads(const ABaseDirectory, APath: string; ADirectory: TDataDirectory; ACache, AResults: TObjectList; ASeen: TStrings; var ACacheChanged: Boolean);
+procedure AddDirectoryWads(
+    const ABaseDirectory, APath: string;
+    ADirectory: TDataDirectory;
+    ACache, AResults: TObjectList;
+    ASeen: TStrings;
+    var ACacheChanged: Boolean
+);
 var
   AbsoluteFileName: string;
   Cached: TWadMetadata;
@@ -237,26 +249,29 @@ begin
     Exit;
   try
     repeat
-      if (SearchRecord.Attr and faDirectory <> 0) then
-      begin
+      if (SearchRecord.Attr and faDirectory <> 0) then begin
         if (SearchRecord.Name <> '.') and (SearchRecord.Name <> '..') and (SearchRecord.Attr and faSymLink = 0) then
-          AddDirectoryWads(ABaseDirectory, IncludeTrailingPathDelimiter(APath) + SearchRecord.Name, ADirectory, ACache, AResults, ASeen, ACacheChanged);
+          AddDirectoryWads(
+              ABaseDirectory,
+              IncludeTrailingPathDelimiter(APath) + SearchRecord.Name,
+              ADirectory,
+              ACache,
+              AResults,
+              ASeen,
+              ACacheChanged
+          );
       end
-      else
-      begin
+      else begin
         Extension := LowerCase(ExtractFileExt(SearchRecord.Name));
-        if (Extension = '.wad') or (Extension = '.pk3') or (Extension = '.zip') then
-        begin
+        if (Extension = '.wad') or (Extension = '.pk3') or (Extension = '.zip') then begin
           AbsoluteFileName := ExpandFileName(IncludeTrailingPathDelimiter(APath) + SearchRecord.Name);
-          if ASeen.IndexOf(AbsoluteFileName) < 0 then
-          begin
+          if ASeen.IndexOf(AbsoluteFileName) < 0 then begin
             ASeen.Add(AbsoluteFileName);
             ReadFileInformation(AbsoluteFileName, Size, ModifiedAt);
             Cached := FindCachedMetadata(ABaseDirectory, AbsoluteFileName, ACache, Size, ModifiedAt);
             if Cached <> nil then
               AResults.Add(CloneMetadata(Cached))
-            else
-            begin
+            else begin
               StoreAbsolute := ADirectory.StoreDiscoveredPathsAbsolute or not CanStoreRelative(ABaseDirectory, AbsoluteFileName);
               try
                 Metadata := AnalyzeWadFile(ABaseDirectory, AbsoluteFileName, StoreAbsolute);
@@ -292,8 +307,7 @@ begin
     if DirectoryName <> '' then
       Paths.Insert(0, DirectoryName);
     for Index := 0 to Paths.Count - 1 do
-      if Trim(Paths[Index]) <> '' then
-      begin
+      if Trim(Paths[Index]) <> '' then begin
         AList.Add(TDataDirectory.Create('Environment', StoredPath(ExpandFileName(Paths[Index]), True), True));
         TDataDirectory(AList[AList.Count - 1]).StoreDiscoveredPathsAbsolute := False;
       end;
@@ -317,10 +331,26 @@ begin
     Seen.Sorted := True;
     Seen.Duplicates := dupIgnore;
     for DirectoryIndex := 0 to ASettings.DataDirectories.Count - 1 do
-      AddDirectoryWads(ABaseDirectory, ResolveStoredPath(ABaseDirectory, TDataDirectory(ASettings.DataDirectories[DirectoryIndex]).DirectoryName), TDataDirectory(ASettings.DataDirectories[DirectoryIndex]), ASettings.WadCache, Result, Seen, ACacheChanged);
+      AddDirectoryWads(
+          ABaseDirectory,
+          ResolveStoredPath(ABaseDirectory, TDataDirectory(ASettings.DataDirectories[DirectoryIndex]).DirectoryName),
+          TDataDirectory(ASettings.DataDirectories[DirectoryIndex]),
+          ASettings.WadCache,
+          Result,
+          Seen,
+          ACacheChanged
+      );
     AddEnvironmentDirectories(EnvironmentDirectories);
     for DirectoryIndex := 0 to EnvironmentDirectories.Count - 1 do
-      AddDirectoryWads(ABaseDirectory, ResolveStoredPath(ABaseDirectory, TDataDirectory(EnvironmentDirectories[DirectoryIndex]).DirectoryName), TDataDirectory(EnvironmentDirectories[DirectoryIndex]), ASettings.WadCache, Result, Seen, ACacheChanged);
+      AddDirectoryWads(
+          ABaseDirectory,
+          ResolveStoredPath(ABaseDirectory, TDataDirectory(EnvironmentDirectories[DirectoryIndex]).DirectoryName),
+          TDataDirectory(EnvironmentDirectories[DirectoryIndex]),
+          ASettings.WadCache,
+          Result,
+          Seen,
+          ACacheChanged
+      );
   finally
     EnvironmentDirectories.Free;
     Seen.Free;

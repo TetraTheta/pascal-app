@@ -1,6 +1,7 @@
 unit register_runtime_resource;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
@@ -9,7 +10,10 @@ procedure Register;
 implementation
 
 uses
-  Classes, SysUtils, LazIDEIntf, runtime_resource;
+  Classes,
+  SysUtils,
+  LazIDEIntf,
+  runtime_resource;
 
 function ResolveProjectFile(const AFileName: string): string;
 begin

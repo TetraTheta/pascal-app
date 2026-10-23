@@ -1,12 +1,21 @@
 unit main;
-{$warn 5024 off}
+{$WARN 5024 off}
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Buttons, Classes, SysUtils, Forms, Controls, StdCtrls, ComCtrls, Process, runtime_resource;
+  Buttons,
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  StdCtrls,
+  ComCtrls,
+  Process,
+  runtime_resource;
 
 type
 
@@ -68,7 +77,8 @@ implementation
 {$R *.lfm}
 
 uses
-  launcher_configuration, LCLType;
+  launcher_configuration,
+  LCLType;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 var
@@ -221,8 +231,7 @@ procedure TMainForm.AssignKeyHandler(AControl: TControl);
 var
   ChildIndex: Integer;
 begin
-  if AControl is TWinControl then
-  begin
+  if AControl is TWinControl then begin
     TWinControl(AControl).OnKeyDown := @LauncherKeyDown;
     for ChildIndex := 0 to TWinControl(AControl).ControlCount - 1 do
       AssignKeyHandler(TWinControl(AControl).Controls[ChildIndex]);

@@ -1,6 +1,7 @@
 unit launcher_configuration;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
@@ -19,7 +20,8 @@ function LoadLauncherConfiguration(const AExecutablePath: string): TLauncherConf
 implementation
 
 uses
-  IniFiles, SysUtils;
+  IniFiles,
+  SysUtils;
 
 function LoadLauncherConfiguration(const AExecutablePath: string): TLauncherConfiguration;
 var
@@ -31,8 +33,7 @@ begin
   ConfigurationExists := FileExists(ConfigurationPath);
   ConfigurationFile := TIniFile.Create(ConfigurationPath);
   try
-    if not ConfigurationExists then
-    begin
+    if not ConfigurationExists then begin
       ConfigurationFile.WriteString('hl2', 'hammer', '');
       ConfigurationFile.WriteString('hl2', 'hammer++', '');
       ConfigurationFile.WriteString('gmod', 'hammer', '');

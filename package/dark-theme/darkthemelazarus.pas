@@ -4,18 +4,18 @@
 
 unit darkthemelazarus;
 
-{$warn 5023 off : no warning about unused units}
+{$WARN 5023 off : no warning about unused units}
 interface
 
 uses
-  registerDarkThemeLazarus, LazarusPackageIntf;
+  registerDarkThemeLazarus,
+  LazarusPackageIntf;
 
 implementation
 
 procedure Register;
 begin
-  RegisterUnit('registerDarkThemeLazarus', @registerDarkThemeLazarus.Register
-    );
+  RegisterUnit('registerDarkThemeLazarus', @registerDarkThemeLazarus.Register);
 end;
 
 initialization

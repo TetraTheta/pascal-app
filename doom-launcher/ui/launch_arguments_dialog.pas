@@ -1,11 +1,14 @@
 unit launch_arguments_dialog;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, Forms, StdCtrls;
+  Classes,
+  Forms,
+  StdCtrls;
 
 type
   TLaunchArgumentsDialog = class(TForm)

@@ -1,6 +1,7 @@
 unit path_service;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
@@ -15,7 +16,8 @@ function SanitizeDirectoryName(const AName: string): string;
 implementation
 
 uses
-  Classes, SysUtils;
+  Classes,
+  SysUtils;
 
 function NormalizedBase(const ABaseDirectory: string): string;
 begin

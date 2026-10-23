@@ -1,27 +1,32 @@
 program hammer_launcher;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 uses
-  {$IFDEF UNIX}
+{$IFDEF UNIX}
   cthreads,
-  {$ENDIF}
-  {$IFDEF HASAMIGA}
+{$ENDIF}
+{$IFDEF HASAMIGA}
   athreads,
-  {$ENDIF}
+{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, main,
+  Forms,
+  main,
   { you can add units after this }
-  uDarkStyleParams, uDarkStyleSchemes, uDarkTheme;
+  uDarkStyleParams,
+  uDarkStyleSchemes,
+  uDarkTheme;
 
 {$R *.res}
 {$R resource\images.rc}
 
 begin
-  RequireDerivedFormResource:=True;
-  {$PUSH}{$WARN 5044 OFF}
-  Application.Scaled:=True;
-  Application.MainFormOnTaskbar:=True;
+  RequireDerivedFormResource := True;
+  {$PUSH}
+  {$WARN 5044 OFF}
+  Application.Scaled := True;
+  Application.MainFormOnTaskbar := True;
   {$POP}
 
   PreferredAppMode := pamForceDark;
@@ -32,4 +37,3 @@ begin
   MainForm.InitializeTarget;
   Application.Run;
 end.
-

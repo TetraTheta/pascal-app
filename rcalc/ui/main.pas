@@ -1,11 +1,19 @@
 unit main;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Spin, StdCtrls;
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  Graphics,
+  Dialogs,
+  Spin,
+  StdCtrls;
 
 type
   { TFloatSpinEdit }
@@ -83,12 +91,12 @@ var
   X: Double;
   Y: Double;
 begin
-  if listBoxResult.ItemIndex < 0 then Exit;
+  if listBoxResult.ItemIndex < 0 then
+    Exit;
 
   // 결과 문자열의 방정식 부분을 다시 입력값으로 복원한다.
   // 원본 WinForms 앱도 ListBox 항목 더블클릭에서 같은 흐름을 사용한다.
-  if not TryReadResult(listBoxResult.Items[listBoxResult.ItemIndex], X, Y, A, B) then
-  begin
+  if not TryReadResult(listBoxResult.Items[listBoxResult.ItemIndex], X, Y, A, B) then begin
     MessageDlg('Failed to parse result with regex!', mtError, [mbOK], 0);
     Exit;
   end;
@@ -103,9 +111,9 @@ procedure TMainForm.AddList(const S: string);
 var
   I: Integer;
 begin
-  for I := 0 to listBoxResult.Items.Count - 1 do
-  begin
-    if S <> listBoxResult.Items[I] then Continue;
+  for I := 0 to listBoxResult.Items.Count - 1 do begin
+    if S <> listBoxResult.Items[I] then
+      Continue;
     listBoxResult.ItemIndex := I;
     Exit;
   end;
@@ -126,18 +134,19 @@ begin
   Y := numericUpDownY.Value;
   A := numericUpDownA.Value;
 
-  if (X = 0) or (Y = 0) or (A = 0) then
-  begin
+  if (X = 0) or (Y = 0) or (A = 0) then begin
     textBoxResult.Text := 'ERROR: You can''t have 0 for ratio calculation!';
     Exit;
   end;
 
   B := Y / X * A;
-  ResultText := 'Result: ' + CleanFloat(B) + ' / Equation: [' + CleanFloat(X) + ' : ' + CleanFloat(Y) + '] = [' + CleanFloat(A) + ' : ' + CleanFloat(B) + ']';
+  ResultText :=
+      'Result: ' + CleanFloat(B) + ' / Equation: [' + CleanFloat(X) + ' : ' + CleanFloat(Y) + '] = [' + CleanFloat(A) + ' : ' + CleanFloat(B) + ']';
 
   numericUpDownB.Value := B;
   textBoxResult.Text := ResultText;
-  if AddToList then AddList(ResultText);
+  if AddToList then
+    AddList(ResultText);
 end;
 
 procedure TMainForm.ConfigureSpinEdits;
@@ -156,7 +165,10 @@ function TMainForm.TryReadResult(const S: string; out X, Y, A, B: Double): Boole
     ColonPos: SizeInt;
   begin
     ColonPos := Pos(':', Pair);
-    Result := (ColonPos > 0) and TryStrToFloat(Trim(Copy(Pair, 1, ColonPos - 1)), First) and TryStrToFloat(Trim(Copy(Pair, ColonPos + 1, Length(Pair))), Second);
+    Result :=
+        (ColonPos > 0)
+            and TryStrToFloat(Trim(Copy(Pair, 1, ColonPos - 1)), First)
+            and TryStrToFloat(Trim(Copy(Pair, ColonPos + 1, Length(Pair))), Second);
   end;
 
 var
@@ -174,8 +186,13 @@ begin
   if RightClose > 0 then
     Inc(RightClose, RightOpen);
 
-  Result := (LeftOpen > 0) and (LeftClose > LeftOpen) and (RightOpen > LeftClose) and (RightClose > RightOpen) and
-            TryReadPair(Copy(S, LeftOpen + 1, LeftClose - LeftOpen - 1), X, Y) and TryReadPair(Copy(S, RightOpen + 1, RightClose - RightOpen - 1), A, B);
+  Result :=
+      (LeftOpen > 0)
+          and (LeftClose > LeftOpen)
+          and (RightOpen > LeftClose)
+          and (RightClose > RightOpen)
+          and TryReadPair(Copy(S, LeftOpen + 1, LeftClose - LeftOpen - 1), X, Y)
+          and TryReadPair(Copy(S, RightOpen + 1, RightClose - RightOpen - 1), A, B);
 end;
 
 procedure TMainForm.InitializeValues(const X, Y, A: Double);

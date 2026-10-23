@@ -1,11 +1,16 @@
 unit data_directories_dialog;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  ButtonPanel, ExtCtrls, Forms, launcher_models, StdCtrls;
+  ButtonPanel,
+  ExtCtrls,
+  Forms,
+  launcher_models,
+  StdCtrls;
 
 type
   TDataDirectoriesDialog = class(TForm)
@@ -35,7 +40,11 @@ implementation
 {$R *.lfm}
 
 uses
-  Classes, Controls, Dialogs, path_item_dialog, SysUtils;
+  Classes,
+  Controls,
+  Dialogs,
+  path_item_dialog,
+  SysUtils;
 
 procedure TDataDirectoriesDialog.Populate;
 var
@@ -45,8 +54,7 @@ var
   Paths: TStringList;
 begin
   FList.Clear;
-  for Index := 0 to FSettings.DataDirectories.Count - 1 do
-  begin
+  for Index := 0 to FSettings.DataDirectories.Count - 1 do begin
     DataDirectory := TDataDirectory(FSettings.DataDirectories[Index]);
     FList.Items.AddObject(DataDirectory.DisplayName + ' — ' + DataDirectory.DirectoryName.Value, DataDirectory);
   end;
@@ -90,8 +98,7 @@ begin
   if FList.ItemIndex < 0 then
     Exit;
   DataDirectory := FList.Items.Objects[FList.ItemIndex];
-  if DataDirectory = nil then
-  begin
+  if DataDirectory = nil then begin
     MessageDlg('Environment data folders are read-only.', mtInformation, [mbOK], 0);
     Exit;
   end;
@@ -111,8 +118,7 @@ begin
   if FList.ItemIndex < 0 then
     Exit;
   DataDirectory := TDataDirectory(FList.Items.Objects[FList.ItemIndex]);
-  if DataDirectory = nil then
-  begin
+  if DataDirectory = nil then begin
     MessageDlg('Environment data folders are read-only.', mtInformation, [mbOK], 0);
     Exit;
   end;

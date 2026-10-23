@@ -1,11 +1,14 @@
 unit profile_service;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, Contnrs, launcher_models;
+  Classes,
+  Contnrs,
+  launcher_models;
 
 procedure ExportProfile(const AFileName: string; AProfile: TProfile);
 function ImportProfile(const AFileName, ABaseDirectory: string; AEngines, AAvailableWads: TObjectList; AUnresolved: TStrings): TProfile;
@@ -13,7 +16,9 @@ function ImportProfile(const AFileName, ABaseDirectory: string; AEngines, AAvail
 implementation
 
 uses
-  IniFiles, path_service, SysUtils;
+  IniFiles,
+  path_service,
+  SysUtils;
 
 procedure WriteStoredPath(AIni: TCustomIniFile; const APrefix: string; const APath: TStoredPath);
 begin
@@ -51,8 +56,7 @@ begin
     Ini.WriteInteger('Profile', 'Port', AProfile.Options.Port);
     Ini.WriteInteger('Profile', 'PlayerCount', AProfile.Options.PlayerCount);
     Ini.WriteInteger('Profile', 'ModCount', AProfile.Mods.Count);
-    for Index := 0 to AProfile.Mods.Count - 1 do
-    begin
+    for Index := 0 to AProfile.Mods.Count - 1 do begin
       Ini.WriteString('Profile', 'Mod' + IntToStr(Index) + 'Path', AProfile.Mods[Index]);
       Ini.WriteBool('Profile', 'Mod' + IntToStr(Index) + 'Absolute', PtrInt(AProfile.Mods.Objects[Index]) <> 0);
     end;
@@ -69,11 +73,9 @@ var
   Index: Integer;
 begin
   FoundCount := 0;
-  for Index := 0 to AEngines.Count - 1 do
-  begin
+  for Index := 0 to AEngines.Count - 1 do begin
     Engine := TEngine(AEngines[Index]);
-    if SameText(ExtractFileName(ResolveStoredPath(ABaseDirectory, Engine.FileName)), AFileName) then
-    begin
+    if SameText(ExtractFileName(ResolveStoredPath(ABaseDirectory, Engine.FileName)), AFileName) then begin
       Inc(FoundCount);
       APath := Engine.FileName;
     end;
@@ -88,11 +90,9 @@ var
   Wad: TWadMetadata;
 begin
   FoundCount := 0;
-  for Index := 0 to AWads.Count - 1 do
-  begin
+  for Index := 0 to AWads.Count - 1 do begin
     Wad := TWadMetadata(AWads[Index]);
-    if SameText(ExtractFileName(ResolveStoredPath(ABaseDirectory, Wad.FileName)), AFileName) then
-    begin
+    if SameText(ExtractFileName(ResolveStoredPath(ABaseDirectory, Wad.FileName)), AFileName) then begin
       Inc(FoundCount);
       APath := Wad.FileName;
     end;
@@ -100,7 +100,13 @@ begin
   Result := FoundCount = 1;
 end;
 
-function ResolveImportedPath(const ABaseDirectory: string; const AImported: TStoredPath; AIsEngine: Boolean; AEngines, AWads: TObjectList; out AResolved: TStoredPath): Boolean;
+function ResolveImportedPath(
+    const ABaseDirectory: string;
+    const AImported: TStoredPath;
+    AIsEngine: Boolean;
+    AEngines, AWads: TObjectList;
+    out AResolved: TStoredPath
+): Boolean;
 var
   AbsolutePath: string;
 begin
@@ -132,48 +138,44 @@ begin
       Result.Name := Ini.ReadString('Profile', 'Name', 'Imported Profile');
       Result.Locked := False;
 
-    ImportedPath := ReadStoredPath(Ini, 'Engine');
-    if ResolveImportedPath(ABaseDirectory, ImportedPath, True, AEngines, AAvailableWads, ResolvedPath) then
-      Result.EnginePath := ResolvedPath
-    else
-    begin
-      Result.EnginePath := ImportedPath;
-      AUnresolved.Add('Engine: ' + ImportedPath.Value);
-    end;
+      ImportedPath := ReadStoredPath(Ini, 'Engine');
+      if ResolveImportedPath(ABaseDirectory, ImportedPath, True, AEngines, AAvailableWads, ResolvedPath) then
+        Result.EnginePath := ResolvedPath
+      else begin
+        Result.EnginePath := ImportedPath;
+        AUnresolved.Add('Engine: ' + ImportedPath.Value);
+      end;
 
-    ImportedPath := ReadStoredPath(Ini, 'IWad');
-    if ResolveImportedPath(ABaseDirectory, ImportedPath, False, AEngines, AAvailableWads, ResolvedPath) then
-      Result.IWadPath := ResolvedPath
-    else
-    begin
-      Result.IWadPath := ImportedPath;
-      AUnresolved.Add('IWAD: ' + ImportedPath.Value);
-    end;
+      ImportedPath := ReadStoredPath(Ini, 'IWad');
+      if ResolveImportedPath(ABaseDirectory, ImportedPath, False, AEngines, AAvailableWads, ResolvedPath) then
+        Result.IWadPath := ResolvedPath
+      else begin
+        Result.IWadPath := ImportedPath;
+        AUnresolved.Add('IWAD: ' + ImportedPath.Value);
+      end;
 
-    Result.ExtraArguments := Ini.ReadString('Profile', 'ExtraArguments', '');
-    Result.Options := DefaultLaunchOptions;
-    Result.Options.Skill := Ini.ReadInteger('Profile', 'Skill', 3);
-    Result.Options.StartMap := Ini.ReadString('Profile', 'StartMap', '');
-    Result.Options.NoMonsters := Ini.ReadBool('Profile', 'NoMonsters', False);
-    Result.Options.FastMonsters := Ini.ReadBool('Profile', 'FastMonsters', False);
-    Result.Options.RespawnMonsters := Ini.ReadBool('Profile', 'RespawnMonsters', False);
-    Result.Options.EnableMultiplayer := Ini.ReadBool('Profile', 'Multiplayer', False);
-    Result.Options.HostGame := Ini.ReadBool('Profile', 'HostGame', False);
-    Result.Options.HostName := Ini.ReadString('Profile', 'HostName', '');
-    Result.Options.Port := Ini.ReadInteger('Profile', 'Port', 10666);
-    Result.Options.PlayerCount := Ini.ReadInteger('Profile', 'PlayerCount', 4);
+      Result.ExtraArguments := Ini.ReadString('Profile', 'ExtraArguments', '');
+      Result.Options := DefaultLaunchOptions;
+      Result.Options.Skill := Ini.ReadInteger('Profile', 'Skill', 3);
+      Result.Options.StartMap := Ini.ReadString('Profile', 'StartMap', '');
+      Result.Options.NoMonsters := Ini.ReadBool('Profile', 'NoMonsters', False);
+      Result.Options.FastMonsters := Ini.ReadBool('Profile', 'FastMonsters', False);
+      Result.Options.RespawnMonsters := Ini.ReadBool('Profile', 'RespawnMonsters', False);
+      Result.Options.EnableMultiplayer := Ini.ReadBool('Profile', 'Multiplayer', False);
+      Result.Options.HostGame := Ini.ReadBool('Profile', 'HostGame', False);
+      Result.Options.HostName := Ini.ReadString('Profile', 'HostName', '');
+      Result.Options.Port := Ini.ReadInteger('Profile', 'Port', 10666);
+      Result.Options.PlayerCount := Ini.ReadInteger('Profile', 'PlayerCount', 4);
 
-    ModCount := Ini.ReadInteger('Profile', 'ModCount', 0);
-    if (ModCount < 0) or (ModCount > 100000) then
-      raise EConvertError.Create('Invalid profile mod count.');
-      for Index := 0 to ModCount - 1 do
-      begin
+      ModCount := Ini.ReadInteger('Profile', 'ModCount', 0);
+      if (ModCount < 0) or (ModCount > 100000) then
+        raise EConvertError.Create('Invalid profile mod count.');
+      for Index := 0 to ModCount - 1 do begin
         ImportedPath.Value := Ini.ReadString('Profile', 'Mod' + IntToStr(Index) + 'Path', '');
         ImportedPath.IsAbsolute := Ini.ReadBool('Profile', 'Mod' + IntToStr(Index) + 'Absolute', False);
         if ResolveImportedPath(ABaseDirectory, ImportedPath, False, AEngines, AAvailableWads, ResolvedPath) then
           Result.Mods.AddObject(ResolvedPath.Value, TObject(PtrInt(Ord(ResolvedPath.IsAbsolute))))
-        else
-        begin
+        else begin
           Result.Mods.AddObject(ImportedPath.Value, TObject(PtrInt(Ord(ImportedPath.IsAbsolute))));
           AUnresolved.Add('Mod: ' + ImportedPath.Value);
         end;

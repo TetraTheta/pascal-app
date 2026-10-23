@@ -1,11 +1,20 @@
 unit main;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, ComCtrls, Controls, ExtCtrls, Forms, Menus, StdCtrls, Interfaces, launcher_models;
+  Classes,
+  ComCtrls,
+  Controls,
+  ExtCtrls,
+  Forms,
+  Menus,
+  StdCtrls,
+  Interfaces,
+  launcher_models;
 
 type
   TMainForm = class;
@@ -145,10 +154,20 @@ implementation
 {$R *.lfm}
 
 uses
-  Contnrs, data_directories_dialog, Dialogs, launch_arguments_dialog, launch_options_dialog, launch_service, launcher_configuration, path_item_dialog, path_service, profile_service, SysUtils, wad_service;
+  Contnrs,
+  data_directories_dialog,
+  Dialogs,
+  launch_arguments_dialog,
+  launch_options_dialog,
+  launch_service,
+  launcher_configuration,
+  path_item_dialog,
+  path_service,
+  profile_service,
+  SysUtils,
+  wad_service;
 
-constructor TWadScanThread.Create(const ABaseDirectory: string;
-  ASettings: TLauncherSettings);
+constructor TWadScanThread.Create(const ABaseDirectory: string; ASettings: TLauncherSettings);
 begin
   inherited Create(True);
   FreeOnTerminate := True;
@@ -185,16 +204,19 @@ begin
   FWads := TObjectList.Create(True);
   FWorkingProfile := TProfile.Create;
 
-  if not LoadLauncherSettings(FConfigFileName, FSettings, ErrorText) then
-  begin
-    if MessageDlg('The configuration could not be read:' + LineEnding + ErrorText + LineEnding + LineEnding + 'Back it up and start with empty settings?', mtError, [mbYes, mbNo], 0) = mrYes then
+  if not LoadLauncherSettings(FConfigFileName, FSettings, ErrorText) then begin
+    if MessageDlg(
+            'The configuration could not be read:' + LineEnding + ErrorText + LineEnding + LineEnding + 'Back it up and start with empty settings?',
+            mtError,
+            [mbYes, mbNo],
+            0)
+        = mrYes then
     begin
       try
         BackupFileName := BackupBrokenConfiguration(FConfigFileName);
         MessageDlg('The old configuration was moved to:' + LineEnding + BackupFileName, mtInformation, [mbOK], 0);
       except
-        on E: Exception do
-        begin
+        on E: Exception do begin
           FAllowSave := False;
           MessageDlg(E.Message, mtError, [mbOK], 0);
         end;
@@ -220,8 +242,7 @@ end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  if FScanThread <> nil then
-  begin
+  if FScanThread <> nil then begin
     MessageDlg('Please wait for the WAD scan to finish.', mtInformation, [mbOK], 0);
     CanClose := False;
     Exit;
@@ -247,8 +268,7 @@ var
   Index: Integer;
 begin
   FEngineList.Clear;
-  for Index := 0 to FSettings.Engines.Count - 1 do
-  begin
+  for Index := 0 to FSettings.Engines.Count - 1 do begin
     Engine := TEngine(FSettings.Engines[Index]);
     FEngineList.Items.AddObject(Engine.DisplayName + ' — ' + Engine.FileName.Value, Engine);
   end;
@@ -260,8 +280,7 @@ var
   Profile: TProfile;
 begin
   FProfileList.Clear;
-  for Index := 0 to FSettings.Profiles.Count - 1 do
-  begin
+  for Index := 0 to FSettings.Profiles.Count - 1 do begin
     Profile := TProfile(FSettings.Profiles[Index]);
     FProfileList.Items.AddObject(Profile.Name, Profile);
   end;
@@ -273,8 +292,7 @@ var
   Wad: TWadMetadata;
 begin
   FIWadList.Clear;
-  for Index := 0 to TObjectList(FWads).Count - 1 do
-  begin
+  for Index := 0 to TObjectList(FWads).Count - 1 do begin
     Wad := TWadMetadata(TObjectList(FWads)[Index]);
     if Wad.IsIWad then
       FIWadList.Items.AddObject(Wad.DisplayName + ' — ' + Wad.FileName.Value, Wad);
@@ -292,8 +310,7 @@ begin
   try
     FAvailableWads.Clear;
     SearchText := LowerCase(Trim(FAvailableFilter.Text));
-    for Index := 0 to TObjectList(FWads).Count - 1 do
-    begin
+    for Index := 0 to TObjectList(FWads).Count - 1 do begin
       Wad := TWadMetadata(TObjectList(FWads)[Index]);
       if Wad.IsIWad or ((SearchText <> '') and (Pos(SearchText, LowerCase(Wad.DisplayName + ' ' + Wad.FileName.Value)) = 0)) then
         Continue;
@@ -314,8 +331,7 @@ var
   Wad: TWadMetadata;
 begin
   Result := nil;
-  for Index := 0 to TObjectList(FWads).Count - 1 do
-  begin
+  for Index := 0 to TObjectList(FWads).Count - 1 do begin
     Wad := TWadMetadata(TObjectList(FWads)[Index]);
     if SameFileName(ResolveStoredPath(FBaseDirectory, Wad.FileName), ResolveStoredPath(FBaseDirectory, APath)) then
       Exit(Wad);
@@ -334,21 +350,18 @@ begin
   try
     FSelectedWads.Clear;
     SearchText := LowerCase(Trim(FSelectedFilter.Text));
-    for Index := 0 to FWorkingProfile.Mods.Count - 1 do
-    begin
+    for Index := 0 to FWorkingProfile.Mods.Count - 1 do begin
       Path := StoredPath(FWorkingProfile.Mods[Index], PtrInt(FWorkingProfile.Mods.Objects[Index]) <> 0);
       Wad := FindWad(Path);
       if (SearchText <> '') and (Pos(SearchText, LowerCase(Path.Value)) = 0) then
         Continue;
       Item := FSelectedWads.Items.Add;
-      if Wad <> nil then
-      begin
+      if Wad <> nil then begin
         Item.Caption := Wad.DisplayName;
         Item.SubItems.Add(IntToStr(Wad.MapIds.Count));
         Item.Data := Wad;
       end
-      else
-      begin
+      else begin
         Item.Caption := '[Missing] ' + ExtractFileName(Path.Value);
         Item.SubItems.Add('?');
       end;
@@ -367,8 +380,7 @@ begin
   FWorkingProfile.Free;
   if (AIndex >= 0) and (AIndex < FSettings.Profiles.Count) then
     FWorkingProfile := TProfile(FSettings.Profiles[AIndex]).Clone
-  else
-  begin
+  else begin
     FCurrentProfileIndex := -1;
     FWorkingProfile := TProfile.Create;
     FWorkingProfile.Name := '_unsorted';
@@ -387,15 +399,13 @@ begin
   try
     FProfileList.ItemIndex := FCurrentProfileIndex;
     FEngineList.ItemIndex := -1;
-    for Index := 0 to FSettings.Engines.Count - 1 do
-    begin
+    for Index := 0 to FSettings.Engines.Count - 1 do begin
       Engine := TEngine(FSettings.Engines[Index]);
       if SameFileName(ResolveStoredPath(FBaseDirectory, Engine.FileName), ResolveStoredPath(FBaseDirectory, FWorkingProfile.EnginePath)) then
         FEngineList.ItemIndex := Index;
     end;
     FIWadList.ItemIndex := -1;
-    for Index := 0 to FIWadList.Items.Count - 1 do
-    begin
+    for Index := 0 to FIWadList.Items.Count - 1 do begin
       Wad := TWadMetadata(FIWadList.Items.Objects[Index]);
       if SameFileName(ResolveStoredPath(FBaseDirectory, Wad.FileName), ResolveStoredPath(FBaseDirectory, FWorkingProfile.IWadPath)) then
         FIWadList.ItemIndex := Index;
@@ -414,11 +424,14 @@ var
   Index: Integer;
   ModPath: TStoredPath;
 begin
-  Result := (FWorkingProfile.EnginePath.Value <> '') and FileExists(ResolveStoredPath(FBaseDirectory, FWorkingProfile.EnginePath)) and (FWorkingProfile.IWadPath.Value <> '') and FileExists(ResolveStoredPath(FBaseDirectory, FWorkingProfile.IWadPath));
+  Result :=
+      (FWorkingProfile.EnginePath.Value <> '')
+          and FileExists(ResolveStoredPath(FBaseDirectory, FWorkingProfile.EnginePath))
+          and (FWorkingProfile.IWadPath.Value <> '')
+          and FileExists(ResolveStoredPath(FBaseDirectory, FWorkingProfile.IWadPath));
   if not Result then
     Exit;
-  for Index := 0 to FWorkingProfile.Mods.Count - 1 do
-  begin
+  for Index := 0 to FWorkingProfile.Mods.Count - 1 do begin
     ModPath := StoredPath(FWorkingProfile.Mods[Index], PtrInt(FWorkingProfile.Mods.Objects[Index]) <> 0);
     if not FileExists(ResolveStoredPath(FBaseDirectory, ModPath)) then
       Exit(False);
@@ -505,8 +518,7 @@ begin
   if (FSelectedWads.Selected = nil) or not CanEditProfile then
     Exit;
   ModIndex := FSelectedWads.Selected.ImageIndex;
-  if (ModIndex >= 0) and (ModIndex < FWorkingProfile.Mods.Count) then
-  begin
+  if (ModIndex >= 0) and (ModIndex < FWorkingProfile.Mods.Count) then begin
     FWorkingProfile.Mods.Delete(ModIndex);
     MarkDirty;
     PopulateSelectedWads;
@@ -520,8 +532,7 @@ begin
   if (FSelectedWads.Selected = nil) or not CanEditProfile then
     Exit;
   Index := FSelectedWads.Selected.ImageIndex;
-  if Index > 0 then
-  begin
+  if Index > 0 then begin
     FWorkingProfile.Mods.Exchange(Index, Index - 1);
     MarkDirty;
     PopulateSelectedWads(Index - 1);
@@ -535,8 +546,7 @@ begin
   if (FSelectedWads.Selected = nil) or not CanEditProfile then
     Exit;
   Index := FSelectedWads.Selected.ImageIndex;
-  if (Index >= 0) and (Index < FWorkingProfile.Mods.Count - 1) then
-  begin
+  if (Index >= 0) and (Index < FWorkingProfile.Mods.Count - 1) then begin
     FWorkingProfile.Mods.Exchange(Index, Index + 1);
     MarkDirty;
     PopulateSelectedWads(Index + 1);
@@ -560,8 +570,7 @@ var
 begin
   DisplayName := 'UZDoom';
   FileName := StoredPath('', False);
-  if EditPathItem('Add Engine', FBaseDirectory, False, DisplayName, FileName) then
-  begin
+  if EditPathItem('Add Engine', FBaseDirectory, False, DisplayName, FileName) then begin
     FSettings.Engines.Add(TEngine.Create(DisplayName, FileName));
     SaveSettings;
     PopulateEngines;
@@ -577,7 +586,9 @@ begin
     Exit;
   Engine := TEngine(FEngineList.Items.Objects[FEngineList.ItemIndex]);
   for Index := 0 to FSettings.Profiles.Count - 1 do
-    if SameFileName(ResolveStoredPath(FBaseDirectory, Engine.FileName), ResolveStoredPath(FBaseDirectory, TProfile(FSettings.Profiles[Index]).EnginePath)) then
+    if SameFileName(
+        ResolveStoredPath(FBaseDirectory, Engine.FileName),
+        ResolveStoredPath(FBaseDirectory, TProfile(FSettings.Profiles[Index]).EnginePath)) then
     begin
       MessageDlg('This engine is used by a profile.', mtError, [mbOK], 0);
       Exit;
@@ -608,8 +619,7 @@ begin
     Exit;
   Engine.DisplayName := DisplayName;
   Engine.FileName := FileName;
-  for Index := 0 to FSettings.Profiles.Count - 1 do
-  begin
+  for Index := 0 to FSettings.Profiles.Count - 1 do begin
     Profile := TProfile(FSettings.Profiles[Index]);
     if SameFileName(ResolveStoredPath(FBaseDirectory, Profile.EnginePath), ResolveStoredPath(FBaseDirectory, OldFileName)) then
       Profile.EnginePath := FileName;
@@ -629,7 +639,9 @@ begin
   Result := False;
   SanitizedName := SanitizeDirectoryName(AName);
   for Index := 0 to FSettings.Profiles.Count - 1 do
-    if (Index <> AExceptIndex) and (SameText(TProfile(FSettings.Profiles[Index]).Name, AName) or SameText(SanitizeDirectoryName(TProfile(FSettings.Profiles[Index]).Name), SanitizedName)) then
+    if (Index <> AExceptIndex)
+        and (SameText(TProfile(FSettings.Profiles[Index]).Name, AName)
+            or SameText(SanitizeDirectoryName(TProfile(FSettings.Profiles[Index]).Name), SanitizedName)) then
       Exit;
   Result := Trim(AName) <> '';
 end;
@@ -644,8 +656,7 @@ begin
   ProfileName := 'New Profile';
   if not InputQuery('New Profile', 'Profile name', ProfileName) then
     Exit;
-  if not UniqueProfileName(ProfileName, -1) then
-  begin
+  if not UniqueProfileName(ProfileName, -1) then begin
     MessageDlg('The profile name or save folder is already in use.', mtError, [mbOK], 0);
     Exit;
   end;
@@ -671,8 +682,7 @@ begin
   ProfileName := TProfile(FSettings.Profiles[FCurrentProfileIndex]).Name + ' Copy';
   if not InputQuery('Duplicate Profile', 'Profile name', ProfileName) then
     Exit;
-  if not UniqueProfileName(ProfileName, -1) then
-  begin
+  if not UniqueProfileName(ProfileName, -1) then begin
     MessageDlg('The profile name or save folder is already in use.', mtError, [mbOK], 0);
     Exit;
   end;
@@ -699,8 +709,7 @@ begin
   ProfileName := Profile.Name;
   if not InputQuery('Rename Profile', 'Profile name', ProfileName) then
     Exit;
-  if not UniqueProfileName(ProfileName, FCurrentProfileIndex) then
-  begin
+  if not UniqueProfileName(ProfileName, FCurrentProfileIndex) then begin
     MessageDlg('The profile name or save folder is already in use.', mtError, [mbOK], 0);
     Exit;
   end;
@@ -714,8 +723,7 @@ procedure TMainForm.RemoveProfileClick(Sender: TObject);
 begin
   if FCurrentProfileIndex < 0 then
     Exit;
-  if FWorkingProfile.Locked then
-  begin
+  if FWorkingProfile.Locked then begin
     MessageDlg('Unlock the profile before removing it.', mtInformation, [mbOK], 0);
     Exit;
   end;
@@ -734,8 +742,7 @@ var
 begin
   if FUpdating or (FCurrentProfileIndex < 0) then
     Exit;
-  if not ConfirmPendingChanges then
-  begin
+  if not ConfirmPendingChanges then begin
     FUpdating := True;
     FLockedCheckBox.Checked := FWorkingProfile.Locked;
     FUpdating := False;
@@ -768,8 +775,7 @@ begin
   Answer := MessageDlg('Save changes to the current profile?', mtConfirmation, [mbYes, mbNo, mbCancel], 0);
   if Answer = mrCancel then
     Exit(False);
-  if Answer = mrYes then
-  begin
+  if Answer = mrYes then begin
     SaveProfileClick(Self);
     Result := not FDirty;
   end
@@ -784,8 +790,7 @@ begin
   if FUpdating then
     Exit;
   NewIndex := FProfileList.ItemIndex;
-  if not ConfirmPendingChanges then
-  begin
+  if not ConfirmPendingChanges then begin
     FUpdating := True;
     FProfileList.ItemIndex := FCurrentProfileIndex;
     FUpdating := False;
@@ -798,8 +803,7 @@ end;
 
 procedure TMainForm.DataDirectoriesClick(Sender: TObject);
 begin
-  if ShowDataDirectoriesDialog(FBaseDirectory, FSettings) then
-  begin
+  if ShowDataDirectoriesDialog(FBaseDirectory, FSettings) then begin
     SaveSettings;
     StartScan;
   end;
@@ -830,8 +834,7 @@ begin
   Enabled := True;
   if ScanThread.ErrorText <> '' then
     MessageDlg('WAD scan failed:' + LineEnding + ScanThread.ErrorText, mtError, [mbOK], 0)
-  else if ScanThread.Results <> nil then
-  begin
+  else if ScanThread.Results <> nil then begin
     FWads.Free;
     FWads := ScanThread.Results;
     ScanThread.Results := nil;
@@ -860,8 +863,7 @@ begin
     Wad := FindWad(FWorkingProfile.IWadPath);
     if Wad <> nil then
       AvailableMaps.AddStrings(Wad.MapIds);
-    for Index := 0 to FWorkingProfile.Mods.Count - 1 do
-    begin
+    for Index := 0 to FWorkingProfile.Mods.Count - 1 do begin
       ModPath := StoredPath(FWorkingProfile.Mods[Index], PtrInt(FWorkingProfile.Mods.Objects[Index]) <> 0);
       Wad := FindWad(ModPath);
       if Wad <> nil then
@@ -878,10 +880,10 @@ procedure TMainForm.RunClick(Sender: TObject);
 var
   ErrorText: string;
 begin
-  if (FCurrentProfileIndex < 0) and (MessageDlg('No profile is selected. Saves will be stored in saves\_unsorted. Continue?', mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
+  if (FCurrentProfileIndex < 0)
+      and (MessageDlg('No profile is selected. Saves will be stored in saves\_unsorted. Continue?', mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
     Exit;
-  if not LaunchProfile(FBaseDirectory, FWorkingProfile, ErrorText) then
-  begin
+  if not LaunchProfile(FBaseDirectory, FWorkingProfile, ErrorText) then begin
     MessageDlg(ErrorText, mtError, [mbOK], 0);
     Exit;
   end;
@@ -925,8 +927,7 @@ procedure TMainForm.ExportProfileClick(Sender: TObject);
 var
   Dialog: TSaveDialog;
 begin
-  if FCurrentProfileIndex < 0 then
-  begin
+  if FCurrentProfileIndex < 0 then begin
     MessageDlg('Select a profile first.', mtInformation, [mbOK], 0);
     Exit;
   end;
@@ -962,8 +963,7 @@ begin
       ImportedProfile := ImportProfile(Dialog.FileName, FBaseDirectory, FSettings.Engines, TObjectList(FWads), Unresolved);
       if not UniqueProfileName(ImportedProfile.Name, -1) then
         ImportedProfile.Name := ImportedProfile.Name + ' (Imported)';
-      if not UniqueProfileName(ImportedProfile.Name, -1) then
-      begin
+      if not UniqueProfileName(ImportedProfile.Name, -1) then begin
         ImportedProfile.Free;
         MessageDlg('A profile with the imported name already exists.', mtError, [mbOK], 0);
         Exit;

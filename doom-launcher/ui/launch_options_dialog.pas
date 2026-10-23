@@ -1,11 +1,17 @@
 unit launch_options_dialog;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  ButtonPanel, Classes, Forms, launcher_models, Spin, StdCtrls;
+  ButtonPanel,
+  Classes,
+  Forms,
+  launcher_models,
+  Spin,
+  StdCtrls;
 
 type
   TLaunchOptionsDialog = class(TForm)
@@ -38,7 +44,10 @@ implementation
 {$R *.lfm}
 
 uses
-  Controls, Dialogs, launch_service, SysUtils;
+  Controls,
+  Dialogs,
+  launch_service,
+  SysUtils;
 
 function EditLaunchOptions(var AOptions: TLaunchOptions; AAvailableMaps: TStrings): Boolean;
 var
@@ -88,8 +97,7 @@ begin
     UpdatedOptions.RespawnMonsters := Dialog.RespawnMonstersCheckBox.Checked;
     UpdatedOptions.Skill := Dialog.SkillComboBox.ItemIndex;
     UpdatedOptions.StartMap := Trim(Dialog.MapComboBox.Text);
-    if not ValidateLaunchOptions(UpdatedOptions, ErrorText) then
-    begin
+    if not ValidateLaunchOptions(UpdatedOptions, ErrorText) then begin
       MessageDlg(ErrorText, mtError, [mbOK], 0);
       Exit;
     end;

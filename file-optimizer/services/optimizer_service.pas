@@ -1,11 +1,16 @@
 unit optimizer_service;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Classes, SysUtils, SyncObjs, IniFiles, optimizer_configuration;
+  Classes,
+  SysUtils,
+  SyncObjs,
+  IniFiles,
+  optimizer_configuration;
 
 type
   TFileState = (fsPending, fsRunning, fsDone, fsSkipped, fsFailed, fsCancelled, fsCached);
@@ -57,13 +62,23 @@ type
     function RunBatchPlugin(const ATool, AInputFile, AOutputFile: string): Integer;
     function RunPlugin(const AIndex: Integer; const AStatus, ACommand, AInputFile, AOutputFile: string; const AErrorMin, AErrorMax: Integer): Boolean;
     function RunRedirectedProcess(const AExecutable, AArguments, AInputFile, AOutputFile: string; const AAppendOutput: Boolean = False): Integer;
-    function RunTool(const AIndex: Integer; const AStatus, ATool, AArguments, AWorkingFile: string; const AInPlace: Boolean; const AErrorMin, AErrorMax: Integer): Boolean;
+    function RunTool(
+        const AIndex: Integer;
+        const AStatus, ATool, AArguments, AWorkingFile: string;
+        const AInPlace: Boolean;
+        const AErrorMin, AErrorMax: Integer
+    ): Boolean;
     procedure CleanCache;
     procedure ProcessItem(const AIndex: Integer);
     procedure RunFormatPlugins(const AIndex: Integer; const AWorkingFile: string);
     procedure SetResult(const AIndex: Integer; const AState: TFileState; const ASize: Int64; const ADetail: string);
     procedure UpdateCache(const APath: string);
-    procedure WritePluginLog(const ACommand, AStatus: string; const AExitCode: Integer; const AOriginalSize, AOptimizedSize: Int64; const AStartedAt: TDateTime);
+    procedure WritePluginLog(
+        const ACommand, AStatus: string;
+        const AExitCode: Integer;
+        const AOriginalSize, AOptimizedSize: Int64;
+        const AStartedAt: TDateTime
+    );
   public
     constructor Create(AConfiguration: TOptimizerConfiguration; const AExecutablePath: string);
     destructor Destroy; override;
@@ -85,10 +100,16 @@ type
 implementation
 
 uses
-  Math, StrUtils, Windows, ShellApi;
+  Math,
+  StrUtils,
+  Windows,
+  ShellApi;
 
-function ReplaceFileW(AReplaced, AReplacement, ABackup: PWideChar; AFlags: DWORD; AExclude, AReserved: Pointer): BOOL;
-  stdcall; external 'kernel32.dll' name 'ReplaceFileW';
+function ReplaceFileW(
+    AReplaced, AReplacement, ABackup: PWideChar;
+    AFlags: DWORD;
+    AExclude, AReserved: Pointer
+): BOOL; stdcall; external 'kernel32.dll' name 'ReplaceFileW';
 
 const
   KS_EXTENSION_7Z = ' .7z .lzma ';
@@ -108,7 +129,8 @@ const
   KS_EXTENSION_JXL = ' .jxl ';
   KS_EXTENSION_LUA = ' .lua .luac ';
   KS_EXTENSION_MIME = ' .mht .mhtml .eml .emlx .msg .mbx .vcf .vcard ';
-  KS_EXTENSION_MISC = ' .aai .art .avs .bpg .cin .cmyk .cmyka .dds .dpx .epdf .fax .fits .fpx .gray .hdr .hrz .inline .jpc .jpt .mono .mif .miff .mpc .mpr .msl .mtv .mvg .otb .p7 .palm .pcd .pcds .pcl .pcls .pdb .pbm .pfs .pfm .pgm .picon .pic .pict .pnm .ppm .psb .psd .ptif .ptiff .rfg .rgb .rgba .sgi .sun .uyvy .vicar .viff .wbmp .x .xbm .xpm .xwd .ycbr .ycbra .yub ';
+  KS_EXTENSION_MISC =
+      ' .aai .art .avs .bpg .cin .cmyk .cmyka .dds .dpx .epdf .fax .fits .fpx .gray .hdr .hrz .inline .jpc .jpt .mono .mif .miff .mpc .mpr .msl .mtv .mvg .otb .p7 .palm .pcd .pcds .pcl .pcls .pdb .pbm .pfs .pfm .pgm .picon .pic .pict .pnm .ppm .psb .psd .ptif .ptiff .rfg .rgb .rgba .sgi .sun .uyvy .vicar .viff .wbmp .x .xbm .xpm .xwd .ycbr .ycbra .yub ';
   KS_EXTENSION_MKV = ' .mkv .mka .mks .mk3d .webm .weba ';
   KS_EXTENSION_MNG = ' .mng ';
   KS_EXTENSION_MP3 = ' .mp3 ';
@@ -116,7 +138,8 @@ const
   KS_EXTENSION_OBJ = ' .obj .o .lib .a ';
   KS_EXTENSION_OGG = ' .ogg .oga .ogx .ogm .spx .opus ';
   KS_EXTENSION_OGV = ' .ogg .ogv .ogx ';
-  KS_EXTENSION_OLE = ' .ac .adp .apr .art .chm .chi .chq .chs .chw .db .doc .dot .fla .fpx .its .lit .max .mce .mdb .mdt .mic .mix .mpd .mpp .mpt .msc .msi .msg .msp .mst .mtw .mzz .ole .ole2 .one .opt .ost .pps .ppt .pub .puz .rfa .rft .rte .rvt .sldasm .sldprt .slddrw .sou .spo stickynotes.snt thumbs.db .vsd .vst .vss .wiz .wps .xl .xla .xlc .xlm .xls .xlw .xsf .xsn ';
+  KS_EXTENSION_OLE =
+      ' .ac .adp .apr .art .chm .chi .chq .chs .chw .db .doc .dot .fla .fpx .its .lit .max .mce .mdb .mdt .mic .mix .mpd .mpp .mpt .msc .msi .msg .msp .mst .mtw .mzz .ole .ole2 .one .opt .ost .pps .ppt .pub .puz .rfa .rft .rte .rvt .sldasm .sldprt .slddrw .sou .spo stickynotes.snt thumbs.db .vsd .vst .vss .wiz .wps .xl .xla .xlc .xlm .xls .xlw .xsf .xsn ';
   KS_EXTENSION_PCX = ' .dcx .pcc .pcx ';
   KS_EXTENSION_PDF = ' .epdf .pdf .fdf .ai ';
   KS_EXTENSION_PNG = ' .apng .ico .png .pns ';
@@ -129,16 +152,42 @@ const
   KS_EXTENSION_WAV = ' .wav ';
   KS_EXTENSION_WEBP = ' .webp ';
   KS_EXTENSION_XML = ' .xml .fb2 .fxg .kml .xsl .xslt .xhtml ';
-  KS_EXTENSION_ZIP = ' .air .apk .appx .bar .bsz .cbz .cdr .cdt .csl .des .docm .docx .dotx .dotm .dwf .dwfx .ear .easm .eprt .epub .fxg .gallery .gallerycollection .galleryitem .grs .ink .ipsw .itz .ipa .ita .jar .kmz .ksf .kmz .lxf .mdz .miz .mmip .mvz .mpp .msz .nar .nbk .notebook .ora .odb .odf .odg .odp .ods .odt .oex .osk .oxps .pk3 .ppam .potm .potx .ppsm .ppsx .pptm .pptx .pub .qwk .r2skin .rdb .rmskin .s3z .sldm .sldx .stz .swc .vdx .vtx .vsx .wal .war .wba .wmz .wsz .xap .xlam .xlsb .xlsm .xlsx .xltm .xltx .xnk .xmz .xpi .xps .z01 .z02 .z03 .z04 .z05 .z06 .z07 .z08 .z09 .z10 .zip .zx01 .zx02 .zx03 .zx04 .zx05 .zx05 .zx06 .zx07 .zx08 .zx09 .zx10 .zipx ';
+  KS_EXTENSION_ZIP =
+      ' .air .apk .appx .bar .bsz .cbz .cdr .cdt .csl .des .docm .docx .dotx .dotm .dwf .dwfx .ear .easm .eprt .epub .fxg .gallery .gallerycollection .galleryitem .grs .ink .ipsw .itz .ipa .ita .jar .kmz .ksf .kmz .lxf .mdz .miz .mmip .mvz .mpp .msz .nar .nbk .notebook .ora .odb .odf .odg .odp .ods .odt .oex .osk .oxps .pk3 .ppam .potm .potx .ppsm .ppsx .pptm .pptx .pub .qwk .r2skin .rdb .rmskin .s3z .sldm .sldx .stz .swc .vdx .vtx .vsx .wal .war .wba .wmz .wsz .xap .xlam .xlsb .xlsm .xlsx .xltm .xltx .xnk .xmz .xpi .xps .z01 .z02 .z03 .z04 .z05 .z06 .z07 .z08 .z09 .z10 .zip .zx01 .zx02 .zx03 .zx04 .zx05 .zx05 .zx06 .zx07 .zx08 .zx09 .zx10 .zipx ';
 
 type
   TOriginalOptions = record
     acCSSTemplate, acJSAdditionalExtensions, acPDFProfile: string;
-    bBMPCopyMetadata, bCSSEnableTidy, bDebug, bEXEDisablePETrim, bEXEEnableUPX, bGIFAllowLossy, bGIFCopyMetadata, bGZCopyMetadata,
-      bHTMLEnableTidy, bJPEGAllowLossy, bJPEGCopyMetadata, bJPEGUseArithmeticEncoding, bJSEnableJSMin, bLUAEnableLeanify,
-      bMiscCopyMetadata, bMiscDisable, bMP3CopyMetadata, bMP4CopyMetadata, bPCXCopyMetadata, bPDFSkipLayered, bPNGAllowLossy,
-      bPNGCopyMetadata, bTGACopyMetadata, bTIFFCopyMetadata, bWAVCopyMetadata, bWAVStripSilence, bWEBPAllowLossy,
-      bXMLEnableLeanify, bZIPCopyMetadata, bZIPRecurse: Boolean;
+    bBMPCopyMetadata,
+    bCSSEnableTidy,
+    bDebug,
+    bEXEDisablePETrim,
+    bEXEEnableUPX,
+    bGIFAllowLossy,
+    bGIFCopyMetadata,
+    bGZCopyMetadata,
+    bHTMLEnableTidy,
+    bJPEGAllowLossy,
+    bJPEGCopyMetadata,
+    bJPEGUseArithmeticEncoding,
+    bJSEnableJSMin,
+    bLUAEnableLeanify,
+    bMiscCopyMetadata,
+    bMiscDisable,
+    bMP3CopyMetadata,
+    bMP4CopyMetadata,
+    bPCXCopyMetadata,
+    bPDFSkipLayered,
+    bPNGAllowLossy,
+    bPNGCopyMetadata,
+    bTGACopyMetadata,
+    bTIFFCopyMetadata,
+    bWAVCopyMetadata,
+    bWAVStripSilence,
+    bWEBPAllowLossy,
+    bXMLEnableLeanify,
+    bZIPCopyMetadata,
+    bZIPRecurse: Boolean;
     iLeanifyIterations, iLevel, iPDFCustomDPI, iPNGWolfIterations: Integer;
   end;
 
@@ -190,14 +239,46 @@ end;
 
 function GetExtensionByContent(const APath, AJSAdditional: string; const AUseName: Boolean = False): string;
 const
-  KnownExtensions = KS_EXTENSION_AVIF + KS_EXTENSION_BMP + KS_EXTENSION_CSS + KS_EXTENSION_DLL + KS_EXTENSION_EXE +
-                    KS_EXTENSION_FLAC + KS_EXTENSION_GIF + KS_EXTENSION_GZ + KS_EXTENSION_HTML + KS_EXTENSION_ICO +
-                    KS_EXTENSION_JPG + KS_EXTENSION_JP2 + KS_EXTENSION_JS + KS_EXTENSION_JXL + KS_EXTENSION_LUA +
-                    KS_EXTENSION_MIME + KS_EXTENSION_MKV + KS_EXTENSION_MNG + KS_EXTENSION_MP3 + KS_EXTENSION_MP4 +
-                    KS_EXTENSION_OBJ + KS_EXTENSION_OGG + KS_EXTENSION_OGV + KS_EXTENSION_OLE + KS_EXTENSION_PCX +
-                    KS_EXTENSION_PDF + KS_EXTENSION_PNG + KS_EXTENSION_SQLITE + KS_EXTENSION_SWF + KS_EXTENSION_TAR +
-                    KS_EXTENSION_TENCENTQQ + KS_EXTENSION_TGA + KS_EXTENSION_TIFF + KS_EXTENSION_WAV +
-                    KS_EXTENSION_WEBP + KS_EXTENSION_XML + KS_EXTENSION_ZIP + KS_EXTENSION_7Z + KS_EXTENSION_MISC;
+  KnownExtensions =
+      KS_EXTENSION_AVIF
+          + KS_EXTENSION_BMP
+          + KS_EXTENSION_CSS
+          + KS_EXTENSION_DLL
+          + KS_EXTENSION_EXE
+          + KS_EXTENSION_FLAC
+          + KS_EXTENSION_GIF
+          + KS_EXTENSION_GZ
+          + KS_EXTENSION_HTML
+          + KS_EXTENSION_ICO
+          + KS_EXTENSION_JPG
+          + KS_EXTENSION_JP2
+          + KS_EXTENSION_JS
+          + KS_EXTENSION_JXL
+          + KS_EXTENSION_LUA
+          + KS_EXTENSION_MIME
+          + KS_EXTENSION_MKV
+          + KS_EXTENSION_MNG
+          + KS_EXTENSION_MP3
+          + KS_EXTENSION_MP4
+          + KS_EXTENSION_OBJ
+          + KS_EXTENSION_OGG
+          + KS_EXTENSION_OGV
+          + KS_EXTENSION_OLE
+          + KS_EXTENSION_PCX
+          + KS_EXTENSION_PDF
+          + KS_EXTENSION_PNG
+          + KS_EXTENSION_SQLITE
+          + KS_EXTENSION_SWF
+          + KS_EXTENSION_TAR
+          + KS_EXTENSION_TENCENTQQ
+          + KS_EXTENSION_TGA
+          + KS_EXTENSION_TIFF
+          + KS_EXTENSION_WAV
+          + KS_EXTENSION_WEBP
+          + KS_EXTENSION_XML
+          + KS_EXTENSION_ZIP
+          + KS_EXTENSION_7Z
+          + KS_EXTENSION_MISC;
 var
   Buffer, Tail: AnsiString;
   Extension, GroupExtensions: string;
@@ -213,8 +294,7 @@ begin
     if Length(Buffer) = 0 then
       Exit;
     Stream.ReadBuffer(Buffer[1], Length(Buffer));
-    if Size >= 512 then
-    begin
+    if Size >= 512 then begin
       SetLength(Tail, 512);
       Stream.Position := Size - 512;
       Stream.ReadBuffer(Tail[1], 512);
@@ -222,8 +302,7 @@ begin
   finally
     Stream.Free;
   end;
-  if Copy(Buffer, 5, 4) = 'ftyp' then
-  begin
+  if Copy(Buffer, 5, 4) = 'ftyp' then begin
     if (Copy(Buffer, 9, 4) = 'avif') or (Copy(Buffer, 9, 4) = 'avis') then
       Result := '.avif'
     else if (Copy(Buffer, 9, 4) = 'heic') or (Copy(Buffer, 9, 4) = 'heix') or (Copy(Buffer, 9, 4) = 'mif1') then
@@ -231,7 +310,12 @@ begin
     else
       Result := '.mp4';
   end
-  else if (Copy(Buffer, 1, 2) = 'BM') or (Copy(Buffer, 1, 2) = 'BA') or (Copy(Buffer, 1, 2) = 'CI') or (Copy(Buffer, 1, 2) = 'CP') or (Copy(Buffer, 1, 2) = 'IC') or (Copy(Buffer, 1, 2) = 'PT') then
+  else if (Copy(Buffer, 1, 2) = 'BM')
+      or (Copy(Buffer, 1, 2) = 'BA')
+      or (Copy(Buffer, 1, 2) = 'CI')
+      or (Copy(Buffer, 1, 2) = 'CP')
+      or (Copy(Buffer, 1, 2) = 'IC')
+      or (Copy(Buffer, 1, 2) = 'PT') then
     Result := '.bmp'
   else if (Copy(Buffer, 1, 2) = 'MZ') or (Copy(Buffer, 1, 2) = 'ZM') then
     Result := '.dll'
@@ -281,8 +365,7 @@ begin
     Result := '.tga'
   else if (Copy(Buffer, 1, 2) = #$0C#$ED) or (Copy(Buffer, 1, 3) = 'I I') or (Copy(Buffer, 1, 4) = 'II*'#0) or (Copy(Buffer, 1, 4) = 'MM'#0'+') then
     Result := '.tif'
-  else if Copy(Buffer, 1, 4) = 'RIFF' then
-  begin
+  else if Copy(Buffer, 1, 4) = 'RIFF' then begin
     if Copy(Buffer, 9, 4) = 'WEBP' then
       Result := '.webp'
     else if Copy(Buffer, 9, 4) = 'WAVE' then
@@ -296,9 +379,9 @@ begin
     Result := '.7z';
   if AUseName then
     Exit;
-  if Result = '' then
-  begin
-    if (Pos(' ' + Extension + ' ', KnownExtensions) > 0) or (Pos(' ' + Extension + ' ', ' ' + StringReplace(LowerCase(AJSAdditional), ',', ' ', [rfReplaceAll]) + ' ') > 0) then
+  if Result = '' then begin
+    if (Pos(' ' + Extension + ' ', KnownExtensions) > 0)
+        or (Pos(' ' + Extension + ' ', ' ' + StringReplace(LowerCase(AJSAdditional), ',', ' ', [rfReplaceAll]) + ' ') > 0) then
       Result := Extension;
     Exit;
   end;
@@ -353,8 +436,7 @@ begin
       Exit;
     if (Signature[0] <> $89) or (Signature[1] <> Ord('P')) then
       Exit;
-    while Stream.Position + 12 <= Stream.Size do
-    begin
+    while Stream.Position + 12 <= Stream.Size do begin
       Stream.ReadBuffer(ChunkHeader, SizeOf(ChunkHeader));
       ChunkLength := QWord(ChunkHeader[0]) shl 24 or QWord(ChunkHeader[1]) shl 16 or QWord(ChunkHeader[2]) shl 8 or QWord(ChunkHeader[3]);
       if (ChunkHeader[4] = Ord('a')) and (ChunkHeader[5] = Ord('c')) and (ChunkHeader[6] = Ord('T')) and (ChunkHeader[7] = Ord('L')) then
@@ -385,9 +467,15 @@ begin
   end;
   if Copy(Buffer, 1, 2) <> 'MZ' then
     Exit;
-  Result := (Pos('Inno Setup', Buffer) > 0) or (Pos('InstallShield', Buffer) > 0) or (Pos('Nullsoft Install System', Buffer) > 0) or
-            (Pos('RTPatch', Buffer) > 0) or (Pos('Rar!'#$1A#$07, Buffer) > 0) or (Pos('PK'#$03#$04, Buffer) > 0) or
-            (Pos('7z'#$BC#$AF#$27#$1C, Buffer) > 0) or (Pos('MSCF', Buffer) > 0);
+  Result :=
+      (Pos('Inno Setup', Buffer) > 0)
+          or (Pos('InstallShield', Buffer) > 0)
+          or (Pos('Nullsoft Install System', Buffer) > 0)
+          or (Pos('RTPatch', Buffer) > 0)
+          or (Pos('Rar!'#$1A#$07, Buffer) > 0)
+          or (Pos('PK'#$03#$04, Buffer) > 0)
+          or (Pos('7z'#$BC#$AF#$27#$1C, Buffer) > 0)
+          or (Pos('MSCF', Buffer) > 0);
 end;
 
 function IsJPEGCMYK(const APath: string): Boolean;
@@ -407,13 +495,11 @@ begin
   if (Count < 4) or (Buffer[0] <> $FF) or (Buffer[1] <> $D8) then
     Exit;
   Position := 2;
-  while Position + 10 <= Count do
-  begin
+  while Position + 10 <= Count do begin
     if Buffer[Position] <> $FF then
       Exit;
     Marker := Buffer[Position + 1];
-    if Marker = $FF then
-    begin
+    if Marker = $FF then begin
       Inc(Position);
       Continue;
     end;
@@ -506,7 +592,9 @@ end;
 destructor TOptimizerService.Destroy;
 begin
   Stop;
-  if Assigned(FCache) and FileExists(ChangeFileExt(FConfiguration.Path, '.Cache.ini')) and (GetFileSize(ChangeFileExt(FConfiguration.Path, '.Cache.ini')) > 2 * 1024 * 1024) then
+  if Assigned(FCache)
+      and FileExists(ChangeFileExt(FConfiguration.Path, '.Cache.ini'))
+      and (GetFileSize(ChangeFileExt(FConfiguration.Path, '.Cache.ini')) > 2 * 1024 * 1024) then
   begin
     CleanCache;
     FCache.UpdateFile;
@@ -557,8 +645,7 @@ begin
   Keys := TStringList.Create;
   try
     FCache.ReadSection('Cache', Keys);
-    for Index := 0 to Keys.Count - 1 do
-    begin
+    for Index := 0 to Keys.Count - 1 do begin
       Signature := FCache.ReadString('Cache', Keys[Index], '');
       Separator := Pos('|', Signature);
       if (Separator = 0) or not FileExists(Copy(Signature, 1, Separator - 1)) then
@@ -580,7 +667,12 @@ begin
   end;
 end;
 
-procedure TOptimizerService.WritePluginLog(const ACommand, AStatus: string; const AExitCode: Integer; const AOriginalSize, AOptimizedSize: Int64; const AStartedAt: TDateTime);
+procedure TOptimizerService.WritePluginLog(
+    const ACommand, AStatus: string;
+    const AExitCode: Integer;
+    const AOriginalSize, AOptimizedSize: Int64;
+    const AStartedAt: TDateTime
+);
 var
   Entry, LogPath: string;
   LogFile: TFileStream;
@@ -588,7 +680,31 @@ begin
   if FConfiguration.GetInteger('General', 'LogLevel') <= 3 then
     Exit;
   LogPath := IncludeTrailingPathDelimiter(ExtractFileDir(FPluginDirectory)) + 'FileOptimizer.log';
-  Entry := 'Start: ' + DateTimeToStr(AStartedAt) + #9 + 'End: ' + DateTimeToStr(Now) + #9 + 'Level: ' + FConfiguration.GetText('General', 'Level') + #9 + 'Original: ' + IntToStr(AOriginalSize) + #9 + 'Optimized: ' + IntToStr(AOptimizedSize) + #9 + 'Errorlevel: ' + IntToStr(AExitCode) + #9 + 'Plugin: ' + AStatus + #9 + 'Commandline: ' + ACommand + LineEnding;
+  Entry :=
+      'Start: '
+          + DateTimeToStr(AStartedAt)
+          + #9
+          + 'End: '
+          + DateTimeToStr(Now)
+          + #9
+          + 'Level: '
+          + FConfiguration.GetText('General', 'Level')
+          + #9
+          + 'Original: '
+          + IntToStr(AOriginalSize)
+          + #9
+          + 'Optimized: '
+          + IntToStr(AOptimizedSize)
+          + #9
+          + 'Errorlevel: '
+          + IntToStr(AExitCode)
+          + #9
+          + 'Plugin: '
+          + AStatus
+          + #9
+          + 'Commandline: '
+          + ACommand
+          + LineEnding;
   FLock.Enter;
   try
     try
@@ -668,8 +784,7 @@ begin
   try
     Kept := 0;
     for Index := 0 to High(FItems) do
-      if FItems[Index].State <> fsDone then
-      begin
+      if FItems[Index].State <> fsDone then begin
         FItems[Kept] := FItems[Index];
         Inc(Kept);
       end;
@@ -707,8 +822,7 @@ begin
   try
     Sorted.CaseSensitive := False;
     Sorted.Duplicates := dupAccept;
-    for Index := 0 to Count - 1 do
-    begin
+    for Index := 0 to Count - 1 do begin
       case AColumn of
         0: Key := FItems[Index].FileName;
         1: Key := FItems[Index].DetectedExtension;
@@ -726,8 +840,7 @@ begin
     SetLength(SortedItems, Length(FItems));
     FLock.Enter;
     try
-      for Index := 0 to High(SortedItems) do
-      begin
+      for Index := 0 to High(SortedItems) do begin
         if ADescending then
           SourceIndex := PtrInt(Sorted.Objects[High(SortedItems) - Index])
         else
@@ -801,8 +914,7 @@ begin
   FLock.Enter;
   try
     for Index := 0 to High(FItems) do
-      if FItems[Index].StartOrder > LatestOrder then
-      begin
+      if FItems[Index].StartOrder > LatestOrder then begin
         LatestOrder := FItems[Index].StartOrder;
         Result := Index;
       end;
@@ -887,36 +999,38 @@ begin
   Result := False;
   AError := '';
   StagePath := NewTempPath(ExtractFileDir(AOriginal)) + ExtractFileExt(AOriginal);
-  if not CopyFileData(AWorkingFile, StagePath) then
-  begin
+  if not CopyFileData(AWorkingFile, StagePath) then begin
     AError := 'Cannot stage optimized file';
     Exit;
   end;
   try
     HasTime := False;
-    if FConfiguration.GetBoolean('General', 'KeepAttributes') then
-    begin
-      FileHandle := CreateFileW(PWideChar(UnicodeString(AOriginal)), GENERIC_READ, FILE_SHARE_READ or FILE_SHARE_WRITE or FILE_SHARE_DELETE, nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-      if FileHandle <> INVALID_HANDLE_VALUE then
-      begin
+    if FConfiguration.GetBoolean('General', 'KeepAttributes') then begin
+      FileHandle :=
+          CreateFileW(
+              PWideChar(UnicodeString(AOriginal)),
+              GENERIC_READ,
+              FILE_SHARE_READ or FILE_SHARE_WRITE or FILE_SHARE_DELETE,
+              nil,
+              OPEN_EXISTING,
+              FILE_ATTRIBUTE_NORMAL,
+              0
+          );
+      if FileHandle <> INVALID_HANDLE_VALUE then begin
         HasTime := GetFileTime(FileHandle, @CreatedAt, @AccessedAt, @ModifiedAt);
         CloseHandle(FileHandle);
       end;
     end;
-    if not FConfiguration.GetBoolean('General', 'DoNotUseRecycleBin') then
-    begin
+    if not FConfiguration.GetBoolean('General', 'DoNotUseRecycleBin') then begin
       RecyclePath := NewTempPath(ExtractFileDir(AOriginal)) + ExtractFileExt(AOriginal);
-      if not MoveCopyToRecycleBin(AOriginal, RecyclePath) then
-      begin
+      if not MoveCopyToRecycleBin(AOriginal, RecyclePath) then begin
         AError := 'Cannot back up original in Recycle Bin';
         Exit;
       end;
     end;
-    if not FConfiguration.GetBoolean('General', 'DoNotCreateBackups') then
-    begin
+    if not FConfiguration.GetBoolean('General', 'DoNotCreateBackups') then begin
       BackupPath := AOriginal + '.bak';
-      if not CopyFileData(AOriginal, BackupPath) then
-      begin
+      if not CopyFileData(AOriginal, BackupPath) then begin
         AError := 'Cannot create .bak file';
         Exit;
       end;
@@ -924,14 +1038,20 @@ begin
     Attributes := FileGetAttr(AOriginal);
     if Attributes <> -1 then
       FileSetAttr(AOriginal, faArchive);
-    if ReplaceFileW(PWideChar(UnicodeString(AOriginal)), PWideChar(UnicodeString(StagePath)), nil, 0, nil, nil) then
-    begin
+    if ReplaceFileW(PWideChar(UnicodeString(AOriginal)), PWideChar(UnicodeString(StagePath)), nil, 0, nil, nil) then begin
       Result := True;
-      if HasTime then
-      begin
-        FileHandle := CreateFileW(PWideChar(UnicodeString(AOriginal)), FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ or FILE_SHARE_WRITE or FILE_SHARE_DELETE, nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-        if FileHandle <> INVALID_HANDLE_VALUE then
-        begin
+      if HasTime then begin
+        FileHandle :=
+            CreateFileW(
+                PWideChar(UnicodeString(AOriginal)),
+                FILE_WRITE_ATTRIBUTES,
+                FILE_SHARE_READ or FILE_SHARE_WRITE or FILE_SHARE_DELETE,
+                nil,
+                OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,
+                0
+            );
+        if FileHandle <> INVALID_HANDLE_VALUE then begin
           SetFileTime(FileHandle, @CreatedAt, @AccessedAt, @ModifiedAt);
           CloseHandle(FileHandle);
         end;
@@ -939,8 +1059,7 @@ begin
       if FConfiguration.GetBoolean('General', 'KeepAttributes') and (Attributes <> -1) then
         FileSetAttr(AOriginal, Attributes);
     end
-    else
-    begin
+    else begin
       AError := 'Cannot replace original';
       if Attributes <> -1 then
         FileSetAttr(AOriginal, Attributes);
@@ -994,8 +1113,7 @@ begin
   try
     FCancelled := False;
     FNextIndex := 0;
-    for Index := 0 to High(FItems) do
-    begin
+    for Index := 0 to High(FItems) do begin
       FItems[Index].State := fsPending;
       FItems[Index].OptimizedSize := FItems[Index].OriginalSize;
       FItems[Index].Detail := '';
@@ -1021,8 +1139,7 @@ begin
     WorkerCount := 1;
   WorkerCount := Min(WorkerCount, Count);
   SetLength(FWorkers, WorkerCount);
-  for Index := 0 to WorkerCount - 1 do
-  begin
+  for Index := 0 to WorkerCount - 1 do begin
     FWorkers[Index] := TOptimizerWorker.Create(Self);
     FWorkers[Index].Start;
   end;
@@ -1067,18 +1184,15 @@ begin
     SetResult(AIndex, fsSkipped, SizeBefore, '');
     Exit;
   end;
-  if MatchesMask(FileName, FConfiguration.GetText('General', 'ExcludeMask')) then
-  begin
+  if MatchesMask(FileName, FConfiguration.GetText('General', 'ExcludeMask')) then begin
     SetResult(AIndex, fsSkipped, SizeBefore, '');
     Exit;
   end;
-  if SizeBefore = 0 then
-  begin
+  if SizeBefore = 0 then begin
     SetResult(AIndex, fsSkipped, 0, '');
     Exit;
   end;
-  if Cached(FileName) then
-  begin
+  if Cached(FileName) then begin
     SetResult(AIndex, fsCached, SizeBefore, '');
     Exit;
   end;
@@ -1088,8 +1202,7 @@ begin
   if not DirectoryExists(TempDirectory) then
     ForceDirectories(TempDirectory);
   WorkingFile := NewTempPath(TempDirectory) + Item(AIndex).DetectedExtension;
-  if not CopyFileData(FileName, WorkingFile) then
-  begin
+  if not CopyFileData(FileName, WorkingFile) then begin
     SetResult(AIndex, fsFailed, SizeBefore, 'Cannot create working copy');
     Exit;
   end;
@@ -1098,18 +1211,15 @@ begin
     SizeAfter := FileSizeOrZero(WorkingFile);
     if IsCancelled then
       SetResult(AIndex, fsCancelled, SizeBefore, '')
-    else if SizeAfter >= SizeBefore then
-    begin
+    else if SizeAfter >= SizeBefore then begin
       if Item(AIndex).PluginRuns = 0 then
         SetResult(AIndex, fsSkipped, SizeBefore, 'No compatible plugin programs were run')
-      else
-      begin
+      else begin
         SetResult(AIndex, fsDone, SizeBefore, Item(AIndex).LastPluginError);
         UpdateCache(FileName);
       end;
     end
-    else if CommitFile(FileName, WorkingFile, ErrorText) then
-    begin
+    else if CommitFile(FileName, WorkingFile, ErrorText) then begin
       SetResult(AIndex, fsDone, SizeAfter, '');
       UpdateCache(FileName);
     end
@@ -1169,35 +1279,88 @@ begin
   sInputFile := AWorkingFile;
   sPluginsDirectory := IncludeTrailingPathDelimiter(FPluginDirectory);
   sExtensionByContent := ' ' + GetExtensionByContent(sInputFile, gudtOptions.acJSAdditionalExtensions) + ' ';
-    if PosEx(sExtensionByContent, KS_EXTENSION_AVIF) > 0 then
-    begin
+  if PosEx(sExtensionByContent, KS_EXTENSION_AVIF) > 0 then begin
+    sFlags := '';
+    RunPlugin(
+        AIndex,
+        'ImageMagick (1/1)',
+        sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -define heic:speed=1 ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_BMP) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bBMPCopyMetadata then
+      sFlags := sFlags + '-strip ';
+    RunPlugin(
+        AIndex,
+        'ImageMagick (1/2)',
+        sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -compress RLE ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(
+        AIndex,
+        'ImageWorsener (2/2)',
+        sPluginsDirectory + 'imagew.exe -opt bmp:version=auto -noresize -zipcmprlevel 9 -outfmt bmp -compress "rle" "%INPUTFILE%" "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_CSS) > 0 then begin
+    if gudtOptions.bCSSEnableTidy then begin
+      RunPlugin(
+          AIndex,
+          'CSSTidy (1/2)',
+          sPluginsDirectory + 'csstidy.exe "%INPUTFILE%" --template=' + gudtOptions.acCSSTemplate + ' "%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+      RunPlugin(AIndex, 'Minify (2/2)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_DLL) > 0 then begin
+    if not gudtOptions.bEXEDisablePETrim then
+      RunPlugin(AIndex, 'PETrim (1/3)', sPluginsDirectory + 'petrim.exe "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'strip (2/3)', sPluginsDirectory + 'strip.exe --strip-all -o "%TMPOUTPUTFILE%" "%INPUTFILE%"', sInputFile, '', 0, 0);
+    if gudtOptions.bEXEEnableUPX then begin
       sFlags := '';
-      RunPlugin(AIndex, 'ImageMagick (1/1)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -define heic:speed=1 ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+      if gudtOptions.iLevel < 3 then
+        sFlags := sFlags + '-1 '
+      else if gudtOptions.iLevel < 5 then
+        sFlags := sFlags + '-9 '
+      else if gudtOptions.iLevel < 7 then
+        sFlags := sFlags + '-9 --best '
+      else if gudtOptions.iLevel < 9 then
+        sFlags := sFlags + '-9 --best --lzma '
+      else
+        sFlags := sFlags + '-9 --best --lzma --ultra-brute --crp-ms=999999 ';
+      RunPlugin(AIndex, 'UPX (3/3)', sPluginsDirectory + 'upx.exe --no-backup --force ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_BMP) > 0 then
-    begin
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_EXE) > 0 then begin
+    if not IsEXESFX(sInputFile) then begin
       sFlags := '';
-      if not gudtOptions.bBMPCopyMetadata then
-        sFlags := sFlags + '-strip ';
-      RunPlugin(AIndex, 'ImageMagick (1/2)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -compress RLE ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'ImageWorsener (2/2)', sPluginsDirectory + 'imagew.exe -opt bmp:version=auto -noresize -zipcmprlevel 9 -outfmt bmp -compress "rle" "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_CSS) > 0 then
-    begin
-      if gudtOptions.bCSSEnableTidy then
-      begin
-        RunPlugin(AIndex, 'CSSTidy (1/2)', sPluginsDirectory + 'csstidy.exe "%INPUTFILE%" --template=' + gudtOptions.acCSSTemplate + ' "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        RunPlugin(AIndex, 'Minify (2/2)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_DLL) > 0 then
-    begin
+      if gudtOptions.iLeanifyIterations <> -1 then
+        iLevel := gudtOptions.iLeanifyIterations
+      else
+        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+      RunPlugin(AIndex, 'Leanify (1/4)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
       if not gudtOptions.bEXEDisablePETrim then
-        RunPlugin(AIndex, 'PETrim (1/3)', sPluginsDirectory + 'petrim.exe "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'strip (2/3)', sPluginsDirectory + 'strip.exe --strip-all -o "%TMPOUTPUTFILE%" "%INPUTFILE%"', sInputFile, '', 0, 0);
-      if gudtOptions.bEXEEnableUPX then
-      begin
-        sFlags := '';
+        RunPlugin(AIndex, 'PETrim (2/4)', sPluginsDirectory + 'petrim.exe /StripFixups:Y "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+      RunPlugin(AIndex, 'strip (3/4)', sPluginsDirectory + 'strip.exe --strip-all -o "%TMPOUTPUTFILE%" "%INPUTFILE%"', sInputFile, '', 0, 0);
+      if gudtOptions.bEXEEnableUPX then begin
+        sFlags := '--no-backup --force ';
         if gudtOptions.iLevel < 3 then
           sFlags := sFlags + '-1 '
         else if gudtOptions.iLevel < 5 then
@@ -1208,518 +1371,341 @@ begin
           sFlags := sFlags + '-9 --best --lzma '
         else
           sFlags := sFlags + '-9 --best --lzma --ultra-brute --crp-ms=999999 ';
-        RunPlugin(AIndex, 'UPX (3/3)', sPluginsDirectory + 'upx.exe --no-backup --force ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+        RunPlugin(AIndex, 'UPX (4/4)', sPluginsDirectory + 'upx.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
       end;
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_EXE) > 0 then
-    begin
-      if not IsEXESFX(sInputFile) then
-      begin
-        sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
-        else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'Leanify (1/4)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-        if not gudtOptions.bEXEDisablePETrim then
-          RunPlugin(AIndex, 'PETrim (2/4)', sPluginsDirectory + 'petrim.exe /StripFixups:Y "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-        RunPlugin(AIndex, 'strip (3/4)', sPluginsDirectory + 'strip.exe --strip-all -o "%TMPOUTPUTFILE%" "%INPUTFILE%"', sInputFile, '', 0, 0);
-        if gudtOptions.bEXEEnableUPX then
-        begin
-          sFlags := '--no-backup --force ';
-          if gudtOptions.iLevel < 3 then
-            sFlags := sFlags + '-1 '
-          else if gudtOptions.iLevel < 5 then
-            sFlags := sFlags + '-9 '
-          else if gudtOptions.iLevel < 7 then
-            sFlags := sFlags + '-9 --best '
-          else if gudtOptions.iLevel < 9 then
-            sFlags := sFlags + '-9 --best --lzma '
-          else
-            sFlags := sFlags + '-9 --best --lzma --ultra-brute --crp-ms=999999 ';
-          RunPlugin(AIndex, 'UPX (4/4)', sPluginsDirectory + 'upx.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-        end;
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_FLAC) > 0 then
-    begin
-      if not gudtOptions.bWAVCopyMetadata then
-      begin
-        sTmpOutputFile := StringReplaceAll(sInputFile, '.flac', '-stripped.flac');
-        if sTmpOutputFile = sInputFile then
-          sTmpOutputFile := sTmpOutputFile + '-stripped.flac';
-        RunPlugin(AIndex, 'shntool (1/4)', sPluginsDirectory + 'shntool.exe strip -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"', sInputFile, '', 0, 0);
-        if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
-          CopyFileData(sTmpOutputFile, sInputFile);
-        if not gudtOptions.bDebug then
-          SysUtils.DeleteFile(sTmpOutputFile);
-        if gudtOptions.bWAVStripSilence then
-        begin
-          sTmpOutputFile := StringReplaceAll(sInputFile, '.flac', '-trimmed.flac');
-          if sTmpOutputFile = sInputFile then
-            sTmpOutputFile := sTmpOutputFile + '-trimmed.flac';
-          RunPlugin(AIndex, 'shntool (2/4)', sPluginsDirectory + 'shntool.exe trim -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"', sInputFile, '', 0, 0);
-          if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
-            CopyFileData(sTmpOutputFile, sInputFile);
-          if not gudtOptions.bDebug then
-            SysUtils.DeleteFile(sTmpOutputFile);
-        end;
-      end;
-      sFlags := '';
-      if gudtOptions.bMiscCopyMetadata then
-        sFlags := sFlags + '--keep-foreign-metadata ';
-      if gudtOptions.iLevel < 3 then
-        sFlags := sFlags + '-1 '
-      else if gudtOptions.iLevel < 5 then
-        sFlags := sFlags + '-8 --best '
-      else if gudtOptions.iLevel < 7 then
-        sFlags := sFlags + '-8 --best -e '
-      else
-        sFlags := sFlags + '-8 --best -ep ';
-      RunPlugin(AIndex, 'FLAC (3/4)', sPluginsDirectory + 'flac.exe --force -s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      if gudtOptions.iLevel >= 9 then
-        RunPlugin(AIndex, 'FLACOut (4/4)', sPluginsDirectory + 'flacout.exe /q /y "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_GIF) > 0 then
-    begin
-      sFlags := '';
-      if not gudtOptions.bGIFCopyMetadata then
-        sFlags := sFlags + '-strip ';
-      RunPlugin(AIndex, 'ImageMagick (1/2)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -layers optimize -compress LZW ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      iLevel := 3;
-      sFlags := sFlags + '-O' + IntToStr(iLevel) + ' ';
-      if not gudtOptions.bGIFCopyMetadata then
-        sFlags := sFlags + '--no-comments --no-extensions --no-names ';
-      if gudtOptions.bGIFAllowLossy then
-        sFlags := sFlags + '--lossy=85 ';
-      RunPlugin(AIndex, 'gifsicle (2/2)', sPluginsDirectory + 'gifsicle.exe -w -j --no-conserve-memory -o "%TMPOUTPUTFILE%" ' + sFlags + '"%INPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_GZ) > 0 then
-    begin
-      if not gudtOptions.bGZCopyMetadata then
-      begin
-        RunPlugin(AIndex, 'libdeflate (1/8)', sPluginsDirectory + 'libdeflate.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
-        else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        if gudtOptions.bGZCopyMetadata then
-          sFlags := sFlags + '--keep-exif ';
-        RunPlugin(AIndex, 'Leanify (2/8)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-      sFlags := '';
-      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'advdef (3/8)', sPluginsDirectory + 'advdef.exe -z -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'zRecompress (4/8)', sPluginsDirectory + 'zRecompress.exe -tgz "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if not gudtOptions.bGZCopyMetadata then
-        sFlags := sFlags + '-strip ';
-      iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
-      if iLevel = 9 then
-        iLevel := 90032;
-      sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'ECT (5/8)', sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file --allfilters -gzip ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if gudtOptions.bGZCopyMetadata then
-        sFlags := sFlags + '/c ';
-      RunPlugin(AIndex, 'DeflOpt (6/8)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'defluff (7/8)', sPluginsDirectory + 'defluff.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'DeflOpt (8/8)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_HTML) > 0 then
-    begin
-      if gudtOptions.bHTMLEnableTidy then
-      begin
-        RunPlugin(AIndex, 'tidy (1/3)', sPluginsDirectory + 'tidy.exe -config tidy.config -quiet -output "%TMPOUTPUTFILE%" "%INPUTFILE%" ', sInputFile, '', 0, 0);
-        RunPlugin(AIndex, 'Minify (2/3)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
-        else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'Leanify (3/3)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_ICO) > 0 then
-    begin
-      if not gudtOptions.bPNGCopyMetadata then
-      begin
-        sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
-        else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'Leanify (2/2)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_JP2) > 0 then
-    begin
-      sFlags := '';
-      RunPlugin(AIndex, 'ImageMagick (1/1)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -quality 0 ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_JPG) > 0 then
-    begin
-      bIsJPEGCMYK := IsJPEGCMYK(sInputFile);
-      sFlags := '';
-      iLevel := min(gudtOptions.iLevel * 4 div 9, 4);
-      sFlags := sFlags + '-s' + IntToStr(iLevel) + ' ';
-      if gudtOptions.bJPEGAllowLossy then
-        sFlags := sFlags + '-quality=95 '
-      else
-        sFlags := sFlags + '-lossless ';
-      if gudtOptions.bJPEGCopyMetadata then
-        sFlags := sFlags + '-nostrip ';
-      RunPlugin(AIndex, 'pingo (1/11)', sPluginsDirectory + 'pingo.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      if (gudtOptions.bJPEGAllowLossy) and (not gudtOptions.bJPEGCopyMetadata) then
-        RunPlugin(AIndex, 'cjpegli (2/11)', sPluginsDirectory + 'cjpegli.exe -q 70 "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      if (gudtOptions.bJPEGAllowLossy) and (not gudtOptions.bJPEGCopyMetadata) then
-        RunPlugin(AIndex, 'Guetzli (3/11)', sPluginsDirectory + 'guetzli.exe --auto --quality 90 "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      if gudtOptions.bJPEGAllowLossy then
-      begin
-        sFlags := '';
-        if not gudtOptions.bJPEGCopyMetadata then
-          sFlags := sFlags + '--strip ';
-        if gudtOptions.iLevel >= 5 then
-          sFlags := sFlags + '--accurate ';
-        RunPlugin(AIndex, 'jpeg-recompress (4/11)', sPluginsDirectory + 'jpeg-recompress.exe --method smallfry --quality high --min 60 --subsample disable --quiet ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-      if not bIsJPEGCMYK then
-      begin
-        sFlags := '';
-        if gudtOptions.bJPEGCopyMetadata then
-          sFlags := sFlags + '-zt '
-        else
-          sFlags := sFlags + '-purejpg -di -dx -dt -zt ';
-        RunPlugin(AIndex, 'jhead (5/11)', sPluginsDirectory + 'jhead.exe -q -autorot ' + sFlags + ' "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-      sFlags := '';
-      if gudtOptions.bJPEGCopyMetadata then
-        sFlags := sFlags + '--keep-exif --keep-icc --jpeg-keep-all ';
-      if gudtOptions.bJPEGUseArithmeticEncoding then
-        sFlags := sFlags + '--jpeg-arithmetic ';
-      if gudtOptions.iLeanifyIterations <> -1 then
-        iLevel := gudtOptions.iLeanifyIterations
-      else
-        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'Leanify (6/11)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      if gudtOptions.bJPEGAllowLossy then
-      begin
-        sFlags := '';
-        if not gudtOptions.bJPEGCopyMetadata then
-          sFlags := sFlags + '-strip ';
-        RunPlugin(AIndex, 'ImageMagick (7/11)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -interlace Plane -define jpeg:optimize-coding=True ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-      sFlags := '';
-      if not gudtOptions.bJPEGCopyMetadata then
-        sFlags := sFlags + '--strip-all ';
-      if gudtOptions.bJPEGUseArithmeticEncoding then
-        sFlags := sFlags + '--with-arith ';
-      sFlags := sFlags + '-w ' + IntToStr(GetSystemThreadCount) + ' ';
-      RunPlugin(AIndex, 'jpegoptim (8/11)', sPluginsDirectory + 'jpegoptim.exe -o -q --all-progressive --nofix ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if gudtOptions.bJPEGUseArithmeticEncoding then
-        sFlags := sFlags + '-arithmetic ';
-      if gudtOptions.bJPEGCopyMetadata then
-        sFlags := sFlags + '-copy all '
-      else
-        sFlags := sFlags + '-copy none ';
-      RunPlugin(AIndex, 'jpegtran (9/11)', sPluginsDirectory + 'jpegtran.exe -progressive -optimize ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'mozjpegtran (10/11)', sPluginsDirectory + 'mozjpegtran.exe -outfile "%TMPOUTPUTFILE%" -progressive -optimize -perfect ' + sFlags + '"%INPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if not gudtOptions.bJPEGCopyMetadata then
-        sFlags := sFlags + '-strip ';
-      if not gudtOptions.bPNGAllowLossy then
-        sFlags := sFlags + '--strict ';
-      iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
-      if iLevel = 9 then
-        iLevel := 90032;
-      sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'ECT (11/11)', sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file --allfilters -progressive ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_JXL) > 0 then
-    begin
-      sFlags := '';
-      iLevel := min(gudtOptions.iLevel * 9 div 9, 9);
-      sFlags := sFlags + 'jxl:effort=' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'ImageMagick (1/1)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    bJSAdditional := (((gudtOptions.acJSAdditionalExtensions <> '')) and (PosEx(sExtensionByContent, ' ' + StringReplaceAll(gudtOptions.acJSAdditionalExtensions, ',', ' ') + ' ') > 0));
-    if (PosEx(sExtensionByContent, KS_EXTENSION_JS) > 0) or (bJSAdditional) then
-    begin
-      if (gudtOptions.bJSEnableJSMin) or (bJSAdditional) then
-      begin
-        RunPlugin(AIndex, 'jsmin (1/2)', sPluginsDirectory + 'jsmin.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        RunPlugin(AIndex, 'Minify (2/2)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_LUA) > 0 then
-    begin
-      if gudtOptions.bLUAEnableLeanify then
-      begin
-        sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
-        else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'Leanify (1/1)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_MIME) > 0 then
-    begin
-      sFlags := '';
-      if gudtOptions.iLeanifyIterations <> -1 then
-        iLevel := gudtOptions.iLeanifyIterations
-      else
-        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'Leanify (1/1)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_MKV) > 0 then
-    begin
-      sFlags := '';
-      if not gudtOptions.bMP4CopyMetadata then
-        sFlags := sFlags + '-map_metadata -1 ';
-      RunPlugin(AIndex, 'ffmpeg (1/2)', sPluginsDirectory + 'ffmpeg.exe -i "%INPUTFILE%" -vcodec copy -acodec copy -map 0 ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'mkclean (2/2)', sPluginsDirectory + 'mkclean.exe --optimize --unsafe --quiet "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_MNG) > 0 then
-    begin
-      sFlags := '';
-      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'advmng (1/1)', sPluginsDirectory + 'advmng.exe -z -r -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_MP3) > 0 then
-    begin
-      sFlags := '';
-      if not gudtOptions.bMP3CopyMetadata then
-        sFlags := sFlags + '-t -s ';
-      RunPlugin(AIndex, 'MP3packer (1/1)', sPluginsDirectory + 'mp3packer.exe ' + sFlags + '-z -a "" -A -f "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_MP4) > 0 then
-    begin
-      sFlags := '';
-      if not gudtOptions.bMP4CopyMetadata then
-        sFlags := sFlags + '-map_metadata -1 ';
-      RunPlugin(AIndex, 'ffmpeg (1/2)', sPluginsDirectory + 'ffmpeg.exe -i "%INPUTFILE%" -vcodec copy -acodec copy -map 0 ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'mp4v2 (2/2)', sPluginsDirectory + 'mp4file.exe --optimize -q "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_OBJ) > 0 then
-      RunPlugin(AIndex, 'strip (1/1)', sPluginsDirectory + 'strip.exe --strip-all -o "%TMPOUTPUTFILE%" "%INPUTFILE%"', sInputFile, '', 0, 0);
-    if PosEx(sExtensionByContent, KS_EXTENSION_OGG) > 0 then
-    begin
-      RunPlugin(AIndex, 'OptiVorbis (1/2)', sPluginsDirectory + 'optivorbis.exe --vendor_string_action empty --comment_fields_action delete "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'rehuff_theora (2/2)', sPluginsDirectory + 'rehuff_theora.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_OGV) > 0 then
-    begin
-      sFlags := '';
-      if not gudtOptions.bMP4CopyMetadata then
-        sFlags := sFlags + '-map_metadata -1 ';
-      RunPlugin(AIndex, 'ffmpeg (1/2)', sPluginsDirectory + 'ffmpeg.exe -i "%INPUTFILE%" -vcodec copy -acodec copy -map 0 ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'rehuff_theora (2/2)', sPluginsDirectory + 'rehuff_theora.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_OLE) > 0 then
-    begin
-      RunPlugin(AIndex, 'Document Press (1/2)', sPluginsDirectory + 'docprc.exe -opt "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'Best CFBF (2/2)', sPluginsDirectory + 'bestcfbf.exe "%INPUTFILE%" "%TMPOUTPUTFILE%" -v4', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_PCX) > 0 then
-    begin
-      sFlags := '';
-      if not gudtOptions.bPCXCopyMetadata then
-        sFlags := sFlags + '-strip ';
-      RunPlugin(AIndex, 'ImageMagick (1/1)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -compress RLE ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_PDF) > 0 then
-    begin
-      bIsPDFLayered := IsPDFLayered(sInputFile);
-      if (not bIsPDFLayered) or (not gudtOptions.bPDFSkipLayered) or (SameText(gudtOptions.acPDFProfile, 'none')) then
-      begin
-        RunPlugin(AIndex, 'mutool (1/4)', sPluginsDirectory + 'mutool.exe clean -g -z "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        if not EndsText('.ai', sInputFile) then
-        begin
-          sFlags := '';
-          if SameText(gudtOptions.acPDFProfile, 'Custom') then
-            sFlags := sFlags + '-dPDFSETTINGS=/ebook -dDownsampleColorImages=True -dColorImageResolution=' + IntToStr(gudtOptions.iPDFCustomDPI) + ' -dDownsampleGrayImages=True -dGrayImageResolution=' + IntToStr(gudtOptions.iPDFCustomDPI) + ' -dDownsampleMonoImages=True -dMonoImageResolution=' + IntToStr(gudtOptions.iPDFCustomDPI) + ' '
-          else if SameText(gudtOptions.acPDFProfile, 'none') then
-            sFlags := sFlags + '-dPDFSETTINGS=/default -c ".setpdfwrite <</ColorACSImageDict>[1 1 1 1] /VSamples [1 1 1 1] /Blend 1>> /GrayACSImageDict<</QFactor>[1 1 1 1] /VSamples [1 1 1 1] /Blend 1>>>> setdistillerparams" '
-          else
-            sFlags := sFlags + '-dPDFSETTINGS=/' + gudtOptions.acPDFProfile + ' ';
-          sFlags := sFlags + '-dColorImageDownsampleType=/Bicubic -dGrayImageDownsampleType=/Bicubic -dMonoImageDownsampleType=/Bicubic -dOptimize=True -dConvertCMYKImagesToRGB=True -dColorConversionStrategy=/sRGB -dPrinted=False -q -dBATCH -dNOPAUSE -dSAFER -dDELAYSAFER -dNOPROMPT -sDEVICE=pdfwrite -dDetectDuplicateImages=True -dAutoRotatePages=/None -dCompatibilityLevel=1.4 ';
-          acTmpFilePdf := sInputFile + '.pdf';
-            RunPlugin(AIndex, 'Ghostcript (2/4)', sPluginsDirectory + 'gswin64c.exe ' + sFlags + '-sOutputFile="' + acTmpFilePdf + '" "%INPUTFILE%"', sInputFile, '', 0, 0);
-          if FileSizeOrZero(acTmpFilePdf) < FileSizeOrZero(sInputFile) then
-          begin
-            if (FileSizeOrZero(acTmpFilePdf) > 3000) and (FileSizeOrZero(sInputFile) > 20000) then
-              CopyFileData(acTmpFilePdf, sInputFile);
-          end;
-          if not gudtOptions.bDebug then
-            SysUtils.DeleteFile(acTmpFilePdf);
-        end;
-        RunPlugin(AIndex, 'cpdf (3/4)', sPluginsDirectory + 'cpdf.exe -squeeze "%INPUTFILE%" -o "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        RunPlugin(AIndex, 'qpdf (4/4)', sPluginsDirectory + 'qpdf.exe "%INPUTFILE%" --compress-streams=y --decode-level=generalized --recompress-flate --compression-level=9 --optimize-images --object-streams=generate "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_PNG) > 0 then
-    begin
-      bIsAPNG := IsAPNG(sInputFile);
-      bIsPNG9Patch := EndsText('.9.png', sInputFile);
-      if bIsAPNG then
-        RunPlugin(AIndex, 'apngopt (1/16)', sPluginsDirectory + 'apngopt.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      if not bIsPNG9Patch then
-      begin
-        if (gudtOptions.bPNGAllowLossy) and (not bIsAPNG) then
-        begin
-          sFlags := '';
-          if not gudtOptions.bPNGCopyMetadata then
-            sFlags := sFlags + '--strip ';
-          RunPlugin(AIndex, 'pngquant (2/16)', sPluginsDirectory + 'pngquant.exe ' + sFlags + '--quality=85-95 --speed 1 --ext .png --force "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-        end;
-        sFlags := '';
-        if gudtOptions.bPNGCopyMetadata then
-          sFlags := sFlags + '-KeepPhysicalPixelDimensions ';
-        RunPlugin(AIndex, 'PngOptimizer (3/16)', sPluginsDirectory + 'PngOptimizer.exe ' + sFlags + '-file:"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-      if (not bIsAPNG) and (not bIsPNG9Patch) then
-      begin
-        if PosEx(sExtensionByContent, KS_EXTENSION_ICO) = 0 then
-        begin
-          sFlags := '';
-          iLevel := min(gudtOptions.iLevel * 3 div 9, 3) + 1;
-          sFlags := sFlags + '-o' + IntToStr(iLevel) + ' ';
-          if gudtOptions.bPNGCopyMetadata then
-            sFlags := sFlags + '-md keep all '
-          else
-            sFlags := sFlags + '-tz -md remove all -a1 -g1 ';
-          if gudtOptions.bPNGAllowLossy then
-            sFlags := sFlags + '-l ';
-          RunPlugin(AIndex, 'TruePNG (4/16)', sPluginsDirectory + 'truepng.exe ' + sFlags + '/i0 /nc /tz /quiet /y /out "%TMPOUTPUTFILE%" "%INPUTFILE%"', sInputFile, '', 0, 0);
-        end;
-        if PosEx(' ' + GetExtensionByContent(sInputFile, gudtOptions.acJSAdditionalExtensions, True) + ' ', KS_EXTENSION_JPG) = 0 then
-        begin
-          sFlags := '';
-          if gudtOptions.bPNGCopyMetadata then
-            sFlags := sFlags + '/k1 '
-          else
-            sFlags := sFlags + '/kacTL,fcTL,fdAT ';
-          iLevel := max((gudtOptions.iLevel * 3 div 9) - 3, 0);
-          sFlags := sFlags + '/s' + IntToStr(iLevel) + ' ';
-          RunPlugin(AIndex, 'PNGOut (5/16)', sPluginsDirectory + 'pngout.exe /q /y /r /d0 /mincodes0 ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        end;
-      end;
-      sFlags := '';
-      iLevel := min(gudtOptions.iLevel * 6 div 9, 6);
-      sFlags := sFlags + '-o' + IntToStr(iLevel) + ' ';
-      if gudtOptions.bPNGAllowLossy then
-        sFlags := sFlags + '--scale16 ';
-      if bIsAPNG then
-      begin
-        sFlags := sFlags + '--strip safe ';
-        RunPlugin(AIndex, 'OxiPNG (6/16)', sPluginsDirectory + 'oxipng.exe --zopfli --alpha --quiet ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end
-      else
-      begin
-        if not gudtOptions.bPNGCopyMetadata then
-          sFlags := sFlags + '--strip all '
-        else
-          sFlags := sFlags + '--strip safe ';
-        RunPlugin(AIndex, 'OxiPNG (7/16)', sPluginsDirectory + 'oxipng.exe --zopfli --alpha --quiet ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-      if not bIsAPNG then
-      begin
-        sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
-        else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        if not gudtOptions.bPNGCopyMetadata then
-          RunPlugin(AIndex, 'Leanify (8/16)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-        sFlags := '';
-        if gudtOptions.iPNGWolfIterations <> -1 then
-          iLevel := gudtOptions.iPNGWolfIterations
-        else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '--out-deflate=zopfli,iter=' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'pngwolf (9/16)', sPluginsDirectory + 'pngwolf.exe ' + sFlags + '--in="%INPUTFILE%" --out="%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-        if not bIsPNG9Patch then
-        begin
-          RunPlugin(AIndex, 'pngrewrite (10/16)', sPluginsDirectory + 'pngrewrite.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-          sFlags := '';
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-          sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-          if not gudtOptions.bPNGCopyMetadata then
-            RunPlugin(AIndex, 'advpng (11/16)', sPluginsDirectory + 'advpng.exe -z -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-        end;
-      end;
-      sFlags := '';
-      if bIsAPNG then
-        sFlags := sFlags + '--reuse '
-      else if not gudtOptions.bPNGCopyMetadata then
-        sFlags := sFlags + '-strip ';
-      iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
-      if iLevel = 9 then
-        iLevel := 90032;
-      sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'ECT (12/16)', sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file --allfilters ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      iLevel := min(gudtOptions.iLevel * 4 div 9, 4);
-      sFlags := sFlags + '-s' + IntToStr(iLevel) + ' ';
-      if gudtOptions.bPNGCopyMetadata then
-        sFlags := sFlags + '-nostrip ';
-      if gudtOptions.bPNGAllowLossy then
-        sFlags := sFlags + '-quality=95 '
-      else
-        sFlags := sFlags + '-lossless ';
-      RunPlugin(AIndex, 'pingo (13/16)', sPluginsDirectory + 'pingo.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if gudtOptions.bPNGCopyMetadata then
-        sFlags := sFlags + '/k ';
-      if (not bIsAPNG) and (not bIsPNG9Patch) then
-        RunPlugin(AIndex, 'DeflOpt (14/16)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'defluff (15/16)', sPluginsDirectory + 'defluff.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      if (not bIsAPNG) and (not bIsPNG9Patch) then
-        RunPlugin(AIndex, 'DeflOpt (16/16)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_SWF) > 0 then
-    begin
-      sTmpOutputFile := ChangeFileExt(sInputFile, '.$wf');
-      RunPlugin(AIndex, 'flasm (1/5)', sPluginsDirectory + 'flasm.exe -x "%INPUTFILE%"', sInputFile, '', 0, 0);
-      CopyFileData(sTmpOutputFile, sInputFile);
-      SysUtils.DeleteFile(sTmpOutputFile);
-      RunPlugin(AIndex, 'flasm (2/5)', sPluginsDirectory + 'flasm.exe -u "%INPUTFILE%"', sInputFile, '', 0, 0);
-      CopyFileData(sTmpOutputFile, sInputFile);
-      SysUtils.DeleteFile(sTmpOutputFile);
-      RunPlugin(AIndex, 'flasm (3/5)', sPluginsDirectory + 'flasm.exe -z "%INPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_FLAC) > 0 then begin
+    if not gudtOptions.bWAVCopyMetadata then begin
+      sTmpOutputFile := StringReplaceAll(sInputFile, '.flac', '-stripped.flac');
+      if sTmpOutputFile = sInputFile then
+        sTmpOutputFile := sTmpOutputFile + '-stripped.flac';
+      RunPlugin(
+          AIndex,
+          'shntool (1/4)',
+          sPluginsDirectory + 'shntool.exe strip -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
       if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
         CopyFileData(sTmpOutputFile, sInputFile);
-      SysUtils.DeleteFile(sTmpOutputFile);
-      RunPlugin(AIndex, 'zRecompress (4/5)', sPluginsDirectory + 'zRecompress.exe -tswf-lzma "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+      if not gudtOptions.bDebug then
+        SysUtils.DeleteFile(sTmpOutputFile);
+      if gudtOptions.bWAVStripSilence then begin
+        sTmpOutputFile := StringReplaceAll(sInputFile, '.flac', '-trimmed.flac');
+        if sTmpOutputFile = sInputFile then
+          sTmpOutputFile := sTmpOutputFile + '-trimmed.flac';
+        RunPlugin(
+            AIndex,
+            'shntool (2/4)',
+            sPluginsDirectory + 'shntool.exe trim -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"',
+            sInputFile,
+            '',
+            0,
+            0
+        );
+        if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
+          CopyFileData(sTmpOutputFile, sInputFile);
+        if not gudtOptions.bDebug then
+          SysUtils.DeleteFile(sTmpOutputFile);
+      end;
+    end;
+    sFlags := '';
+    if gudtOptions.bMiscCopyMetadata then
+      sFlags := sFlags + '--keep-foreign-metadata ';
+    if gudtOptions.iLevel < 3 then
+      sFlags := sFlags + '-1 '
+    else if gudtOptions.iLevel < 5 then
+      sFlags := sFlags + '-8 --best '
+    else if gudtOptions.iLevel < 7 then
+      sFlags := sFlags + '-8 --best -e '
+    else
+      sFlags := sFlags + '-8 --best -ep ';
+    RunPlugin(AIndex, 'FLAC (3/4)', sPluginsDirectory + 'flac.exe --force -s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    if gudtOptions.iLevel >= 9 then
+      RunPlugin(AIndex, 'FLACOut (4/4)', sPluginsDirectory + 'flacout.exe /q /y "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_GIF) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bGIFCopyMetadata then
+      sFlags := sFlags + '-strip ';
+    RunPlugin(
+        AIndex,
+        'ImageMagick (1/2)',
+        sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -layers optimize -compress LZW ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    sFlags := '';
+    iLevel := 3;
+    sFlags := sFlags + '-O' + IntToStr(iLevel) + ' ';
+    if not gudtOptions.bGIFCopyMetadata then
+      sFlags := sFlags + '--no-comments --no-extensions --no-names ';
+    if gudtOptions.bGIFAllowLossy then
+      sFlags := sFlags + '--lossy=85 ';
+    RunPlugin(
+        AIndex,
+        'gifsicle (2/2)',
+        sPluginsDirectory + 'gifsicle.exe -w -j --no-conserve-memory -o "%TMPOUTPUTFILE%" ' + sFlags + '"%INPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_GZ) > 0 then begin
+    if not gudtOptions.bGZCopyMetadata then begin
+      RunPlugin(AIndex, 'libdeflate (1/8)', sPluginsDirectory + 'libdeflate.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
       sFlags := '';
       if gudtOptions.iLeanifyIterations <> -1 then
         iLevel := gudtOptions.iLeanifyIterations
       else
         iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
       sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'Leanify (5/5)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_SQLITE) > 0 then
-      RunPlugin(AIndex, 'sqlite (1/1)', sPluginsDirectory + 'sqlite.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    if PosEx(sExtensionByContent, KS_EXTENSION_TAR) > 0 then
-    begin
-      sFlags := '';
       if gudtOptions.bGZCopyMetadata then
         sFlags := sFlags + '--keep-exif ';
+      RunPlugin(AIndex, 'Leanify (2/8)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+    sFlags := '';
+    iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+    sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+    RunPlugin(AIndex, 'advdef (3/8)', sPluginsDirectory + 'advdef.exe -z -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'zRecompress (4/8)', sPluginsDirectory + 'zRecompress.exe -tgz "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    sFlags := '';
+    if not gudtOptions.bGZCopyMetadata then
+      sFlags := sFlags + '-strip ';
+    iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
+    if iLevel = 9 then
+      iLevel := 90032;
+    sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
+    RunPlugin(
+        AIndex,
+        'ECT (5/8)',
+        sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file --allfilters -gzip ' + sFlags + '"%TMPINPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    sFlags := '';
+    if gudtOptions.bGZCopyMetadata then
+      sFlags := sFlags + '/c ';
+    RunPlugin(AIndex, 'DeflOpt (6/8)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'defluff (7/8)', sPluginsDirectory + 'defluff.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'DeflOpt (8/8)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_HTML) > 0 then begin
+    if gudtOptions.bHTMLEnableTidy then begin
+      RunPlugin(
+          AIndex,
+          'tidy (1/3)',
+          sPluginsDirectory + 'tidy.exe -config tidy.config -quiet -output "%TMPOUTPUTFILE%" "%INPUTFILE%" ',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+      RunPlugin(AIndex, 'Minify (2/3)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+      sFlags := '';
+      if gudtOptions.iLeanifyIterations <> -1 then
+        iLevel := gudtOptions.iLeanifyIterations
+      else
+        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+      RunPlugin(AIndex, 'Leanify (3/3)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_ICO) > 0 then begin
+    if not gudtOptions.bPNGCopyMetadata then begin
+      sFlags := '';
+      if gudtOptions.iLeanifyIterations <> -1 then
+        iLevel := gudtOptions.iLeanifyIterations
+      else
+        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+      RunPlugin(AIndex, 'Leanify (2/2)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_JP2) > 0 then begin
+    sFlags := '';
+    RunPlugin(
+        AIndex,
+        'ImageMagick (1/1)',
+        sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -quality 0 ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_JPG) > 0 then begin
+    bIsJPEGCMYK := IsJPEGCMYK(sInputFile);
+    sFlags := '';
+    iLevel := min(gudtOptions.iLevel * 4 div 9, 4);
+    sFlags := sFlags + '-s' + IntToStr(iLevel) + ' ';
+    if gudtOptions.bJPEGAllowLossy then
+      sFlags := sFlags + '-quality=95 '
+    else
+      sFlags := sFlags + '-lossless ';
+    if gudtOptions.bJPEGCopyMetadata then
+      sFlags := sFlags + '-nostrip ';
+    RunPlugin(AIndex, 'pingo (1/11)', sPluginsDirectory + 'pingo.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    if (gudtOptions.bJPEGAllowLossy) and (not gudtOptions.bJPEGCopyMetadata) then
+      RunPlugin(AIndex, 'cjpegli (2/11)', sPluginsDirectory + 'cjpegli.exe -q 70 "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    if (gudtOptions.bJPEGAllowLossy) and (not gudtOptions.bJPEGCopyMetadata) then
+      RunPlugin(
+          AIndex,
+          'Guetzli (3/11)',
+          sPluginsDirectory + 'guetzli.exe --auto --quality 90 "%INPUTFILE%" "%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+    if gudtOptions.bJPEGAllowLossy then begin
+      sFlags := '';
+      if not gudtOptions.bJPEGCopyMetadata then
+        sFlags := sFlags + '--strip ';
+      if gudtOptions.iLevel >= 5 then
+        sFlags := sFlags + '--accurate ';
+      RunPlugin(
+          AIndex,
+          'jpeg-recompress (4/11)',
+          sPluginsDirectory
+              + 'jpeg-recompress.exe --method smallfry --quality high --min 60 --subsample disable --quiet '
+              + sFlags
+              + '"%INPUTFILE%" "%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+    end;
+    if not bIsJPEGCMYK then begin
+      sFlags := '';
+      if gudtOptions.bJPEGCopyMetadata then
+        sFlags := sFlags + '-zt '
+      else
+        sFlags := sFlags + '-purejpg -di -dx -dt -zt ';
+      RunPlugin(AIndex, 'jhead (5/11)', sPluginsDirectory + 'jhead.exe -q -autorot ' + sFlags + ' "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+    sFlags := '';
+    if gudtOptions.bJPEGCopyMetadata then
+      sFlags := sFlags + '--keep-exif --keep-icc --jpeg-keep-all ';
+    if gudtOptions.bJPEGUseArithmeticEncoding then
+      sFlags := sFlags + '--jpeg-arithmetic ';
+    if gudtOptions.iLeanifyIterations <> -1 then
+      iLevel := gudtOptions.iLeanifyIterations
+    else
+      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+    sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+    RunPlugin(AIndex, 'Leanify (6/11)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    if gudtOptions.bJPEGAllowLossy then begin
+      sFlags := '';
+      if not gudtOptions.bJPEGCopyMetadata then
+        sFlags := sFlags + '-strip ';
+      RunPlugin(
+          AIndex,
+          'ImageMagick (7/11)',
+          sPluginsDirectory
+              + 'magick.exe convert "%INPUTFILE%" -quiet -interlace Plane -define jpeg:optimize-coding=True '
+              + sFlags
+              + '"%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+    end;
+    sFlags := '';
+    if not gudtOptions.bJPEGCopyMetadata then
+      sFlags := sFlags + '--strip-all ';
+    if gudtOptions.bJPEGUseArithmeticEncoding then
+      sFlags := sFlags + '--with-arith ';
+    sFlags := sFlags + '-w ' + IntToStr(GetSystemThreadCount) + ' ';
+    RunPlugin(
+        AIndex,
+        'jpegoptim (8/11)',
+        sPluginsDirectory + 'jpegoptim.exe -o -q --all-progressive --nofix ' + sFlags + '"%TMPINPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    sFlags := '';
+    if gudtOptions.bJPEGUseArithmeticEncoding then
+      sFlags := sFlags + '-arithmetic ';
+    if gudtOptions.bJPEGCopyMetadata then
+      sFlags := sFlags + '-copy all '
+    else
+      sFlags := sFlags + '-copy none ';
+    RunPlugin(
+        AIndex,
+        'jpegtran (9/11)',
+        sPluginsDirectory + 'jpegtran.exe -progressive -optimize ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(
+        AIndex,
+        'mozjpegtran (10/11)',
+        sPluginsDirectory + 'mozjpegtran.exe -outfile "%TMPOUTPUTFILE%" -progressive -optimize -perfect ' + sFlags + '"%INPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    sFlags := '';
+    if not gudtOptions.bJPEGCopyMetadata then
+      sFlags := sFlags + '-strip ';
+    if not gudtOptions.bPNGAllowLossy then
+      sFlags := sFlags + '--strict ';
+    iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
+    if iLevel = 9 then
+      iLevel := 90032;
+    sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
+    RunPlugin(
+        AIndex,
+        'ECT (11/11)',
+        sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file --allfilters -progressive ' + sFlags + '"%TMPINPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_JXL) > 0 then begin
+    sFlags := '';
+    iLevel := min(gudtOptions.iLevel * 9 div 9, 9);
+    sFlags := sFlags + 'jxl:effort=' + IntToStr(iLevel) + ' ';
+    RunPlugin(
+        AIndex,
+        'ImageMagick (1/1)',
+        sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  bJSAdditional :=
+      (((gudtOptions.acJSAdditionalExtensions <> ''))
+          and (PosEx(sExtensionByContent, ' ' + StringReplaceAll(gudtOptions.acJSAdditionalExtensions, ',', ' ') + ' ') > 0));
+  if (PosEx(sExtensionByContent, KS_EXTENSION_JS) > 0) or (bJSAdditional) then begin
+    if (gudtOptions.bJSEnableJSMin) or (bJSAdditional) then begin
+      RunPlugin(AIndex, 'jsmin (1/2)', sPluginsDirectory + 'jsmin.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+      RunPlugin(AIndex, 'Minify (2/2)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_LUA) > 0 then begin
+    if gudtOptions.bLUAEnableLeanify then begin
+      sFlags := '';
       if gudtOptions.iLeanifyIterations <> -1 then
         iLevel := gudtOptions.iLeanifyIterations
       else
@@ -1727,181 +1713,618 @@ begin
       sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
       RunPlugin(AIndex, 'Leanify (1/1)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_TENCENTQQ) > 0 then
-    begin
-      if not gudtOptions.bPNGCopyMetadata then
-      begin
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_MIME) > 0 then begin
+    sFlags := '';
+    if gudtOptions.iLeanifyIterations <> -1 then
+      iLevel := gudtOptions.iLeanifyIterations
+    else
+      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+    sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+    RunPlugin(AIndex, 'Leanify (1/1)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_MKV) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bMP4CopyMetadata then
+      sFlags := sFlags + '-map_metadata -1 ';
+    RunPlugin(
+        AIndex,
+        'ffmpeg (1/2)',
+        sPluginsDirectory + 'ffmpeg.exe -i "%INPUTFILE%" -vcodec copy -acodec copy -map 0 ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(
+        AIndex,
+        'mkclean (2/2)',
+        sPluginsDirectory + 'mkclean.exe --optimize --unsafe --quiet "%INPUTFILE%" "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_MNG) > 0 then begin
+    sFlags := '';
+    iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+    sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+    RunPlugin(AIndex, 'advmng (1/1)', sPluginsDirectory + 'advmng.exe -z -r -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_MP3) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bMP3CopyMetadata then
+      sFlags := sFlags + '-t -s ';
+    RunPlugin(
+        AIndex,
+        'MP3packer (1/1)',
+        sPluginsDirectory + 'mp3packer.exe ' + sFlags + '-z -a "" -A -f "%INPUTFILE%" "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_MP4) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bMP4CopyMetadata then
+      sFlags := sFlags + '-map_metadata -1 ';
+    RunPlugin(
+        AIndex,
+        'ffmpeg (1/2)',
+        sPluginsDirectory + 'ffmpeg.exe -i "%INPUTFILE%" -vcodec copy -acodec copy -map 0 ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(AIndex, 'mp4v2 (2/2)', sPluginsDirectory + 'mp4file.exe --optimize -q "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_OBJ) > 0 then
+    RunPlugin(AIndex, 'strip (1/1)', sPluginsDirectory + 'strip.exe --strip-all -o "%TMPOUTPUTFILE%" "%INPUTFILE%"', sInputFile, '', 0, 0);
+  if PosEx(sExtensionByContent, KS_EXTENSION_OGG) > 0 then begin
+    RunPlugin(
+        AIndex,
+        'OptiVorbis (1/2)',
+        sPluginsDirectory + 'optivorbis.exe --vendor_string_action empty --comment_fields_action delete "%INPUTFILE%" "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(AIndex, 'rehuff_theora (2/2)', sPluginsDirectory + 'rehuff_theora.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_OGV) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bMP4CopyMetadata then
+      sFlags := sFlags + '-map_metadata -1 ';
+    RunPlugin(
+        AIndex,
+        'ffmpeg (1/2)',
+        sPluginsDirectory + 'ffmpeg.exe -i "%INPUTFILE%" -vcodec copy -acodec copy -map 0 ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(AIndex, 'rehuff_theora (2/2)', sPluginsDirectory + 'rehuff_theora.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_OLE) > 0 then begin
+    RunPlugin(AIndex, 'Document Press (1/2)', sPluginsDirectory + 'docprc.exe -opt "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'Best CFBF (2/2)', sPluginsDirectory + 'bestcfbf.exe "%INPUTFILE%" "%TMPOUTPUTFILE%" -v4', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_PCX) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bPCXCopyMetadata then
+      sFlags := sFlags + '-strip ';
+    RunPlugin(
+        AIndex,
+        'ImageMagick (1/1)',
+        sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -compress RLE ' + sFlags + '"%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_PDF) > 0 then begin
+    bIsPDFLayered := IsPDFLayered(sInputFile);
+    if (not bIsPDFLayered) or (not gudtOptions.bPDFSkipLayered) or (SameText(gudtOptions.acPDFProfile, 'none')) then begin
+      RunPlugin(AIndex, 'mutool (1/4)', sPluginsDirectory + 'mutool.exe clean -g -z "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+      if not EndsText('.ai', sInputFile) then begin
         sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
+        if SameText(gudtOptions.acPDFProfile, 'Custom') then
+          sFlags :=
+              sFlags
+                  + '-dPDFSETTINGS=/ebook -dDownsampleColorImages=True -dColorImageResolution='
+                  + IntToStr(gudtOptions.iPDFCustomDPI)
+                  + ' -dDownsampleGrayImages=True -dGrayImageResolution='
+                  + IntToStr(gudtOptions.iPDFCustomDPI)
+                  + ' -dDownsampleMonoImages=True -dMonoImageResolution='
+                  + IntToStr(gudtOptions.iPDFCustomDPI)
+                  + ' '
+        else if SameText(gudtOptions.acPDFProfile, 'none') then
+          sFlags :=
+              sFlags
+                  + '-dPDFSETTINGS=/default -c ".setpdfwrite <</ColorACSImageDict>[1 1 1 1] /VSamples [1 1 1 1] /Blend 1>> /GrayACSImageDict<</QFactor>[1 1 1 1] /VSamples [1 1 1 1] /Blend 1>>>> setdistillerparams" '
         else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'Leanify (1/1)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_TGA) > 0 then
-    begin
-      sFlags := '';
-      if not gudtOptions.bTGACopyMetadata then
-        sFlags := sFlags + '-strip ';
-      RunPlugin(AIndex, 'ImageMagick (1/1)', sPluginsDirectory + 'magick.exe convert -quiet -compress RLE ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_TIFF) > 0 then
-    begin
-      bIsJPEGCMYK := IsJPEGCMYK(sInputFile);
-      if not bIsJPEGCMYK then
-      begin
-        sFlags := '';
-        if gudtOptions.bTIFFCopyMetadata then
-          sFlags := sFlags + '-zt '
-        else
-          sFlags := sFlags + '-purejpg -di -dx -dt -zt ';
-        RunPlugin(AIndex, 'jhead (1/6)', sPluginsDirectory + 'jhead.exe -q -autorot ' + sFlags + ' "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      end;
-      if not gudtOptions.bTIFFCopyMetadata then
-        RunPlugin(AIndex, 'ImageMagick (2/6)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -compress ZIP -strip "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if not gudtOptions.bTIFFCopyMetadata then
-        sFlags := sFlags + '--strip-all ';
-      if gudtOptions.bJPEGUseArithmeticEncoding then
-        sFlags := sFlags + '--with-arith ';
-      sFlags := sFlags + '-w ' + IntToStr(GetSystemThreadCount) + ' ';
-      RunPlugin(AIndex, 'jpegoptim (3/6)', sPluginsDirectory + 'jpegoptim.exe -o -q --all-progressive --nofix ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if gudtOptions.bJPEGUseArithmeticEncoding then
-        sFlags := sFlags + '-arithmetic ';
-      if gudtOptions.bTIFFCopyMetadata then
-        sFlags := sFlags + '-copy all '
-      else
-        sFlags := sFlags + '-copy none ';
-      RunPlugin(AIndex, 'jpegtran (4/6)', sPluginsDirectory + 'jpegtran.exe -progressive -optimize ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'mozjpegtran (5/6)', sPluginsDirectory + 'mozjpegtran.exe -outfile "%TMPOUTPUTFILE%" -progressive -optimize -perfect ' + sFlags + '"%INPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'tinydng (6/6)', sPluginsDirectory + 'tinydng-cli.exe --input "%INPUTFILE%" -l -o "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-    end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_WAV) > 0 then
-    begin
-      if not gudtOptions.bWAVCopyMetadata then
-      begin
-        sTmpOutputFile := StringReplaceAll(sInputFile, '.wav', '-stripped.wav');
-        if sTmpOutputFile = sInputFile then
-          sTmpOutputFile := sTmpOutputFile + '-stripped.wav';
-        RunPlugin(AIndex, 'shntool (1/2)', sPluginsDirectory + 'shntool.exe strip -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"', sInputFile, '', 0, 0);
-        if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
-          CopyFileData(sTmpOutputFile, sInputFile);
-        if not gudtOptions.bDebug then
-          SysUtils.DeleteFile(sTmpOutputFile);
-        if gudtOptions.bWAVStripSilence then
-        begin
-          sTmpOutputFile := StringReplaceAll(sInputFile, '.wav', '-trimmed.wav');
-          if sTmpOutputFile = sInputFile then
-            sTmpOutputFile := sTmpOutputFile + '-trimmed.wav';
-          RunPlugin(AIndex, 'shntool (2/2)', sPluginsDirectory + 'shntool.exe trim -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"', sInputFile, '', 0, 0);
-          if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
-            CopyFileData(sTmpOutputFile, sInputFile);
-          if not gudtOptions.bDebug then
-            SysUtils.DeleteFile(sTmpOutputFile);
+          sFlags := sFlags + '-dPDFSETTINGS=/' + gudtOptions.acPDFProfile + ' ';
+        sFlags :=
+            sFlags
+                + '-dColorImageDownsampleType=/Bicubic -dGrayImageDownsampleType=/Bicubic -dMonoImageDownsampleType=/Bicubic -dOptimize=True -dConvertCMYKImagesToRGB=True -dColorConversionStrategy=/sRGB -dPrinted=False -q -dBATCH -dNOPAUSE -dSAFER -dDELAYSAFER -dNOPROMPT -sDEVICE=pdfwrite -dDetectDuplicateImages=True -dAutoRotatePages=/None -dCompatibilityLevel=1.4 ';
+        acTmpFilePdf := sInputFile + '.pdf';
+        RunPlugin(
+            AIndex,
+            'Ghostcript (2/4)',
+            sPluginsDirectory + 'gswin64c.exe ' + sFlags + '-sOutputFile="' + acTmpFilePdf + '" "%INPUTFILE%"',
+            sInputFile,
+            '',
+            0,
+            0
+        );
+        if FileSizeOrZero(acTmpFilePdf) < FileSizeOrZero(sInputFile) then begin
+          if (FileSizeOrZero(acTmpFilePdf) > 3000) and (FileSizeOrZero(sInputFile) > 20000) then
+            CopyFileData(acTmpFilePdf, sInputFile);
         end;
+        if not gudtOptions.bDebug then
+          SysUtils.DeleteFile(acTmpFilePdf);
       end;
+      RunPlugin(AIndex, 'cpdf (3/4)', sPluginsDirectory + 'cpdf.exe -squeeze "%INPUTFILE%" -o "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+      RunPlugin(
+          AIndex,
+          'qpdf (4/4)',
+          sPluginsDirectory
+              + 'qpdf.exe "%INPUTFILE%" --compress-streams=y --decode-level=generalized --recompress-flate --compression-level=9 --optimize-images --object-streams=generate "%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_XML) > 0 then
-    begin
-      if gudtOptions.bXMLEnableLeanify then
-      begin
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_PNG) > 0 then begin
+    bIsAPNG := IsAPNG(sInputFile);
+    bIsPNG9Patch := EndsText('.9.png', sInputFile);
+    if bIsAPNG then
+      RunPlugin(AIndex, 'apngopt (1/16)', sPluginsDirectory + 'apngopt.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    if not bIsPNG9Patch then begin
+      if (gudtOptions.bPNGAllowLossy) and (not bIsAPNG) then begin
         sFlags := '';
-        if gudtOptions.iLeanifyIterations <> -1 then
-          iLevel := gudtOptions.iLeanifyIterations
+        if not gudtOptions.bPNGCopyMetadata then
+          sFlags := sFlags + '--strip ';
+        RunPlugin(
+            AIndex,
+            'pngquant (2/16)',
+            sPluginsDirectory + 'pngquant.exe ' + sFlags + '--quality=85-95 --speed 1 --ext .png --force "%TMPINPUTFILE%"',
+            sInputFile,
+            '',
+            0,
+            0
+        );
+      end;
+      sFlags := '';
+      if gudtOptions.bPNGCopyMetadata then
+        sFlags := sFlags + '-KeepPhysicalPixelDimensions ';
+      RunPlugin(AIndex, 'PngOptimizer (3/16)', sPluginsDirectory + 'PngOptimizer.exe ' + sFlags + '-file:"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+    if (not bIsAPNG) and (not bIsPNG9Patch) then begin
+      if PosEx(sExtensionByContent, KS_EXTENSION_ICO) = 0 then begin
+        sFlags := '';
+        iLevel := min(gudtOptions.iLevel * 3 div 9, 3) + 1;
+        sFlags := sFlags + '-o' + IntToStr(iLevel) + ' ';
+        if gudtOptions.bPNGCopyMetadata then
+          sFlags := sFlags + '-md keep all '
         else
-          iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
-        sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'Leanify (1/2)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-        RunPlugin(AIndex, 'Minify (2/2)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+          sFlags := sFlags + '-tz -md remove all -a1 -g1 ';
+        if gudtOptions.bPNGAllowLossy then
+          sFlags := sFlags + '-l ';
+        RunPlugin(
+            AIndex,
+            'TruePNG (4/16)',
+            sPluginsDirectory + 'truepng.exe ' + sFlags + '/i0 /nc /tz /quiet /y /out "%TMPOUTPUTFILE%" "%INPUTFILE%"',
+            sInputFile,
+            '',
+            0,
+            0
+        );
+      end;
+      if PosEx(' ' + GetExtensionByContent(sInputFile, gudtOptions.acJSAdditionalExtensions, True) + ' ', KS_EXTENSION_JPG) = 0 then begin
+        sFlags := '';
+        if gudtOptions.bPNGCopyMetadata then
+          sFlags := sFlags + '/k1 '
+        else
+          sFlags := sFlags + '/kacTL,fcTL,fdAT ';
+        iLevel := max((gudtOptions.iLevel * 3 div 9) - 3, 0);
+        sFlags := sFlags + '/s' + IntToStr(iLevel) + ' ';
+        RunPlugin(
+            AIndex,
+            'PNGOut (5/16)',
+            sPluginsDirectory + 'pngout.exe /q /y /r /d0 /mincodes0 ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"',
+            sInputFile,
+            '',
+            0,
+            0
+        );
       end;
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_WEBP) > 0 then
-    begin
-      sFlags := '';
-      iLevel := min(gudtOptions.iLevel * 4 div 9, 4);
-      sFlags := sFlags + '-s' + IntToStr(iLevel) + ' ';
-      if gudtOptions.bWEBPAllowLossy then
-        sFlags := sFlags + '-quality=95 -webp '
+    sFlags := '';
+    iLevel := min(gudtOptions.iLevel * 6 div 9, 6);
+    sFlags := sFlags + '-o' + IntToStr(iLevel) + ' ';
+    if gudtOptions.bPNGAllowLossy then
+      sFlags := sFlags + '--scale16 ';
+    if bIsAPNG then begin
+      sFlags := sFlags + '--strip safe ';
+      RunPlugin(
+          AIndex,
+          'OxiPNG (6/16)',
+          sPluginsDirectory + 'oxipng.exe --zopfli --alpha --quiet ' + sFlags + '"%TMPINPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+    end
+    else begin
+      if not gudtOptions.bPNGCopyMetadata then
+        sFlags := sFlags + '--strip all '
       else
-        sFlags := sFlags + '-lossless ';
-      RunPlugin(AIndex, 'pingo (1/2)', sPluginsDirectory + 'pingo.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      sFlags := '';
-      if gudtOptions.bWEBPAllowLossy then
-      begin
-        iLevel := min(gudtOptions.iLevel * 6 div 9, 6);
-        sFlags := sFlags + '-m ' + IntToStr(iLevel) + ' ';
-      end
-      else
-      begin
-        iLevel := min(gudtOptions.iLevel * 9 div 9, 9);
-        sFlags := sFlags + '-z ' + IntToStr(iLevel) + ' -lossless ';
-      end;
-      RunPlugin(AIndex, 'cwebp (2/2)', sPluginsDirectory + 'cwebp.exe -mt -quiet ' + sFlags + '"%INPUTFILE%" -o "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+        sFlags := sFlags + '--strip safe ';
+      RunPlugin(
+          AIndex,
+          'OxiPNG (7/16)',
+          sPluginsDirectory + 'oxipng.exe --zopfli --alpha --quiet ' + sFlags + '"%TMPINPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_ZIP) > 0 then
-    begin
-      bIsEXESFX := IsEXESFX(sInputFile);
+    if not bIsAPNG then begin
       sFlags := '';
-      if gudtOptions.bZIPCopyMetadata then
-        sFlags := sFlags + '--keep-exif ';
       if gudtOptions.iLeanifyIterations <> -1 then
         iLevel := gudtOptions.iLeanifyIterations
       else
         iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
       sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-      sFlags := sFlags + '--zip-deflate ';
-      if not gudtOptions.bZIPRecurse then
-        sFlags := sFlags + '-d 1 ';
-      if gudtOptions.bJPEGCopyMetadata then
-        sFlags := sFlags + '--keep-exif --keep-icc --jpeg-keep-all ';
-      if gudtOptions.bJPEGUseArithmeticEncoding then
-        sFlags := sFlags + '--jpeg-arithmetic ';
-      RunPlugin(AIndex, 'Leanify (1/6)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+      if not gudtOptions.bPNGCopyMetadata then
+        RunPlugin(AIndex, 'Leanify (8/16)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
       sFlags := '';
-      if not gudtOptions.bZIPCopyMetadata then
-        sFlags := sFlags + '-strip ';
-      if (not gudtOptions.bZIPRecurse) and (PosEx(sExtensionByContent, ' .zip ') > 0) then
-        sFlags := sFlags + '--disable-png --disable-jpg ';
-      iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
-      if iLevel = 9 then
-        iLevel := 90032;
-      sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
-      RunPlugin(AIndex, 'ECT (2/6)', sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file -zip ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      if not bIsEXESFX then
-      begin
+      if gudtOptions.iPNGWolfIterations <> -1 then
+        iLevel := gudtOptions.iPNGWolfIterations
+      else
+        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+      sFlags := sFlags + '--out-deflate=zopfli,iter=' + IntToStr(iLevel) + ' ';
+      RunPlugin(
+          AIndex,
+          'pngwolf (9/16)',
+          sPluginsDirectory + 'pngwolf.exe ' + sFlags + '--in="%INPUTFILE%" --out="%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+      if not bIsPNG9Patch then begin
+        RunPlugin(AIndex, 'pngrewrite (10/16)', sPluginsDirectory + 'pngrewrite.exe "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
         sFlags := '';
         iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
         sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
-        RunPlugin(AIndex, 'advzip (3/6)', sPluginsDirectory + 'advzip.exe -z -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+        if not gudtOptions.bPNGCopyMetadata then
+          RunPlugin(AIndex, 'advpng (11/16)', sPluginsDirectory + 'advpng.exe -z -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
       end;
+    end;
+    sFlags := '';
+    if bIsAPNG then
+      sFlags := sFlags + '--reuse '
+    else if not gudtOptions.bPNGCopyMetadata then
+      sFlags := sFlags + '-strip ';
+    iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
+    if iLevel = 9 then
+      iLevel := 90032;
+    sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
+    RunPlugin(
+        AIndex,
+        'ECT (12/16)',
+        sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file --allfilters ' + sFlags + '"%TMPINPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    sFlags := '';
+    iLevel := min(gudtOptions.iLevel * 4 div 9, 4);
+    sFlags := sFlags + '-s' + IntToStr(iLevel) + ' ';
+    if gudtOptions.bPNGCopyMetadata then
+      sFlags := sFlags + '-nostrip ';
+    if gudtOptions.bPNGAllowLossy then
+      sFlags := sFlags + '-quality=95 '
+    else
+      sFlags := sFlags + '-lossless ';
+    RunPlugin(AIndex, 'pingo (13/16)', sPluginsDirectory + 'pingo.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    sFlags := '';
+    if gudtOptions.bPNGCopyMetadata then
+      sFlags := sFlags + '/k ';
+    if (not bIsAPNG) and (not bIsPNG9Patch) then
+      RunPlugin(AIndex, 'DeflOpt (14/16)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'defluff (15/16)', sPluginsDirectory + 'defluff.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    if (not bIsAPNG) and (not bIsPNG9Patch) then
+      RunPlugin(AIndex, 'DeflOpt (16/16)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_SWF) > 0 then begin
+    sTmpOutputFile := ChangeFileExt(sInputFile, '.$wf');
+    RunPlugin(AIndex, 'flasm (1/5)', sPluginsDirectory + 'flasm.exe -x "%INPUTFILE%"', sInputFile, '', 0, 0);
+    CopyFileData(sTmpOutputFile, sInputFile);
+    SysUtils.DeleteFile(sTmpOutputFile);
+    RunPlugin(AIndex, 'flasm (2/5)', sPluginsDirectory + 'flasm.exe -u "%INPUTFILE%"', sInputFile, '', 0, 0);
+    CopyFileData(sTmpOutputFile, sInputFile);
+    SysUtils.DeleteFile(sTmpOutputFile);
+    RunPlugin(AIndex, 'flasm (3/5)', sPluginsDirectory + 'flasm.exe -z "%INPUTFILE%"', sInputFile, '', 0, 0);
+    if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
+      CopyFileData(sTmpOutputFile, sInputFile);
+    SysUtils.DeleteFile(sTmpOutputFile);
+    RunPlugin(AIndex, 'zRecompress (4/5)', sPluginsDirectory + 'zRecompress.exe -tswf-lzma "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    sFlags := '';
+    if gudtOptions.iLeanifyIterations <> -1 then
+      iLevel := gudtOptions.iLeanifyIterations
+    else
+      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+    sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+    RunPlugin(AIndex, 'Leanify (5/5)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_SQLITE) > 0 then
+    RunPlugin(AIndex, 'sqlite (1/1)', sPluginsDirectory + 'sqlite.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+  if PosEx(sExtensionByContent, KS_EXTENSION_TAR) > 0 then begin
+    sFlags := '';
+    if gudtOptions.bGZCopyMetadata then
+      sFlags := sFlags + '--keep-exif ';
+    if gudtOptions.iLeanifyIterations <> -1 then
+      iLevel := gudtOptions.iLeanifyIterations
+    else
+      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+    sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+    RunPlugin(AIndex, 'Leanify (1/1)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_TENCENTQQ) > 0 then begin
+    if not gudtOptions.bPNGCopyMetadata then begin
       sFlags := '';
-      if gudtOptions.bZIPCopyMetadata then
-        sFlags := sFlags + '/c ';
-      RunPlugin(AIndex, 'DeflOpt (4/6)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'defluff (5/6)', sPluginsDirectory + 'defluff.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
-      RunPlugin(AIndex, 'DeflOpt (6/6)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+      if gudtOptions.iLeanifyIterations <> -1 then
+        iLevel := gudtOptions.iLeanifyIterations
+      else
+        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+      RunPlugin(AIndex, 'Leanify (1/1)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_7Z) > 0 then
-    begin
-      if gudtOptions.iLevel > 7 then
-        RunPlugin(AIndex, 'm7zRepacker (1/1)', sPluginsDirectory + 'm7zrepacker.exe -m1 -d1024 -mem2048 "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_TGA) > 0 then begin
+    sFlags := '';
+    if not gudtOptions.bTGACopyMetadata then
+      sFlags := sFlags + '-strip ';
+    RunPlugin(
+        AIndex,
+        'ImageMagick (1/1)',
+        sPluginsDirectory + 'magick.exe convert -quiet -compress RLE ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_TIFF) > 0 then begin
+    bIsJPEGCMYK := IsJPEGCMYK(sInputFile);
+    if not bIsJPEGCMYK then begin
+      sFlags := '';
+      if gudtOptions.bTIFFCopyMetadata then
+        sFlags := sFlags + '-zt '
+      else
+        sFlags := sFlags + '-purejpg -di -dx -dt -zt ';
+      RunPlugin(AIndex, 'jhead (1/6)', sPluginsDirectory + 'jhead.exe -q -autorot ' + sFlags + ' "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
     end;
-    if PosEx(sExtensionByContent, KS_EXTENSION_MISC) > 0 then
-    begin
-      if not gudtOptions.bMiscDisable then
-      begin
-        sFlags := '';
-        if not gudtOptions.bMiscCopyMetadata then
-          sFlags := sFlags + '-strip ';
-        RunPlugin(AIndex, 'ImageMagick (1/1)', sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet ' + sFlags + '"%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    if not gudtOptions.bTIFFCopyMetadata then
+      RunPlugin(
+          AIndex,
+          'ImageMagick (2/6)',
+          sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet -compress ZIP -strip "%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+    sFlags := '';
+    if not gudtOptions.bTIFFCopyMetadata then
+      sFlags := sFlags + '--strip-all ';
+    if gudtOptions.bJPEGUseArithmeticEncoding then
+      sFlags := sFlags + '--with-arith ';
+    sFlags := sFlags + '-w ' + IntToStr(GetSystemThreadCount) + ' ';
+    RunPlugin(
+        AIndex,
+        'jpegoptim (3/6)',
+        sPluginsDirectory + 'jpegoptim.exe -o -q --all-progressive --nofix ' + sFlags + '"%TMPINPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    sFlags := '';
+    if gudtOptions.bJPEGUseArithmeticEncoding then
+      sFlags := sFlags + '-arithmetic ';
+    if gudtOptions.bTIFFCopyMetadata then
+      sFlags := sFlags + '-copy all '
+    else
+      sFlags := sFlags + '-copy none ';
+    RunPlugin(
+        AIndex,
+        'jpegtran (4/6)',
+        sPluginsDirectory + 'jpegtran.exe -progressive -optimize ' + sFlags + '"%INPUTFILE%" "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(
+        AIndex,
+        'mozjpegtran (5/6)',
+        sPluginsDirectory + 'mozjpegtran.exe -outfile "%TMPOUTPUTFILE%" -progressive -optimize -perfect ' + sFlags + '"%INPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    RunPlugin(AIndex, 'tinydng (6/6)', sPluginsDirectory + 'tinydng-cli.exe --input "%INPUTFILE%" -l -o "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_WAV) > 0 then begin
+    if not gudtOptions.bWAVCopyMetadata then begin
+      sTmpOutputFile := StringReplaceAll(sInputFile, '.wav', '-stripped.wav');
+      if sTmpOutputFile = sInputFile then
+        sTmpOutputFile := sTmpOutputFile + '-stripped.wav';
+      RunPlugin(
+          AIndex,
+          'shntool (1/2)',
+          sPluginsDirectory + 'shntool.exe strip -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+      if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
+        CopyFileData(sTmpOutputFile, sInputFile);
+      if not gudtOptions.bDebug then
+        SysUtils.DeleteFile(sTmpOutputFile);
+      if gudtOptions.bWAVStripSilence then begin
+        sTmpOutputFile := StringReplaceAll(sInputFile, '.wav', '-trimmed.wav');
+        if sTmpOutputFile = sInputFile then
+          sTmpOutputFile := sTmpOutputFile + '-trimmed.wav';
+        RunPlugin(
+            AIndex,
+            'shntool (2/2)',
+            sPluginsDirectory + 'shntool.exe trim -q -O always -d "' + ExtractFileDir(sInputFile) + '" "%INPUTFILE%"',
+            sInputFile,
+            '',
+            0,
+            0
+        );
+        if (FileSizeOrZero(sTmpOutputFile) > 0) and (FileSizeOrZero(sTmpOutputFile) < FileSizeOrZero(sInputFile)) then
+          CopyFileData(sTmpOutputFile, sInputFile);
+        if not gudtOptions.bDebug then
+          SysUtils.DeleteFile(sTmpOutputFile);
       end;
     end;
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_XML) > 0 then begin
+    if gudtOptions.bXMLEnableLeanify then begin
+      sFlags := '';
+      if gudtOptions.iLeanifyIterations <> -1 then
+        iLevel := gudtOptions.iLeanifyIterations
+      else
+        iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+      RunPlugin(AIndex, 'Leanify (1/2)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+      RunPlugin(AIndex, 'Minify (2/2)', sPluginsDirectory + 'minify.exe "%INPUTFILE%" --output "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_WEBP) > 0 then begin
+    sFlags := '';
+    iLevel := min(gudtOptions.iLevel * 4 div 9, 4);
+    sFlags := sFlags + '-s' + IntToStr(iLevel) + ' ';
+    if gudtOptions.bWEBPAllowLossy then
+      sFlags := sFlags + '-quality=95 -webp '
+    else
+      sFlags := sFlags + '-lossless ';
+    RunPlugin(AIndex, 'pingo (1/2)', sPluginsDirectory + 'pingo.exe ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    sFlags := '';
+    if gudtOptions.bWEBPAllowLossy then begin
+      iLevel := min(gudtOptions.iLevel * 6 div 9, 6);
+      sFlags := sFlags + '-m ' + IntToStr(iLevel) + ' ';
+    end
+    else begin
+      iLevel := min(gudtOptions.iLevel * 9 div 9, 9);
+      sFlags := sFlags + '-z ' + IntToStr(iLevel) + ' -lossless ';
+    end;
+    RunPlugin(
+        AIndex,
+        'cwebp (2/2)',
+        sPluginsDirectory + 'cwebp.exe -mt -quiet ' + sFlags + '"%INPUTFILE%" -o "%TMPOUTPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_ZIP) > 0 then begin
+    bIsEXESFX := IsEXESFX(sInputFile);
+    sFlags := '';
+    if gudtOptions.bZIPCopyMetadata then
+      sFlags := sFlags + '--keep-exif ';
+    if gudtOptions.iLeanifyIterations <> -1 then
+      iLevel := gudtOptions.iLeanifyIterations
+    else
+      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+    sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+    sFlags := sFlags + '--zip-deflate ';
+    if not gudtOptions.bZIPRecurse then
+      sFlags := sFlags + '-d 1 ';
+    if gudtOptions.bJPEGCopyMetadata then
+      sFlags := sFlags + '--keep-exif --keep-icc --jpeg-keep-all ';
+    if gudtOptions.bJPEGUseArithmeticEncoding then
+      sFlags := sFlags + '--jpeg-arithmetic ';
+    RunPlugin(AIndex, 'Leanify (1/6)', sPluginsDirectory + 'leanify.exe -q -p ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    sFlags := '';
+    if not gudtOptions.bZIPCopyMetadata then
+      sFlags := sFlags + '-strip ';
+    if (not gudtOptions.bZIPRecurse) and (PosEx(sExtensionByContent, ' .zip ') > 0) then
+      sFlags := sFlags + '--disable-png --disable-jpg ';
+    iLevel := min(gudtOptions.iLevel * 8 div 9, 8) + 1;
+    if iLevel = 9 then
+      iLevel := 90032;
+    sFlags := sFlags + '-' + IntToStr(iLevel) + ' ';
+    RunPlugin(
+        AIndex,
+        'ECT (2/6)',
+        sPluginsDirectory + 'ECT.exe -quiet --mt-deflate --mt-file -zip ' + sFlags + '"%TMPINPUTFILE%"',
+        sInputFile,
+        '',
+        0,
+        0
+    );
+    if not bIsEXESFX then begin
+      sFlags := '';
+      iLevel := ((gudtOptions.iLevel * gudtOptions.iLevel * gudtOptions.iLevel) div 25) + 1;
+      sFlags := sFlags + '-i ' + IntToStr(iLevel) + ' ';
+      RunPlugin(AIndex, 'advzip (3/6)', sPluginsDirectory + 'advzip.exe -z -q -4 ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    end;
+    sFlags := '';
+    if gudtOptions.bZIPCopyMetadata then
+      sFlags := sFlags + '/c ';
+    RunPlugin(AIndex, 'DeflOpt (4/6)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'defluff (5/6)', sPluginsDirectory + 'defluff.bat "%INPUTFILE%" "%TMPOUTPUTFILE%"', sInputFile, '', 0, 0);
+    RunPlugin(AIndex, 'DeflOpt (6/6)', sPluginsDirectory + 'deflopt.exe /a /b /s ' + sFlags + '"%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_7Z) > 0 then begin
+    if gudtOptions.iLevel > 7 then
+      RunPlugin(AIndex, 'm7zRepacker (1/1)', sPluginsDirectory + 'm7zrepacker.exe -m1 -d1024 -mem2048 "%TMPINPUTFILE%"', sInputFile, '', 0, 0);
+  end;
+  if PosEx(sExtensionByContent, KS_EXTENSION_MISC) > 0 then begin
+    if not gudtOptions.bMiscDisable then begin
+      sFlags := '';
+      if not gudtOptions.bMiscCopyMetadata then
+        sFlags := sFlags + '-strip ';
+      RunPlugin(
+          AIndex,
+          'ImageMagick (1/1)',
+          sPluginsDirectory + 'magick.exe convert "%INPUTFILE%" -quiet ' + sFlags + '"%TMPOUTPUTFILE%"',
+          sInputFile,
+          '',
+          0,
+          0
+      );
+    end;
+  end;
 end;
 
-function TOptimizerService.RunPlugin(const AIndex: Integer; const AStatus, ACommand, AInputFile, AOutputFile: string; const AErrorMin, AErrorMax: Integer): Boolean;
+function TOptimizerService.RunPlugin(
+    const AIndex: Integer;
+    const AStatus, ACommand, AInputFile, AOutputFile: string;
+    const AErrorMin, AErrorMax: Integer
+): Boolean;
 var
   Arguments, Command, Mask, ToolName: string;
   Masks: TStringList;
@@ -1913,19 +2336,16 @@ begin
     Exit;
   Command := Copy(ACommand, Length(IncludeTrailingPathDelimiter(FPluginDirectory)) + 1, MaxInt);
   Separator := Pos(' ', Command);
-  if Separator = 0 then
-  begin
+  if Separator = 0 then begin
     ToolName := Command;
     Arguments := '';
   end
-  else
-  begin
+  else begin
     ToolName := Copy(Command, 1, Separator - 1);
     Arguments := Copy(Command, Separator + 1, MaxInt);
   end;
   Mask := FConfiguration.GetText('General', 'DisablePluginMask');
-  if Mask <> '' then
-  begin
+  if Mask <> '' then begin
     Masks := TStringList.Create;
     try
       Masks.StrictDelimiter := True;
@@ -1947,7 +2367,10 @@ begin
   Result := RunTool(AIndex, AStatus, ToolName, Arguments, AInputFile, UseInPlace, AErrorMin, AErrorMax);
 end;
 
-function TOptimizerService.RunRedirectedProcess(const AExecutable, AArguments, AInputFile, AOutputFile: string; const AAppendOutput: Boolean): Integer;
+function TOptimizerService.RunRedirectedProcess(
+    const AExecutable, AArguments, AInputFile, AOutputFile: string;
+    const AAppendOutput: Boolean
+): Integer;
 var
   CommandLine: UnicodeString;
   ErrorHandle, InputHandle, OutputHandle: THandle;
@@ -1963,14 +2386,24 @@ begin
   Security.nLength := SizeOf(Security);
   Security.bInheritHandle := True;
   if AInputFile <> '' then
-    InputHandle := CreateFileW(PWideChar(UnicodeString(AInputFile)), GENERIC_READ, FILE_SHARE_READ, @Security, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)
+    InputHandle :=
+        CreateFileW(PWideChar(UnicodeString(AInputFile)), GENERIC_READ, FILE_SHARE_READ, @Security, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)
   else
     InputHandle := CreateFileW('NUL', GENERIC_READ, FILE_SHARE_READ, @Security, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if InputHandle = INVALID_HANDLE_VALUE then
     Exit;
   try
     if AOutputFile <> '' then
-      OutputHandle := CreateFileW(PWideChar(UnicodeString(AOutputFile)), GENERIC_WRITE, FILE_SHARE_READ, @Security, IfThen(AAppendOutput, OPEN_ALWAYS, CREATE_ALWAYS), FILE_ATTRIBUTE_NORMAL, 0)
+      OutputHandle :=
+          CreateFileW(
+              PWideChar(UnicodeString(AOutputFile)),
+              GENERIC_WRITE,
+              FILE_SHARE_READ,
+              @Security,
+              IfThen(AAppendOutput, OPEN_ALWAYS, CREATE_ALWAYS),
+              FILE_ATTRIBUTE_NORMAL,
+              0
+          )
     else
       OutputHandle := CreateFileW('NUL', GENERIC_WRITE, FILE_SHARE_READ, @Security, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if OutputHandle = INVALID_HANDLE_VALUE then
@@ -1980,30 +2413,40 @@ begin
       if ErrorHandle = INVALID_HANDLE_VALUE then
         Exit;
       try
-      if AAppendOutput then
-        SetFilePointer(OutputHandle, 0, nil, FILE_END);
-      FillChar(Startup, SizeOf(Startup), 0);
-      Startup.cb := SizeOf(Startup);
-      Startup.dwFlags := STARTF_USESTDHANDLES or STARTF_USESHOWWINDOW;
-      Startup.wShowWindow := SW_HIDE;
-      Startup.hStdInput := InputHandle;
-      Startup.hStdOutput := OutputHandle;
-      Startup.hStdError := ErrorHandle;
-      FillChar(ProcessInfo, SizeOf(ProcessInfo), 0);
-      CommandLine := '"' + UnicodeString(AExecutable) + '" ' + UnicodeString(AArguments);
-      if not CreateProcessW(nil, PWideChar(CommandLine), nil, nil, True, CREATE_NO_WINDOW or DWORD(FConfiguration.GetInteger('General', 'ProcessPriority')), nil, PWideChar(UnicodeString(FPluginDirectory)), Startup, ProcessInfo) then
-        Exit;
-      try
-        repeat
-          WaitResult := WaitForSingleObject(ProcessInfo.hProcess, 100);
-          if IsCancelled then
-            TerminateProcess(ProcessInfo.hProcess, 1);
-        until WaitResult <> WAIT_TIMEOUT;
-        GetExitCodeProcess(ProcessInfo.hProcess, DWORD(Result));
-      finally
-        CloseHandle(ProcessInfo.hThread);
-        CloseHandle(ProcessInfo.hProcess);
-      end;
+        if AAppendOutput then
+          SetFilePointer(OutputHandle, 0, nil, FILE_END);
+        FillChar(Startup, SizeOf(Startup), 0);
+        Startup.cb := SizeOf(Startup);
+        Startup.dwFlags := STARTF_USESTDHANDLES or STARTF_USESHOWWINDOW;
+        Startup.wShowWindow := SW_HIDE;
+        Startup.hStdInput := InputHandle;
+        Startup.hStdOutput := OutputHandle;
+        Startup.hStdError := ErrorHandle;
+        FillChar(ProcessInfo, SizeOf(ProcessInfo), 0);
+        CommandLine := '"' + UnicodeString(AExecutable) + '" ' + UnicodeString(AArguments);
+        if not CreateProcessW(
+            nil,
+            PWideChar(CommandLine),
+            nil,
+            nil,
+            True,
+            CREATE_NO_WINDOW or DWORD(FConfiguration.GetInteger('General', 'ProcessPriority')),
+            nil,
+            PWideChar(UnicodeString(FPluginDirectory)),
+            Startup,
+            ProcessInfo) then
+          Exit;
+        try
+          repeat
+            WaitResult := WaitForSingleObject(ProcessInfo.hProcess, 100);
+            if IsCancelled then
+              TerminateProcess(ProcessInfo.hProcess, 1);
+          until WaitResult <> WAIT_TIMEOUT;
+          GetExitCodeProcess(ProcessInfo.hProcess, DWORD(Result));
+        finally
+          CloseHandle(ProcessInfo.hThread);
+          CloseHandle(ProcessInfo.hProcess);
+        end;
       finally
         CloseHandle(ErrorHandle);
       end;
@@ -2022,16 +2465,14 @@ var
   Header: AnsiString;
 begin
   Result := -1;
-  if SameText(ATool, 'defluff.bat') or SameText(ATool, 'jsmin.bat') then
-  begin
+  if SameText(ATool, 'defluff.bat') or SameText(ATool, 'jsmin.bat') then begin
     if SameText(ATool, 'defluff.bat') then
       ProgramPath := IncludeTrailingPathDelimiter(FPluginDirectory) + 'defluff.exe'
     else
       ProgramPath := IncludeTrailingPathDelimiter(FPluginDirectory) + 'jsmin.exe';
     Exit(RunRedirectedProcess(ProgramPath, '', AInputFile, AOutputFile));
   end;
-  if SameText(ATool, 'libdeflate.bat') then
-  begin
+  if SameText(ATool, 'libdeflate.bat') then begin
     ProgramPath := IncludeTrailingPathDelimiter(FPluginDirectory) + 'gzip.exe';
     TemporaryFile := NewTempPath(GetTempDir(False));
     try
@@ -2043,8 +2484,7 @@ begin
     end;
     Exit;
   end;
-  if SameText(ATool, 'sqlite.bat') then
-  begin
+  if SameText(ATool, 'sqlite.bat') then begin
     ProgramPath := IncludeTrailingPathDelimiter(FPluginDirectory) + 'sqlite3.exe';
     TemporaryFile := NewTempPath(GetTempDir(False)) + '.sql';
     Stream := TFileStream.Create(TemporaryFile, fmCreate);
@@ -2064,8 +2504,12 @@ begin
   end;
 end;
 
-function TOptimizerService.RunTool(const AIndex: Integer; const AStatus, ATool, AArguments, AWorkingFile: string;
-  const AInPlace: Boolean; const AErrorMin, AErrorMax: Integer): Boolean;
+function TOptimizerService.RunTool(
+    const AIndex: Integer;
+    const AStatus, ATool, AArguments, AWorkingFile: string;
+    const AInPlace: Boolean;
+    const AErrorMin, AErrorMax: Integer
+): Boolean;
 var
   Candidate, CommandLine, ExePath: string;
   ExitCode: Integer;
@@ -2100,8 +2544,7 @@ begin
   else
     ExitCode := RunRedirectedProcess(ExePath, CommandLine, '', '');
   WritePluginLog(ExePath + ' ' + CommandLine, AStatus, ExitCode, OldSize, FileSizeOrZero(Candidate), StartedAt);
-  if (ExitCode < AErrorMin) or (ExitCode > AErrorMax) then
-  begin
+  if (ExitCode < AErrorMin) or (ExitCode > AErrorMax) then begin
     FLock.Enter;
     try
       FItems[AIndex].LastPluginError := AStatus + ': exit code ' + IntToStr(ExitCode);
@@ -2109,8 +2552,7 @@ begin
       FLock.Leave;
     end;
   end;
-  if ExitCode >= 0 then
-  begin
+  if ExitCode >= 0 then begin
     FLock.Enter;
     try
       Inc(FItems[AIndex].PluginRuns);
@@ -2120,8 +2562,7 @@ begin
   end;
   try
     NewSize := FileSizeOrZero(Candidate);
-    if (ExitCode >= AErrorMin) and (ExitCode <= AErrorMax) and (NewSize >= 8) and (NewSize < OldSize) then
-    begin
+    if (ExitCode >= AErrorMin) and (ExitCode <= AErrorMax) and (NewSize >= 8) and (NewSize < OldSize) then begin
       Result := CopyFileData(Candidate, AWorkingFile);
       if Result then
         SetResult(AIndex, fsRunning, NewSize, AStatus);

@@ -4,11 +4,13 @@
 
 unit runtimeresource;
 
-{$warn 5023 off : no warning about unused units}
+{$WARN 5023 off : no warning about unused units}
 interface
 
 uses
-  runtime_resource, register_runtime_resource, LazarusPackageIntf;
+  runtime_resource,
+  register_runtime_resource,
+  LazarusPackageIntf;
 
 implementation
 

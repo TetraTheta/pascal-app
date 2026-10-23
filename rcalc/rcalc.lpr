@@ -1,19 +1,23 @@
 program rcalc;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 uses
-  {$IFDEF UNIX}
+{$IFDEF UNIX}
   cthreads,
-  {$ENDIF}
-  {$IFDEF HASAMIGA}
+{$ENDIF}
+{$IFDEF HASAMIGA}
   athreads,
-  {$ENDIF}
+{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   SysUtils,
-  Forms, main,
+  Forms,
+  main,
   { you can add units after this }
-  uDarkStyleParams, uDarkStyleSchemes, uDarkTheme;
+  uDarkStyleParams,
+  uDarkStyleSchemes,
+  uDarkTheme;
 
 {$R *.res}
 
@@ -23,13 +27,17 @@ var
   Y: Double;
 
 begin
-  if (ParamCount < 1) or not TryStrToFloat(ParamStr(1), X) then X := 0;
-  if (ParamCount < 2) or not TryStrToFloat(ParamStr(2), Y) then Y := 0;
-  if (ParamCount < 3) or not TryStrToFloat(ParamStr(3), A) then A := 0;
+  if (ParamCount < 1) or not TryStrToFloat(ParamStr(1), X) then
+    X := 0;
+  if (ParamCount < 2) or not TryStrToFloat(ParamStr(2), Y) then
+    Y := 0;
+  if (ParamCount < 3) or not TryStrToFloat(ParamStr(3), A) then
+    A := 0;
 
-  RequireDerivedFormResource:=True;
-  {$PUSH}{$WARN 5044 OFF}
-  Application.MainFormOnTaskbar:=True;
+  RequireDerivedFormResource := True;
+  {$PUSH}
+  {$WARN 5044 OFF}
+  Application.MainFormOnTaskbar := True;
   {$POP}
 
   PreferredAppMode := pamForceDark;

@@ -1,11 +1,20 @@
 unit main;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 interface
 
 uses
-  Buttons, Classes, Controls, Dialogs, ExtCtrls, Forms, Menus, StdCtrls, SysUtils;
+  Buttons,
+  Classes,
+  Controls,
+  Dialogs,
+  ExtCtrls,
+  Forms,
+  Menus,
+  StdCtrls,
+  SysUtils;
 
 type
   TMainForm = class(TForm)
@@ -91,8 +100,16 @@ implementation
 {$R *.lfm}
 
 uses
-  Clipbrd, fpjson, jsonparser, LCLType
-  {$IFDEF MSWINDOWS}, Windows, ShlObj{$ENDIF};
+  Clipbrd,
+  fpjson,
+  jsonparser,
+  LCLType
+{$IFDEF MSWINDOWS}
+  ,
+  Windows,
+  ShlObj
+{$ENDIF}
+      ;
 
 const
   JsonFilterAll = 'JSON 파일 (*.json)|*.json|모든 파일 (*.*)|*.*';
@@ -144,16 +161,14 @@ begin
     Exit;
 
   case Key of
-    VK_O:
-      begin
-        MenuItemOpenClick(Sender);
-        Key := 0;
-      end;
-    VK_S:
-      begin
-        MenuItemSaveClick(Sender);
-        Key := 0;
-      end;
+    VK_O: begin
+      MenuItemOpenClick(Sender);
+      Key := 0;
+    end;
+    VK_S: begin
+      MenuItemSaveClick(Sender);
+      Key := 0;
+    end;
   end;
 end;
 
@@ -202,8 +217,7 @@ begin
     try
       ReleaseDate := ReadReleaseDate;
     except
-      on E: EConvertError do
-      begin
+      on E: EConvertError do begin
         MessageDlg('ERROR', E.Message, mtError, [mbOK], 0);
         Exit;
       end;
@@ -230,8 +244,7 @@ begin
     Css := CheckBoxCSS.Checked;
     Tf2 := CheckBoxTF2.Checked;
     L4d2 := CheckBoxL4D2.Checked;
-    if Hl2 or Css or Tf2 or L4d2 then
-    begin
+    if Hl2 or Css or Tf2 or L4d2 then begin
       Builder.Append('[h2]Requirements[/h2]'#10'[list]'#10);
       if Hl2 then
         Builder.Append('  [*]Half-Life 2 (+ Episode One, Episode Two)'#10);
@@ -246,8 +259,7 @@ begin
     end;
 
     Lines := MemoTrimmedLines(TextBoxMapList);
-    if Lines.Count > 0 then
-    begin
+    if Lines.Count > 0 then begin
       Builder.Append('[h2]Map List[/h2]'#10'[list]'#10);
       for I := 0 to Lines.Count - 1 do
         Builder.Append(Format('  [*]%s'#10, [Lines[I]]));
@@ -262,27 +274,32 @@ begin
     Builder.Append('  [*][Troubleshooting] Unsubscribe from all other add-ons (keep only this one subscribed).'#10);
     Builder.Append('  [*][Troubleshooting] Factory reset GMod using ''FactoryReset-GMod.bat'' in the GMod installation directory.'#10);
     Builder.Append('[/olist]'#10);
-    Builder.Append('The maps tested fine without lags or CTDs. Any issues you encounter are likely system-specific, which unfortunately I can''t fix.'#10);
+    Builder.Append(
+        'The maps tested fine without lags or CTDs. Any issues you encounter are likely system-specific, which unfortunately I can''t fix.'#10
+    );
     if CheckBoxSCTools.Checked then
-      Builder.Append(#10'[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3207465120]SC Tools[/url] is required for level transitions, custom entities, and more. You can still play without it, but many things won''t work.'#10)
+      Builder.Append(
+          #10'[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3207465120]SC Tools[/url] is required for level transitions, custom entities, and more. You can still play without it, but many things won''t work.'#10
+      )
     else
-      Builder.Append(#10'I highly recommend subscribing to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3207465120]SC Tools[/url] for a [i]better[/i] experience.'#10);
+      Builder.Append(
+          #10'I highly recommend subscribing to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3207465120]SC Tools[/url] for a [i]better[/i] experience.'#10
+      );
 
     if CheckBoxSubtitle.Checked then
-      Builder.Append(#10'Subscribe to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3311765429]Simplest Subtitles Framework[/url] for closed captions (highly recommended).'#10);
+      Builder.Append(
+          #10'Subscribe to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3311765429]Simplest Subtitles Framework[/url] for closed captions (highly recommended).'#10
+      );
 
     Recompiled := CheckBoxRecompiled.Checked;
     Warning := TrimmedText(TextBoxWarning);
-    if Recompiled or (Warning <> '') then
-    begin
+    if Recompiled or (Warning <> '') then begin
       Builder.Append('[h2]Warning[/h2]'#10);
-      if Recompiled then
-      begin
+      if Recompiled then begin
         Builder.Append('This add-on includes recompiled maps for fixes and optimization.'#10);
         Builder.Append('Please report any [b]new[/b] glitches or issues; I will try to fix them.'#10);
       end;
-      if Warning <> '' then
-      begin
+      if Warning <> '' then begin
         if Recompiled then
           Builder.Append(#10);
         Builder.Append(Warning).Append(#10);
@@ -290,8 +307,12 @@ begin
     end;
 
     Builder.Append('[h2]Disclaimer[/h2]'#10);
-    Builder.Append('Tested only in Singleplayer Sandbox on the ''dev'' beta branch. Compatibility with other gamemodes or Multiplayer is not guaranteed.'#10#10);
-    Builder.Append('Before reporting any issue, please follow all 4 (or at least the first 3) steps above. I cannot support and cover every environment, so a report from a ''clean state'' is crucial.'#10#10);
+    Builder.Append(
+        'Tested only in Singleplayer Sandbox on the ''dev'' beta branch. Compatibility with other gamemodes or Multiplayer is not guaranteed.'#10#10
+    );
+    Builder.Append(
+        'Before reporting any issue, please follow all 4 (or at least the first 3) steps above. I cannot support and cover every environment, so a report from a ''clean state'' is crucial.'#10#10
+    );
     Builder.Append('I did not create these maps; I only [i]ported[/i] them to Garry''s Mod. All credit goes to the original authors.'#10);
     Builder.Append('[hr][/hr]Search Tag: [spoiler]half life hl2 custom campaign[/spoiler]');
 
@@ -339,8 +360,7 @@ begin
   try
     ComboBoxRDMonth.Text := IntToStr(ParseMonth(ComboBoxRDMonth.Text));
   except
-    on E: EConvertError do
-    begin
+    on E: EConvertError do begin
       MessageDlg('ERROR', E.Message, mtError, [mbOK], 0);
       ComboBoxRDMonth.SetFocus;
     end;
@@ -393,8 +413,7 @@ begin
   Result := TJSONObject(AObject).Get(AName, ADefault);
 end;
 
-function TMainForm.GetJsonInt(AObject: TObject; const AName: string;
-  AMinimum, AMaximum: Integer): Integer;
+function TMainForm.GetJsonInt(AObject: TObject; const AName: string; AMinimum, AMaximum: Integer): Integer;
 var
   Data: TJSONData;
 begin
@@ -434,8 +453,7 @@ var
   Line: string;
 begin
   Result := TStringList.Create;
-  for I := 0 to AMemo.Lines.Count - 1 do
-  begin
+  for I := 0 to AMemo.Lines.Count - 1 do begin
     Line := Trim(AMemo.Lines[I]);
     if Line <> '' then
       Result.Add(Line);
@@ -502,8 +520,7 @@ var
   InputText: string;
 begin
   InputText := Trim(AText);
-  if TryStrToInt(InputText, Result) then
-  begin
+  if TryStrToInt(InputText, Result) then begin
     if (Result >= Low(MonthNames)) and (Result <= High(MonthNames)) then
       Exit;
   end
@@ -533,8 +550,7 @@ procedure TMainForm.RegisterDragDrop(AControl: TControl);
 var
   ChildIndex: Integer;
 begin
-  if AControl is TCustomForm then
-  begin
+  if AControl is TCustomForm then begin
     TCustomForm(AControl).AllowDropFiles := True;
     TCustomForm(AControl).OnDropFiles := @FormDropFiles;
   end;

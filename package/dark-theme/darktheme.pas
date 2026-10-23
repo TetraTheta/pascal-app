@@ -4,12 +4,16 @@
 
 unit DarkTheme;
 
-{$warn 5023 off : no warning about unused units}
+{$WARN 5023 off : no warning about unused units}
 interface
 
 uses
-  uDarkTheme, uDarkStyleParams, uDarkStyleSchemes, 
-  uDarkStyleSchemesLoader, uDarkStyleSchemesAdditional, LazarusPackageIntf;
+  uDarkTheme,
+  uDarkStyleParams,
+  uDarkStyleSchemes,
+  uDarkStyleSchemesLoader,
+  uDarkStyleSchemesAdditional,
+  LazarusPackageIntf;
 
 implementation
 

@@ -1,26 +1,31 @@
 program gmod_description_generator;
 
-{$mode objfpc}{$H+}
+{$MODE objfpc}
+{$H+}
 
 uses
-  {$IFDEF UNIX}
+{$IFDEF UNIX}
   cthreads,
-  {$ENDIF}
-  {$IFDEF HASAMIGA}
+{$ENDIF}
+{$IFDEF HASAMIGA}
   athreads,
-  {$ENDIF}
+{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, main,
+  Forms,
+  main,
   { you can add units after this }
-  uDarkStyleParams, uDarkStyleSchemes, uDarkTheme;
+  uDarkStyleParams,
+  uDarkStyleSchemes,
+  uDarkTheme;
 
 {$R *.res}
 
 begin
-  RequireDerivedFormResource:=True;
-  Application.Scaled:=True;
-  {$PUSH}{$WARN 5044 OFF}
-  Application.MainFormOnTaskbar:=True;
+  RequireDerivedFormResource := True;
+  Application.Scaled := True;
+  {$PUSH}
+  {$WARN 5044 OFF}
+  Application.MainFormOnTaskbar := True;
   {$POP}
 
   PreferredAppMode := pamForceDark;
@@ -30,4 +35,3 @@ begin
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.
-
