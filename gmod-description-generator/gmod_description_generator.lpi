@@ -35,7 +35,8 @@
     </RunParams>
     <RequiredPackages>
       <Item>
-        <PackageName Value="MetaDarkStyle"/>
+        <PackageName Value="DarkTheme"/>
+        <DefaultFilename Value="..\package\dark-theme\darktheme.lpk" Prefer="True"/>
       </Item>
       <Item>
         <PackageName Value="LCL"/>

@@ -13,7 +13,7 @@ uses
   SysUtils,
   Forms, main,
   { you can add units after this }
-  uDarkStyleParams, uDarkStyleSchemes, uMetaDarkStyle;
+  uDarkStyleParams, uDarkStyleSchemes, uDarkTheme;
 
 {$R *.res}
 
@@ -33,7 +33,7 @@ begin
   {$POP}
 
   PreferredAppMode := pamForceDark;
-  uMetaDarkStyle.ApplyMetaDarkStyle(DefaultDark);
+  uDarkTheme.ApplyDarkTheme(DefaultDark);
 
   Application.Initialize;
   Application.CreateForm(TMainForm, MainForm);

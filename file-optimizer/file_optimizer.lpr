@@ -4,7 +4,7 @@ program FileOptimizer;
 
 uses
   {$IFDEF UNIX}cthreads,{$ENDIF}
-  Interfaces, Forms, SysUtils, Windows, main_form, options_form, uDarkStyleParams, uDarkStyleSchemes, uMetaDarkStyle;
+  Interfaces, Forms, SysUtils, Windows, main_form, options_form, uDarkStyleParams, uDarkStyleSchemes, uDarkTheme;
 
 {$R *.res}
 
@@ -21,7 +21,7 @@ begin
   RequireDerivedFormResource := True;
   Application.Scaled:=True;
   PreferredAppMode := pamForceDark;
-  uMetaDarkStyle.ApplyMetaDarkStyle(DefaultDark);
+  uDarkTheme.ApplyDarkTheme(DefaultDark);
   Application.Initialize;
   Application.Title:='FileOptimizer';
   HasPathArgument := False;

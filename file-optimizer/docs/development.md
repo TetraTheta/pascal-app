@@ -7,7 +7,7 @@ Open `file_optimizer.lpi` in Lazarus or run `lazbuild file_optimizer.lpi` with t
 - `configuration/optimizer_configuration.pas` defines the INI keys and defaults.
 - `services/optimizer_service.pas` owns the file queue, per-file workers, temporary copies, CLI processes, cache, and replacement.
 - `services/optimizer_service.pas` also defines the recognized extension sets and format-specific tool order. Each `RunPlugin` call belongs to the preceding format condition.
-- `ui/main_form.pas` and `ui/options_form.pas` implement behavior; their `.lfm` files define the editable form layouts. Lazarus needs the installed `MetaDarkStyle` package for the dark theme.
+- `ui/main_form.pas` and `ui/options_form.pas` implement behavior; their `.lfm` files define the editable form layouts. Lazarus needs the installed `DarkTheme` package for the dark theme.
 - `lang/ko.ini` supplies Korean strings; English defaults are in the Pascal source.
 
 The tool chain for one file is sequential. Parallel workers handle different files. A plugin result is adopted only when its exit code is accepted and its output is at least eight bytes and smaller than the current working copy. The final working copy replaces the original only when it is smaller. Missing tools are skipped. Options and file characteristics can skip individual steps.

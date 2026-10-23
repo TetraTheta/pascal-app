@@ -1,0 +1,5 @@
+/libdsgn/
+/test/*.compiled
+/test/*.exe
+/test/*.obj
+/test/*.a

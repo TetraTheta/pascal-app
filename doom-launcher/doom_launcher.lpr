@@ -3,7 +3,7 @@ program doom_launcher;
 {$mode objfpc}{$H+}
 
 uses
-  Interfaces, Forms, main, data_directories_dialog, launch_options_dialog, launch_arguments_dialog, path_item_dialog, launcher_configuration, launcher_models, launch_service, path_service, profile_service, wad_service, uDarkStyleParams, uDarkStyleSchemes, uMetaDarkStyle;
+  Interfaces, Forms, main, data_directories_dialog, launch_options_dialog, launch_arguments_dialog, path_item_dialog, launcher_configuration, launcher_models, launch_service, path_service, profile_service, wad_service, uDarkStyleParams, uDarkStyleSchemes, uDarkTheme;
 
 {$R *.res}
 
@@ -13,7 +13,7 @@ begin
   Application.Scaled:=True;
   //Application.MainFormOnTaskbar := True;
   PreferredAppMode := pamForceDark;
-  uMetaDarkStyle.ApplyMetaDarkStyle(DefaultDark);
+  uDarkTheme.ApplyDarkTheme(DefaultDark);
   Application.Initialize;
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
