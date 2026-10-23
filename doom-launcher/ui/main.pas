@@ -34,6 +34,7 @@ type
     BottomPanel: TPanel;
     ContentPanel: TPanel;
     DownButton: TButton;
+    DuplicateProfileButton: TButton;
     EditEngineButton: TButton;
     EngineGroup: TGroupBox;
     ExitAfterLaunchMenuItem: TMenuItem;
@@ -79,6 +80,7 @@ type
     procedure AddWadClick(Sender: TObject);
     procedure AvailableFilterChange(Sender: TObject);
     procedure DataDirectoriesClick(Sender: TObject);
+    procedure DuplicateProfileClick(Sender: TObject);
     procedure EditEngineClick(Sender: TObject);
     procedure EngineSelectionChange(Sender: TObject);
     procedure ExitAfterLaunchClick(Sender: TObject);
@@ -441,6 +443,7 @@ begin
   FSelectedWads.Enabled := Editable;
   FExtraArguments.Enabled := Editable;
   FSaveProfileButton.Enabled := Editable and (FCurrentProfileIndex >= 0) and FDirty;
+  DuplicateProfileButton.Enabled := FCurrentProfileIndex >= 0;
   FRunButton.Enabled := CanLaunchProfile;
   FLockedCheckBox.Enabled := FCurrentProfileIndex >= 0;
   if FDirty then
@@ -647,6 +650,33 @@ begin
     Exit;
   end;
   Profile := FWorkingProfile.Clone;
+  Profile.Name := Trim(ProfileName);
+  Profile.Locked := False;
+  FSettings.Profiles.Add(Profile);
+  PopulateProfiles;
+  FSettings.SelectedProfileIndex := FSettings.Profiles.Count - 1;
+  SaveSettings;
+  LoadWorkingProfile(FSettings.SelectedProfileIndex);
+end;
+
+procedure TMainForm.DuplicateProfileClick(Sender: TObject);
+var
+  ProfileName: string;
+  Profile: TProfile;
+begin
+  if FCurrentProfileIndex < 0 then
+    Exit;
+  if not ConfirmPendingChanges then
+    Exit;
+  ProfileName := TProfile(FSettings.Profiles[FCurrentProfileIndex]).Name + ' Copy';
+  if not InputQuery('Duplicate Profile', 'Profile name', ProfileName) then
+    Exit;
+  if not UniqueProfileName(ProfileName, -1) then
+  begin
+    MessageDlg('The profile name or save folder is already in use.', mtError, [mbOK], 0);
+    Exit;
+  end;
+  Profile := TProfile(FSettings.Profiles[FCurrentProfileIndex]).Clone;
   Profile.Name := Trim(ProfileName);
   Profile.Locked := False;
   FSettings.Profiles.Add(Profile);
