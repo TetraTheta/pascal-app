@@ -50,25 +50,25 @@ object MainForm: TMainForm
         Left = 8
         Height = 30
         Top = 138
-        Width = 76
+        Width = 66
         Caption = 'Add'
         TabOrder = 1
         OnClick = AddEngineClick
       end
       object EditEngineButton: TButton
-        Left = 88
+        Left = 80
         Height = 30
         Top = 138
-        Width = 76
+        Width = 66
         Caption = 'Edit'
         TabOrder = 2
         OnClick = EditEngineClick
       end
       object RemoveEngineButton: TButton
-        Left = 168
+        Left = 152
         Height = 30
         Top = 138
-        Width = 82
+        Width = 66
         Caption = 'Remove'
         TabOrder = 3
         OnClick = RemoveEngineClick
@@ -115,43 +115,43 @@ object MainForm: TMainForm
         Left = 8
         Height = 30
         Top = 138
-        Width = 48
+        Width = 66
         Caption = 'New'
         TabOrder = 1
         OnClick = NewProfileClick
       end
       object DuplicateProfileButton: TButton
-        Left = 60
+        Left = 80
         Height = 30
         Top = 138
-        Width = 74
+        Width = 66
         Caption = 'Duplicate'
         TabOrder = 2
         OnClick = DuplicateProfileClick
       end
       object RenameProfileButton: TButton
-        Left = 138
+        Left = 152
         Height = 30
         Top = 138
-        Width = 72
+        Width = 66
         Caption = 'Rename'
         TabOrder = 3
         OnClick = RenameProfileClick
       end
       object RemoveProfileButton: TButton
-        Left = 214
+        Left = 224
         Height = 30
         Top = 138
-        Width = 72
+        Width = 66
         Caption = 'Remove'
         TabOrder = 4
         OnClick = RemoveProfileClick
       end
       object FLockedCheckBox: TCheckBox
-        Left = 294
+        Left = 296
         Height = 19
         Top = 144
-        Width = 62
+        Width = 56
         Caption = 'Locked'
         TabOrder = 5
         OnClick = LockProfileClick
@@ -186,34 +186,34 @@ object MainForm: TMainForm
       Left = 8
       Height = 23
       Top = 28
-      Width = 760
+      Width = 768
       TabOrder = 0
       OnChange = TextProfileChange
     end
     object FSaveProfileButton: TButton
-      Left = 778
+      Left = 784
       Height = 30
-      Top = 28
-      Width = 116
+      Top = 24
+      Width = 100
       Caption = 'Save Profile'
       TabOrder = 1
       OnClick = SaveProfileClick
     end
     object FRunButton: TButton
-      Left = 900
+      Left = 888
       Height = 30
-      Top = 28
-      Width = 130
+      Top = 24
+      Width = 164
       Caption = 'Run'
       TabOrder = 2
       OnClick = RunClick
       OnMouseDown = RunMouseDown
     end
     object LaunchOptionsButton: TButton
-      Left = 1036
+      Left = 1056
       Height = 30
-      Top = 28
-      Width = 56
+      Top = 24
+      Width = 36
       Caption = '▼'
       TabOrder = 3
       OnClick = LaunchOptionsClick
@@ -375,16 +375,16 @@ object MainForm: TMainForm
         Left = 8
         Height = 30
         Top = 372
-        Width = 72
+        Width = 66
         Caption = 'Up'
         TabOrder = 2
         OnClick = MoveWadUpClick
       end
       object DownButton: TButton
-        Left = 86
+        Left = 80
         Height = 30
         Top = 372
-        Width = 72
+        Width = 66
         Caption = 'Down'
         TabOrder = 3
         OnClick = MoveWadDownClick
