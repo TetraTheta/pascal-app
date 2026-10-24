@@ -51,17 +51,21 @@ type
     ExportProfileMenuItem: TMenuItem;
     ExtraArgumentsLabel: TLabel;
     FAvailableFilter: TEdit;
+    FAvailableFolderHint: TLabel;
     FAvailablePanel: TPanel;
     FAvailableWads: TListView;
     FEngineList: TListBox;
+    FEngineFolderHint: TLabel;
     FExtraArguments: TEdit;
     FileMenu: TMenuItem;
     FIWadList: TListBox;
+    FIWadFolderHint: TLabel;
     FLockedCheckBox: TCheckBox;
     FProfileList: TListBox;
     FRunButton: TButton;
     FSaveProfileButton: TButton;
     FSelectedFilter: TEdit;
+    FSelectedFolderHint: TLabel;
     FSelectedPanel: TPanel;
     FSelectedWads: TListView;
     FStatusBar: TStatusBar;
@@ -129,6 +133,7 @@ type
     FWorkingProfile: TProfile;
     function CanEditProfile: Boolean;
     function CanLaunchProfile: Boolean;
+    function NeedsDataFolder: Boolean;
     function ConfirmPendingChanges: Boolean;
     function FindWad(const APath: TStoredPath): TWadMetadata;
     function UniqueProfileName(const AName: string; AExceptIndex: Integer): Boolean;
@@ -144,6 +149,7 @@ type
     procedure ScanFinished(Sender: TObject);
     procedure SetProfileControls;
     procedure StartScan;
+    procedure UpdateDataFolderHints;
   end;
 
 var
@@ -227,9 +233,14 @@ begin
   end;
 
   ExitAfterLaunchMenuItem.Checked := FSettings.ExitAfterLaunch;
+  FEngineFolderHint.Caption := 'Set a data folder first.' + LineEnding + 'File > Manage Data Folders';
+  FIWadFolderHint.Caption := FEngineFolderHint.Caption;
+  FAvailableFolderHint.Caption := FEngineFolderHint.Caption;
+  FSelectedFolderHint.Caption := FEngineFolderHint.Caption;
   PopulateEngines;
   PopulateProfiles;
   LoadWorkingProfile(FSettings.SelectedProfileIndex);
+  UpdateDataFolderHints;
   StartScan;
 end;
 
@@ -425,7 +436,8 @@ var
   ModPath: TStoredPath;
 begin
   Result :=
-      (FWorkingProfile.EnginePath.Value <> '')
+      not NeedsDataFolder
+          and (FWorkingProfile.EnginePath.Value <> '')
           and FileExists(ResolveStoredPath(FBaseDirectory, FWorkingProfile.EnginePath))
           and (FWorkingProfile.IWadPath.Value <> '')
           and FileExists(ResolveStoredPath(FBaseDirectory, FWorkingProfile.IWadPath));
@@ -436,6 +448,27 @@ begin
     if not FileExists(ResolveStoredPath(FBaseDirectory, ModPath)) then
       Exit(False);
   end;
+end;
+
+function TMainForm.NeedsDataFolder: Boolean;
+begin
+  Result := (FSettings.DataDirectories.Count = 0) and (TObjectList(FWads).Count = 0);
+end;
+
+procedure TMainForm.UpdateDataFolderHints;
+var
+  NeedsFolderHint: Boolean;
+begin
+  NeedsFolderHint := NeedsDataFolder;
+  FEngineList.Visible := not NeedsFolderHint;
+  FIWadList.Visible := not NeedsFolderHint;
+  FAvailableWads.Visible := not NeedsFolderHint;
+  FSelectedWads.Visible := not NeedsFolderHint;
+  FEngineFolderHint.Visible := NeedsFolderHint;
+  FIWadFolderHint.Visible := NeedsFolderHint;
+  FAvailableFolderHint.Visible := NeedsFolderHint;
+  FSelectedFolderHint.Visible := NeedsFolderHint;
+  SetProfileControls;
 end;
 
 function TMainForm.CanEditProfile: Boolean;
@@ -805,6 +838,8 @@ procedure TMainForm.DataDirectoriesClick(Sender: TObject);
 begin
   if ShowDataDirectoriesDialog(FBaseDirectory, FSettings) then begin
     SaveSettings;
+    if FSettings.DataDirectories.Count > 0 then
+      UpdateDataFolderHints;
     StartScan;
   end;
 end;
@@ -832,8 +867,16 @@ begin
   ScanThread := TWadScanThread(Sender);
   FScanThread := nil;
   Enabled := True;
-  if ScanThread.ErrorText <> '' then
-    MessageDlg('WAD scan failed:' + LineEnding + ScanThread.ErrorText, mtError, [mbOK], 0)
+  if ScanThread.ErrorText <> '' then begin
+    if FSettings.DataDirectories.Count = 0 then begin
+      FAvailableWads.Clear;
+      FIWadList.Clear;
+      FSelectedWads.Clear;
+      TObjectList(FWads).Clear;
+      UpdateDataFolderHints;
+    end;
+    MessageDlg('WAD scan failed:' + LineEnding + ScanThread.ErrorText, mtError, [mbOK], 0);
+  end
   else if ScanThread.Results <> nil then begin
     FWads.Free;
     FWads := ScanThread.Results;
@@ -843,6 +886,7 @@ begin
     PopulateIWads;
     PopulateAvailableWads;
     ApplyWorkingProfile;
+    UpdateDataFolderHints;
     FStatusBar.SimpleText := Format('%d WAD files found.', [TObjectList(FWads).Count]);
   end;
 end;
@@ -880,6 +924,8 @@ procedure TMainForm.RunClick(Sender: TObject);
 var
   ErrorText: string;
 begin
+  if not CanLaunchProfile then
+    Exit;
   if (FCurrentProfileIndex < 0)
       and (MessageDlg('No profile is selected. Saves will be stored in saves\_unsorted. Continue?', mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
     Exit;
@@ -896,7 +942,7 @@ var
   Arguments: TStringList;
   SaveDirectory: string;
 begin
-  if Button <> mbRight then
+  if (Button <> mbRight) or not CanLaunchProfile then
     Exit;
   SaveDirectory := IncludeTrailingPathDelimiter(FBaseDirectory) + 'saves' + DirectorySeparator + SanitizeDirectoryName(FWorkingProfile.Name);
   try

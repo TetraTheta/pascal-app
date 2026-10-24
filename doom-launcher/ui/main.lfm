@@ -46,6 +46,15 @@ object MainForm: TMainForm
         TabOrder = 0
         OnClick = EngineSelectionChange
       end
+      object FEngineFolderHint: TLabel
+        Left = 8
+        Height = 40
+        Top = 4
+        Width = 330
+        AutoSize = False
+        Visible = False
+        WordWrap = True
+      end
       object AddEngineButton: TButton
         Left = 8
         Height = 30
@@ -91,6 +100,15 @@ object MainForm: TMainForm
         ItemHeight = 0
         TabOrder = 0
         OnClick = IWadSelectionChange
+      end
+      object FIWadFolderHint: TLabel
+        Left = 8
+        Height = 40
+        Top = 4
+        Width = 332
+        AutoSize = False
+        Visible = False
+        WordWrap = True
       end
     end
     object ProfileGroup: TGroupBox
@@ -280,6 +298,15 @@ object MainForm: TMainForm
         ViewStyle = vsReport
         OnDblClick = AddWadClick
       end
+      object FAvailableFolderHint: TLabel
+        Left = 8
+        Height = 40
+        Top = 64
+        Width = 500
+        AutoSize = False
+        Visible = False
+        WordWrap = True
+      end
     end
     object FTransferPanel: TPanel
       Left = 516
@@ -370,6 +397,15 @@ object MainForm: TMainForm
         TabOrder = 1
         ViewStyle = vsReport
         OnDblClick = RemoveWadClick
+      end
+      object FSelectedFolderHint: TLabel
+        Left = 8
+        Height = 40
+        Top = 64
+        Width = 500
+        AutoSize = False
+        Visible = False
+        WordWrap = True
       end
       object UpButton: TButton
         Left = 8
