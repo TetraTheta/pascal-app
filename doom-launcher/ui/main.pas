@@ -199,12 +199,17 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 var
+  Arguments: array of string;
   BackupFileName: string;
   ErrorText: string;
+  Index: Integer;
 begin
   FAllowSave := True;
   FBaseDirectory := IncludeTrailingPathDelimiter(ExtractFileDir(Application.ExeName));
-  FConfigFileName := ChangeFileExt(Application.ExeName, '.ini');
+  SetLength(Arguments, ParamCount);
+  for Index := 1 to ParamCount do
+    Arguments[Index - 1] := ParamStr(Index);
+  FConfigFileName := FindLauncherConfiguration(Application.ExeName, Arguments);
   FCurrentProfileIndex := -1;
   FSettings := TLauncherSettings.Create;
   FWads := TObjectList.Create(True);

@@ -9,6 +9,7 @@ uses
   launcher_models;
 
 function BackupBrokenConfiguration(const AFileName: string): string;
+function FindLauncherConfiguration(const AExecutablePath: string; const AArguments: array of string): string;
 function LoadLauncherSettings(const AFileName: string; ASettings: TLauncherSettings; out AError: string): Boolean;
 procedure SaveLauncherSettings(const AFileName: string; ASettings: TLauncherSettings);
 
@@ -23,6 +24,18 @@ const
   CurrentFormatVersion = 1;
   CurrentWadCacheVersion = 2;
   MaximumItemCount = 100000;
+
+function FindLauncherConfiguration(const AExecutablePath: string; const AArguments: array of string): string;
+var
+  Index: Integer;
+begin
+  Result := ChangeFileExt(AExecutablePath, '.ini');
+  for Index := Low(AArguments) to High(AArguments) - 1 do
+    if SameText(AArguments[Index], '-ini') and (AArguments[Index + 1] <> '') then begin
+      Result := ExpandFileName(AArguments[Index + 1]);
+      Exit;
+    end;
+end;
 
 function IndexedSection(const APrefix: string; AIndex: Integer): string;
 begin
