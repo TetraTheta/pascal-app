@@ -2,7 +2,11 @@
 
 FileOptimizer reduces file sizes with format-specific command-line tools. Add files or folders, then choose **Optimize all**. A file is replaced only when the processed copy is smaller. The original is copied to the Recycle Bin by default.
 
-See the [user guide](docs/usage.md) for file handling, backups, settings, and parallel processing.
+## Use
+
+Drag files or folders onto the window, or choose **Add files** or **Add folder**, then select **Optimize all**. Folders are scanned recursively. FileOptimizer runs applicable programs from its `plugin` folder on temporary copies and replaces a file only when the result is smaller. By default, it sends a copy of the original to the Recycle Bin before replacement. Review **Options** before processing valuable files: some enabled tools can remove metadata or change image quality.
+
+See the [user guide](docs/usage.md) for command-line use, backups, settings, and parallel processing.
 
 ## Portable layout
 
@@ -10,14 +14,13 @@ Keep these items together when running the application:
 
 ```text
 FileOptimizer.exe
-FileOptimizer.ini          (created when settings are saved)
 lang/
   ko.ini
 plugin/
   <command-line programs and their required DLLs>
 ```
 
-The `plugin` folder is supplied separately. If a tool is missing, its processing step is skipped. The application uses built-in English text and reads `lang/ko.ini` for Korean. Settings are stored beside `FileOptimizer.exe` in `FileOptimizer.ini`.
+The `plugin` folder is supplied separately. If a tool is missing, its processing step is skipped. The application uses built-in English text and reads `lang/ko.ini` for Korean. Settings are normally saved in `%AppData%\FileOptimizer\FileOptimizer.ini`; an existing INI beside the executable can be read as a fallback.
 
 ## Command-line programs
 
@@ -80,4 +83,16 @@ The versions below were checked from an installed x64 tool set on 2026-10-20. �
 | [UPX](https://upx.github.io/) (`upx.exe`) | 5.0.2 |
 | [zRecompress](http://nikkhokkho.sourceforge.net/static.php?page=zRecompress) (`zRecompress.exe`) | R2.12 |
 
-버튼 아이콘은 [famfamfam-silk](https://github.com/legacy-icons/famfamfam-silk)의 것을 사용하고 있습니다.
+## Build it yourself
+
+Install Lazarus with Free Pascal and the Windows LCL widgetset. Register this repository's [`DarkTheme`](../package/dark-theme/README.md) and [`RuntimeResource`](../package/runtime-resource/README.md) packages in Lazarus. From this directory, run:
+
+```powershell
+lazbuild --build-mode=Default file_optimizer.lpi
+```
+
+The executable is `FileOptimizer.exe` in this directory. Copy `lang/` and your separately obtained `plugin/` tools alongside it for a portable layout. The repository's `task build:file-optimizer` builds and moves only the executable to `.dist/FileOptimizer.exe`; adjust the Taskfile's local tool paths before using that task.
+
+## For developers
+
+The [developer guide](docs/development.md) describes the queue, tool pipeline, format-specific steps, and project layout. `configuration/` owns settings, `services/` owns processing and language lookup, and `ui/` owns forms. `resource/images.rc` embeds UI images through RuntimeResource. Button icons come from [famfamfam-silk](https://github.com/legacy-icons/famfamfam-silk).
