@@ -7,12 +7,18 @@ interface
 
 type
   TLauncherConfiguration = record
-    HL2Hammer: string;
-    HL2HammerPP: string;
-    GModHammer: string;
-    GModHammerPP: string;
-    EZ2Hammer: string;
-    EZ2HammerPP: string;
+    HL2HammerStock: string;
+    HL2HammerStockArgs: string;
+    HL2HammerCustom: string;
+    HL2HammerCustomArgs: string;
+    GModHammerStock: string;
+    GModHammerStockArgs: string;
+    GModHammerCustom: string;
+    GModHammerCustomArgs: string;
+    EZ2HammerStock: string;
+    EZ2HammerStockArgs: string;
+    EZ2HammerCustom: string;
+    EZ2HammerCustomArgs: string;
   end;
 
 function LoadLauncherConfiguration(const AExecutablePath: string): TLauncherConfiguration;
@@ -34,21 +40,33 @@ begin
   ConfigurationFile := TIniFile.Create(ConfigurationPath);
   try
     if not ConfigurationExists then begin
-      ConfigurationFile.WriteString('hl2', 'hammer', '');
-      ConfigurationFile.WriteString('hl2', 'hammer++', '');
-      ConfigurationFile.WriteString('gmod', 'hammer', '');
-      ConfigurationFile.WriteString('gmod', 'hammer++', '');
-      ConfigurationFile.WriteString('ez2', 'hammer', '');
-      ConfigurationFile.WriteString('ez2', 'hammer++', '');
+      ConfigurationFile.WriteString('hl2', 'stock', '');
+      ConfigurationFile.WriteString('hl2', 'stockargs', '');
+      ConfigurationFile.WriteString('hl2', 'custom', '');
+      ConfigurationFile.WriteString('hl2', 'customargs', '');
+      ConfigurationFile.WriteString('gmod', 'stock', '');
+      ConfigurationFile.WriteString('gmod', 'stockargs', '');
+      ConfigurationFile.WriteString('gmod', 'custom', '');
+      ConfigurationFile.WriteString('gmod', 'customargs', '');
+      ConfigurationFile.WriteString('ez2', 'stock', '');
+      ConfigurationFile.WriteString('ez2', 'stockargs', '');
+      ConfigurationFile.WriteString('ez2', 'custom', '');
+      ConfigurationFile.WriteString('ez2', 'customargs', '');
       ConfigurationFile.UpdateFile;
     end;
 
-    Result.HL2Hammer := ConfigurationFile.ReadString('hl2', 'hammer', '');
-    Result.HL2HammerPP := ConfigurationFile.ReadString('hl2', 'hammer++', '');
-    Result.GModHammer := ConfigurationFile.ReadString('gmod', 'hammer', '');
-    Result.GModHammerPP := ConfigurationFile.ReadString('gmod', 'hammer++', '');
-    Result.EZ2Hammer := ConfigurationFile.ReadString('ez2', 'hammer', '');
-    Result.EZ2HammerPP := ConfigurationFile.ReadString('ez2', 'hammer++', '');
+    Result.HL2HammerStock := ConfigurationFile.ReadString('hl2', 'stock', '');
+    Result.HL2HammerStockArgs := ConfigurationFile.ReadString('hl2', 'stockargs', '');
+    Result.HL2HammerCustom := ConfigurationFile.ReadString('hl2', 'custom', '');
+    Result.HL2HammerCustomArgs := ConfigurationFile.ReadString('hl2', 'customargs', '');
+    Result.GModHammerStock := ConfigurationFile.ReadString('gmod', 'stock', '');
+    Result.GModHammerStockArgs := ConfigurationFile.ReadString('gmod', 'stockargs', '');
+    Result.GModHammerCustom := ConfigurationFile.ReadString('gmod', 'custom', '');
+    Result.GModHammerCustomArgs := ConfigurationFile.ReadString('gmod', 'customargs', '');
+    Result.EZ2HammerStock := ConfigurationFile.ReadString('ez2', 'stock', '');
+    Result.EZ2HammerStockArgs := ConfigurationFile.ReadString('ez2', 'stockargs', '');
+    Result.EZ2HammerCustom := ConfigurationFile.ReadString('ez2', 'custom', '');
+    Result.EZ2HammerCustomArgs := ConfigurationFile.ReadString('ez2', 'customargs', '');
   finally
     ConfigurationFile.Free;
   end;

@@ -38,26 +38,26 @@ object MainForm: TMainForm
     Top = 40
     Width = 50
   end
-  object ButtonHL2Hammer: TRuntimeResourceBitBtn
-    ResourceName = 'HAMMER_HL2'
+  object ButtonHL2HammerStock: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_STOCK_HL2'
     SourceFile = 'resource/hammer_hl2.png'
     Height = 50
     Left = 64
-    OnClick = ButtonHL2HammerClick
-    OnMouseEnter = ButtonHL2HammerMouseEnter
-    OnMouseLeave = ButtonHL2HammerMouseLeave
+    OnClick = ButtonHL2HammerStockClick
+    OnMouseEnter = ButtonHL2HammerStockMouseEnter
+    OnMouseLeave = ButtonHL2HammerStockMouseLeave
     TabOrder = 1
     Top = 40
     Width = 50
   end
-  object ButtonHL2HammerPP: TRuntimeResourceBitBtn
-    ResourceName = 'HAMMER_PLUSPLUS'
+  object ButtonHL2HammerCustom: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_CUSTOM'
     SourceFile = 'resource/hammer_plusplus.png'
     Height = 50
     Left = 120
-    OnClick = ButtonHL2HammerPPClick
-    OnMouseEnter = ButtonHL2HammerPPMouseEnter
-    OnMouseLeave = ButtonHL2HammerPPMouseLeave
+    OnClick = ButtonHL2HammerCustomClick
+    OnMouseEnter = ButtonHL2HammerCustomMouseEnter
+    OnMouseLeave = ButtonHL2HammerCustomMouseLeave
     TabOrder = 2
     Top = 40
     Width = 50
@@ -72,26 +72,26 @@ object MainForm: TMainForm
     Top = 96
     Width = 50
   end
-  object ButtonGModHammer: TRuntimeResourceBitBtn
-    ResourceName = 'HAMMER_GMOD'
+  object ButtonGModHammerStock: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_STOCK_GMOD'
     SourceFile = 'resource/hammer_gmod.png'
     Height = 50
     Left = 64
-    OnClick = ButtonGModHammerClick
-    OnMouseEnter = ButtonGModHammerMouseEnter
-    OnMouseLeave = ButtonGModHammerMouseLeave
+    OnClick = ButtonGModHammerStockClick
+    OnMouseEnter = ButtonGModHammerStockMouseEnter
+    OnMouseLeave = ButtonGModHammerStockMouseLeave
     TabOrder = 3
     Top = 96
     Width = 50
   end
-  object ButtonGModHammerPP: TRuntimeResourceBitBtn
-    ResourceName = 'HAMMER_PLUSPLUS'
+  object ButtonGModHammerCustom: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_CUSTOM'
     SourceFile = 'resource/hammer_plusplus.png'
     Height = 50
     Left = 120
-    OnClick = ButtonGModHammerPPClick
-    OnMouseEnter = ButtonGModHammerPPMouseEnter
-    OnMouseLeave = ButtonGModHammerPPMouseLeave
+    OnClick = ButtonGModHammerCustomClick
+    OnMouseEnter = ButtonGModHammerCustomMouseEnter
+    OnMouseLeave = ButtonGModHammerCustomMouseLeave
     TabOrder = 4
     Top = 96
     Width = 50
@@ -106,26 +106,26 @@ object MainForm: TMainForm
     Top = 152
     Width = 50
   end
-  object ButtonEZ2Hammer: TRuntimeResourceBitBtn
-    ResourceName = 'HAMMER_HL2'
+  object ButtonEZ2HammerStock: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_STOCK_HL2'
     SourceFile = 'resource/hammer_hl2.png'
     Height = 50
     Left = 64
-    OnClick = ButtonEZ2HammerClick
-    OnMouseEnter = ButtonEZ2HammerMouseEnter
-    OnMouseLeave = ButtonEZ2HammerMouseLeave
+    OnClick = ButtonEZ2HammerStockClick
+    OnMouseEnter = ButtonEZ2HammerStockMouseEnter
+    OnMouseLeave = ButtonEZ2HammerStockMouseLeave
     TabOrder = 5
     Top = 152
     Width = 50
   end
-  object ButtonEZ2HammerPP: TRuntimeResourceBitBtn
-    ResourceName = 'HAMMER_PLUSPLUS'
+  object ButtonEZ2HammerCustom: TRuntimeResourceBitBtn
+    ResourceName = 'HAMMER_CUSTOM'
     SourceFile = 'resource/hammer_plusplus.png'
     Height = 50
     Left = 120
-    OnClick = ButtonEZ2HammerPPClick
-    OnMouseEnter = ButtonEZ2HammerPPMouseEnter
-    OnMouseLeave = ButtonEZ2HammerPPMouseLeave
+    OnClick = ButtonEZ2HammerCustomClick
+    OnMouseEnter = ButtonEZ2HammerCustomMouseEnter
+    OnMouseLeave = ButtonEZ2HammerCustomMouseLeave
     TabOrder = 6
     Top = 152
     Width = 50
