@@ -389,9 +389,9 @@ begin
   ah := ARect.Height div 2;
 
   if IsWindowEnabled(Window) then
-    Canvas.Pen.Color := clBtnText
+    Canvas.Pen.Color := SysColor[COLOR_BTNTEXT]
   else begin
-    Canvas.Pen.Color := clGrayText;
+    Canvas.Pen.Color := SysColor[COLOR_GRAYTEXT];
   end;
   if (AType in [udLeft, udRight]) then
     Calculate(ah, aw)
@@ -895,15 +895,11 @@ begin
 end;
 
 class function TWin32WSCustomComboBoxDark.GetDefaultColor(const AControl: TControl; const ADefaultColorType: TDefaultColorType): TColor;
-const
-  DefColors: array[TDefaultColorType] of TColor = (
-      { dctBrush }
-      clBtnFace,
-      { dctFont  }
-      clBtnText
-  );
 begin
-  Result := DefColors[ADefaultColorType];
+  case ADefaultColorType of
+    dctBrush: Result := SysColor[COLOR_BTNFACE];
+    dctFont: Result := SysColor[COLOR_BTNTEXT];
+  end;
 end;
 
 { TWin32WSStatusBarDark }
@@ -1699,7 +1695,7 @@ begin
   try
     LCanvas.Handle := HDC;
 
-    LCanvas.Brush.Color := clBtnFace;
+    LCanvas.Brush.Color := SysColor[COLOR_BTNFACE];
     LCanvas.FillRect(pRect);
 
     AStyle := LCanvas.TextStyle;
