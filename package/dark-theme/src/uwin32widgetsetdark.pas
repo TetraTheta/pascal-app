@@ -35,6 +35,7 @@ uses
   JwaWinGDI,
   LCLType,
   LMessages,
+  LCLResCache,
   LazUTF8,
   Math,
   Menus,
@@ -518,7 +519,7 @@ end;
 
 class function TWin32WSTrackBarDark.CreateHandle(const AWinControl: TWinControl; const AParams: TCreateParams): HWND;
 begin
-  AWinControl.Color := SysColor[COLOR_BTNFACE];
+  AWinControl.Color := clBtnFace;
   Result := inherited CreateHandle(AWinControl, AParams);
   SetWindowSubclass(Result, @TrackBarWindowProc, ID_SUB_TRACKBAR, 0);
 end;
@@ -626,12 +627,12 @@ begin
   P := AParams;
   if not (csDesigning in AWinControl.ComponentState) then begin
     if (AWinControl is TCustomTreeView) then begin
-      AWinControl.Color := SysColor[COLOR_WINDOW];
+      AWinControl.Color := clWindow;
       with TCustomTreeView(AWinControl) do begin
         if DrawControl.TreeViewExpandSignOverride then
           ExpandSignType := DrawControl.TreeViewExpandSignValue;
-        TreeLineColor := SysColor[COLOR_GRAYTEXT];
-        ExpandSignColor := SysColor[COLOR_GRAYTEXT];
+        TreeLineColor := clGrayText;
+        ExpandSignColor := clGrayText;
       end;
     end;
     P.ExStyle := p.ExStyle and not WS_EX_CLIENTEDGE;
@@ -697,8 +698,8 @@ var
 begin
   if not (csDesigning in AWinControl.ComponentState) then begin
     AWinControl.DoubleBuffered := True;
-    AWinControl.Color := SysColor[COLOR_BTNFACE];
-    AWinControl.Brush.Color := SysColor[COLOR_BTNFACE];
+    AWinControl.Color := clBtnFace;
+    AWinControl.Brush.Color := clBtnFace;
   end;
 
   Result := inherited CreateHandle(AWinControl, AParams);
@@ -710,8 +711,8 @@ begin
   CustomFormWndProc := Windows.WNDPROC(SetWindowLongPtrW(Result, GWL_WNDPROC, LONG_PTR(@FormWndProc2)));
 
   if not (csDesigning in AWinControl.ComponentState) then begin
-    AWinControl.Color := SysColor[COLOR_BTNFACE];
-    AWinControl.Font.Color := SysColor[COLOR_BTNTEXT];
+    AWinControl.Color := clBtnFace;
+    AWinControl.Font.Color := clBtnText;
   end;
 end;
 
@@ -755,8 +756,8 @@ begin
   if not (csDesigning in AWinControl.ComponentState) then begin
     EnableDarkStyle(Result);
     SetWindowSubclass(Result, @ListBoxWindowProc2, ID_SUB_LISTBOX, 0);
-    TCustomListBox(AWinControl).Color := SysColor[COLOR_WINDOW];
-    AWinControl.Font.Color := SysColor[COLOR_WINDOWTEXT];
+    TCustomListBox(AWinControl).Color := clWindow;
+    AWinControl.Font.Color := clWindowText;
   end;
 end;
 
@@ -835,8 +836,8 @@ begin
     if DrawControl.BorderStyleOverride then
       TCustomEdit(AWinControl).BorderStyle := bsNone;
     P.ExStyle := P.ExStyle and not WS_EX_CLIENTEDGE;
-    AWinControl.Color := SysColor[COLOR_WINDOW];
-    AWinControl.Font.Color := SysColor[COLOR_WINDOWTEXT];
+    AWinControl.Color := clWindow;
+    AWinControl.Font.Color := clWindowText;
   end;
 
   Result := inherited CreateHandle(AWinControl, P);
@@ -876,8 +877,8 @@ var
   Info: TComboboxInfo;
 begin
   if not (csDesigning in AWinControl.ComponentState) then begin
-    AWinControl.Color := SysColor[COLOR_BTNFACE];
-    AWinControl.Font.Color := SysColor[COLOR_BTNTEXT];
+    AWinControl.Color := clBtnFace;
+    AWinControl.Font.Color := clBtnText;
   end;
 
   Result := inherited CreateHandle(AWinControl, AParams);
@@ -2228,15 +2229,9 @@ begin
   end;
 
   Result := TrampolineOpenThemeData(hwnd, pszClassList);
+  // Windows shares theme handles; closing one reference must not discard the class.
   if Result <> 0 then
     ThemeClass.Insert(Result, pszClassList);
-end;
-
-function InterceptCloseThemeData(hTheme: HTHEME): HRESULT; stdcall;
-begin
-  if Assigned(ThemeClass) then
-    ThemeClass.Delete(hTheme);
-  Result := TrampolineCloseThemeData(hTheme);
 end;
 
 function InterceptDrawThemeText(
@@ -2272,7 +2267,9 @@ begin
           OldColor := SysColor[COLOR_GRAYTEXT]
         else if (iPartId = BP_GROUPBOX) and (iStateId = GBS_DISABLED) then
           OldColor := SysColor[COLOR_GRAYTEXT]
-        else if (iPartId = BP_PUSHBUTTON) then begin
+        else if (iPartId = BP_PUSHBUTTON) and (iStateId = PBS_DISABLED) then
+          OldColor := SysColor[COLOR_GRAYTEXT]
+        else if (iPartId = BP_PUSHBUTTON) and not DrawControl.CustomDrawPushButtons then begin
           Result := TrampolineDrawThemeText(hTheme, hdc, iPartId, iStateId, pszText, iCharCount, dwTextFlags, dwTextFlags2, pRect);
           Exit;
         end;
@@ -2408,27 +2405,49 @@ end;
 procedure SetColorsScheme(Scheme: TDSColors);
 var
   Index, FormIndex: Integer;
+  OldBrush: HBRUSH;
+  CacheItem: TResourceCacheItem;
+  RetiredDescriptor: TBlockResourceCacheDescriptor;
+  RetiredBrush: TLogBrush;
 begin
   if not StyleInitialized then begin
     InitializeColors(Scheme);
     Exit;
   end;
-  // Cached LCL brushes must release their handles before these GDI brushes change.
-  if Application.Handle <> 0 then
-    SendMessage(HWND(Application.Handle), WM_SYSCOLORCHANGE, 0, 0);
-  for Index := 0 to High(SysColorBrush) do begin
-    if SysColorBrush[Index] <> 0 then
-      DeleteObjectOld(SysColorBrush[Index]);
-    SysColorBrush[Index] := 0;
+  // Retire symbolic cache keys without deleting brushes still held by TBrush instances.
+  BrushResourceCache.Lock;
+  try
+    for Index := 0 to High(SysColorBrush) do begin
+      OldBrush := SysColorBrush[Index];
+      SysColorBrush[Index] := 0;
+      if OldBrush = 0 then
+        Continue;
+      CacheItem := BrushResourceCache.FindItem(OldBrush);
+      if CacheItem = nil then
+        DeleteObjectOld(OldBrush)
+      else begin
+        FillChar(RetiredBrush, SizeOf(RetiredBrush), 0);
+        RetiredBrush.lbStyle := BS_SOLID;
+        RetiredBrush.lbColor := SysColor[Index];
+        // LCL uses zero hatch for solid brushes; this key cannot match a new brush.
+        RetiredBrush.lbHatch := OldBrush;
+        RetiredDescriptor := BrushResourceCache.AddResource(OldBrush, @RetiredBrush);
+        while CacheItem.FirstDescriptor <> RetiredDescriptor do
+          CacheItem.FirstDescriptor.Free;
+        CacheItem.DecreaseRefCount;
+      end;
+    end;
+    UpdateHandleObjects;
+  finally
+    BrushResourceCache.Unlock;
   end;
   InitializeColors(Scheme);
   for FormIndex := 0 to Screen.FormCount - 1 do begin
-    RefreshListViews(Screen.Forms[FormIndex]);
     if Screen.Forms[FormIndex].HandleAllocated then begin
-      if Assigned(Screen.Forms[FormIndex].Menu) then
-        SetMenuBackground(GetMenu(Screen.Forms[FormIndex].Handle));
+      ScreenFormEvent(nil, nil, Screen.Forms[FormIndex]);
       SendMessage(HWND(Screen.Forms[FormIndex].Handle), WM_SYSCOLORCHANGE, 0, 0);
-      RedrawWindow(HWND(Screen.Forms[FormIndex].Handle), nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_ALLCHILDREN);
+      RefreshListViews(Screen.Forms[FormIndex]);
+      RedrawWindow(HWND(Screen.Forms[FormIndex].Handle), nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_ALLCHILDREN or RDW_FRAME);
     end;
   end;
 end;
@@ -2581,12 +2600,6 @@ begin
   if not Assigned(TrampolineOpenThemeData) or not Assigned(TrampolineCloseThemeData) then
     raise Exception.Create('Required uxtheme functions are unavailable');
 
-  pLibrary := FindImportLibrary(MainInstance, themelib);
-  if Assigned(pLibrary) then begin
-    pFunction := FindImportFunction(pLibrary, Pointer(TrampolineCloseThemeData));
-    if Assigned(pFunction) then
-      ReplaceImportFunction(pFunction, @InterceptCloseThemeData);
-  end;
   if Assigned(pImpDesc) then begin
     Pointer(TrampolineOpenNCThemeData) := GetProcAddress(hUxTheme, MAKEINTRESOURCEA(49));
     Pointer(TrampolineDrawThemeText) := GetProcAddress(hUxTheme, 'DrawThemeText');
@@ -2594,7 +2607,6 @@ begin
 
     ReplaceDelayImportFunctionByOrdinal(hModule, pImpDesc, 49, @InterceptOpenNCThemeData);
     ReplaceDelayImportFunction(hModule, pImpDesc, 'OpenThemeData', @InterceptOpenThemeData);
-    ReplaceDelayImportFunction(hModule, pImpDesc, 'CloseThemeData', @InterceptCloseThemeData);
     ReplaceDelayImportFunction(hModule, pImpDesc, 'DrawThemeText', @InterceptDrawThemeText);
     ReplaceDelayImportFunction(hModule, pImpDesc, 'DrawThemeBackground', @InterceptDrawThemeBackground);
 

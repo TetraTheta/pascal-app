@@ -6,24 +6,36 @@ program darktheme_gallery;
 uses
   Interfaces,
   Classes,
+  Types,
   Forms,
   Controls,
   StdCtrls,
   ComCtrls,
+  CommCtrl,
   Menus,
   ExtCtrls,
   Graphics,
+  SysUtils,
+  UxTheme,
+  TmSchema,
+  uImport,
   LCLType,
   Windows,
   uDarkStyleParams,
   uDarkStyleSchemes,
   uDarkTheme;
 
+{$R *.res}
+
 type
   TGalleryForm = class(TForm)
   private
+    CheckBox: TCheckBox;
     ListBox: TListBox;
     ListView: TListView;
+    LightColors: Boolean;
+    procedure CheckColorSchemes;
+    procedure CheckSharedButtonTheme;
     procedure ToggleEnabled(Sender: TObject);
     procedure ToggleScheme(Sender: TObject);
   public
@@ -35,7 +47,6 @@ function GetGuiResources(hProcess: THandle; uiFlags: DWORD): DWORD; stdcall; ext
 constructor TGalleryForm.CreateNew(AOwner: TComponent; Num: Integer);
 var
   Button: TButton;
-  CheckBox: TCheckBox;
   ComboBox: TComboBox;
   Edit: TEdit;
   GroupBox: TGroupBox;
@@ -148,6 +159,105 @@ begin
   StatusBar.SimpleText := 'Check focus, selection, enabled state, menus and colors.';
 end;
 
+procedure TGalleryForm.CheckColorSchemes;
+var
+  CachedBrush: TBrush;
+  DormantBrush: TBrush;
+  BrushData: TLogBrush;
+  Cycle: Integer;
+  Scheme: TDSColors;
+begin
+  CachedBrush := TBrush.Create;
+  DormantBrush := TBrush.Create;
+  try
+    DormantBrush.Color := clWindow;
+    GetObject(DormantBrush.Handle, SizeOf(BrushData), @BrushData);
+    CachedBrush.Color := clWindow;
+    GetObject(CachedBrush.Handle, SizeOf(BrushData), @BrushData);
+    for Cycle := 1 to 4 do begin
+      if Odd(Cycle) then
+        Scheme := DefaultWhite
+      else
+        Scheme := DefaultDark;
+      ToggleScheme(nil);
+      Application.ProcessMessages;
+      if (GetObject(CachedBrush.Handle, SizeOf(BrushData), @BrushData) = 0)
+          or (BrushData.lbColor <> ColorToRGB(Scheme.SysColor[COLOR_WINDOW]))
+          or (ColorToRGB(ListBox.Color) <> ColorToRGB(Scheme.SysColor[COLOR_WINDOW]))
+          or (ColorToRGB(Color) <> ColorToRGB(Scheme.SysColor[COLOR_BTNFACE]))
+          or (ColorToRGB(Font.Color) <> ColorToRGB(Scheme.SysColor[COLOR_BTNTEXT]))
+          or (ListView_GetBkColor(ListView.Handle) <> ColorToRGB(Scheme.SysColor[COLOR_WINDOW])) then begin
+        WriteLn(StdErr, 'Color scheme did not reach cached brushes and controls at cycle ', Cycle);
+        Halt(5);
+      end;
+    end;
+    if (GetObject(DormantBrush.Handle, SizeOf(BrushData), @BrushData) = 0)
+        or (BrushData.lbColor <> ColorToRGB(DefaultDark.SysColor[COLOR_WINDOW])) then
+      Halt(5);
+  finally
+    DormantBrush.Free;
+    CachedBrush.Free;
+  end;
+end;
+
+procedure TGalleryForm.CheckSharedButtonTheme;
+var
+  BeforeClose: Graphics.TBitmap;
+  AfterClose: Graphics.TBitmap;
+  SharedTheme: HTHEME;
+  OtherTheme: HTHEME;
+  Module: HMODULE;
+  Entry: PPointer;
+  Imports: Pointer;
+  Bounds: TRect;
+  CloseTheme: function(Theme: HTHEME): HRESULT; stdcall;
+  DrawBackground: function(Theme: HTHEME; DC: HDC; Part, State: Integer; const Rect: TRect; Clip: Pointer): HRESULT; stdcall;
+begin
+  if not IsDarkModeEnabled then
+    Halt(4);
+  BeforeClose := Graphics.TBitmap.Create;
+  AfterClose := Graphics.TBitmap.Create;
+  try
+    BeforeClose.SetSize(CheckBox.Width, CheckBox.Height);
+    AfterClose.SetSize(CheckBox.Width, CheckBox.Height);
+    BeforeClose.Canvas.Brush.Color := Color;
+    BeforeClose.Canvas.FillRect(0, 0, CheckBox.Width, CheckBox.Height);
+    AfterClose.Canvas.Draw(0, 0, BeforeClose);
+    Module := GetModuleHandle('comctl32.dll');
+    Imports := FindDelayImportLibrary(Module, 'uxtheme.dll');
+    if Imports = nil then
+      raise Exception.Create('The themed common controls library is unavailable');
+    Entry := FindDelayImportFunction(Module, Imports, 'DrawThemeBackground');
+    if Entry = nil then
+      raise Exception.Create('The native theme drawing hook is unavailable');
+    Pointer(DrawBackground) := Entry^;
+    Entry := FindDelayImportFunction(Module, Imports, 'CloseThemeData');
+    if Entry = nil then
+      raise Exception.Create('The native theme close entry is unavailable');
+    Pointer(CloseTheme) := Entry^;
+    Bounds := Types.Rect(0, 0, CheckBox.Width, CheckBox.Height);
+    SharedTheme := UxTheme.OpenThemeData(0, 'Button');
+    OtherTheme := UxTheme.OpenThemeData(0, 'Button');
+    if (SharedTheme = 0) or (OtherTheme = 0) then
+      raise Exception.Create('Could not open the shared button theme');
+    try
+      if SharedTheme <> OtherTheme then
+        Halt(3);
+      DrawBackground(SharedTheme, BeforeClose.Canvas.Handle, BP_CHECKBOX, CBS_CHECKEDNORMAL, Bounds, nil);
+      // Closing one reference must preserve custom drawing for the other reference.
+      CloseTheme(OtherTheme);
+      DrawBackground(SharedTheme, AfterClose.Canvas.Handle, BP_CHECKBOX, CBS_CHECKEDNORMAL, Bounds, nil);
+    finally
+      UxTheme.CloseThemeData(SharedTheme);
+    end;
+    if not BeforeClose.Equals(AfterClose) then
+      Halt(2);
+  finally
+    AfterClose.Free;
+    BeforeClose.Free;
+  end;
+end;
+
 procedure TGalleryForm.ToggleEnabled(Sender: TObject);
 begin
   ListView.Enabled := not ListView.Enabled;
@@ -156,14 +266,11 @@ end;
 
 procedure TGalleryForm.ToggleScheme(Sender: TObject);
 begin
-  if Color = clWhite then begin
-    ApplyDarkTheme(DefaultDark);
-    Color := DefaultDark.SysColor[COLOR_BTNFACE];
-  end
-  else begin
+  if LightColors then
+    ApplyDarkTheme(DefaultDark)
+  else
     ApplyDarkTheme(DefaultWhite);
-    Color := clWhite;
-  end;
+  LightColors := not LightColors;
 end;
 
 var
@@ -173,6 +280,7 @@ var
   PlainMode: Boolean;
   RecreatedForm: TGalleryForm;
 begin
+  Application.CaptureExceptions := False;
   RequireDerivedFormResource := False;
   PlainMode := (ParamCount = 1) and (ParamStr(1) = '--self-test-plain');
   if not PlainMode then begin
@@ -182,6 +290,20 @@ begin
   end;
   Application.Initialize;
   Application.CreateForm(TGalleryForm, GalleryForm);
+  if (ParamCount = 1) and (ParamStr(1) = '--self-test-colors') then begin
+    GalleryForm.Show;
+    Application.ProcessMessages;
+    GalleryForm.CheckColorSchemes;
+    GalleryForm.Free;
+    Exit;
+  end;
+  if (ParamCount = 1) and (ParamStr(1) = '--self-test-theme') then begin
+    GalleryForm.Show;
+    Application.ProcessMessages;
+    GalleryForm.CheckSharedButtonTheme;
+    GalleryForm.Free;
+    Exit;
+  end;
   if (ParamCount = 1) and ((ParamStr(1) = '--self-test') or PlainMode) then begin
     GalleryForm.Show;
     if not PlainMode then begin
@@ -189,6 +311,10 @@ begin
       GalleryForm.ToggleScheme(nil);
     end;
     Application.ProcessMessages;
+    if not PlainMode then begin
+      GalleryForm.CheckColorSchemes;
+      GalleryForm.CheckSharedButtonTheme;
+    end;
     InitialGdiCount := GetGuiResources(GetCurrentProcess, 0);
     for Cycle := 1 to 20 do begin
       GalleryForm.ToggleEnabled(nil);
@@ -205,8 +331,10 @@ begin
         RecreatedForm.Free;
       end;
     end;
-    if GetGuiResources(GetCurrentProcess, 0) > InitialGdiCount + 32 then
+    if GetGuiResources(GetCurrentProcess, 0) > InitialGdiCount + 32 then begin
+      WriteLn(StdErr, 'GDI objects: ', InitialGdiCount, ' -> ', GetGuiResources(GetCurrentProcess, 0));
       Halt(1);
+    end;
     GalleryForm.Free;
     Exit;
   end;

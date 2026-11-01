@@ -27,3 +27,7 @@ For the IDE theme, open `darkthemelazarus.lpk` in Lazarus and use **Install** to
 Build `test/darktheme_gallery.lpi` with `lazbuild`, then run the gallery to inspect selection, focus, enabled state, menus, and color changes. The **Toggle lists enabled** button covers the ListView and ListBox disabled state. The **Switch colors** button exercises live scheme updates.
 
 Run `darktheme_gallery.exe --self-test` to repeat initialization, switch colors 20 times, recreate the form 30 times, and check that the GDI object count remains bounded. `--self-test-plain` runs the same form cycle without applying the theme for comparison.
+
+Run `darktheme_gallery.exe --self-test-theme` to verify that closing one reference to a shared Windows button theme preserves checkbox drawing through the native common-controls hooks. Exit codes are 2 for changed rendering, 3 if Windows does not share the tested handles, and 4 if dark mode is unavailable. The same check runs as part of `--self-test`. The gallery includes its manifest resource so it uses themed common controls like the application projects.
+
+Run `darktheme_gallery.exe --self-test-colors` to switch from dark to light colors and back twice, checking cached system brushes, form/list colors, and the native ListView background. It also checks a brush left unused across the switches. A color mismatch returns exit code 5. This check also runs in `--self-test`. Color schemes change the package palette; Windows dark mode remains enabled.
