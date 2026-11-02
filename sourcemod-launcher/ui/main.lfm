@@ -1,0 +1,98 @@
+object MainForm: TMainForm
+  Left = 0
+  Height = 360
+  Top = 0
+  Width = 640
+  Caption = 'Sourcemod Launcher'
+  ClientHeight = 360
+  ClientWidth = 640
+  Constraints.MaxHeight = 240
+  Constraints.MaxWidth = 460
+  Constraints.MinHeight = 240
+  Constraints.MinWidth = 460
+  Font.Height = -13
+  Font.Name = 'Segoe UI'
+  Menu = MainMenu
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  object ActionPanel: TPanel
+    Left = 528
+    Height = 338
+    Top = 0
+    Width = 112
+    Align = alRight
+    BevelOuter = bvNone
+    ClientHeight = 338
+    ClientWidth = 112
+    TabOrder = 1
+    object PlayButton: TRuntimeResourceBitBtn
+      Left = 8
+      Height = 88
+      Top = 8
+      Width = 96
+      Caption = 'Play'
+      Layout = blGlyphTop
+      TabOrder = 0
+      OnClick = PlayClick
+      ResourceName = 'PLAY'
+      SourceFile = 'resource/play.png'
+    end
+    object RefreshButton: TButton
+      Left = 8
+      Height = 32
+      Top = 104
+      Width = 96
+      Caption = 'Refresh'
+      TabOrder = 1
+      OnClick = RefreshClick
+    end
+  end
+  object ModList: TListBox
+    Left = 8
+    Height = 322
+    Top = 8
+    Width = 512
+    Align = alClient
+    BorderSpacing.Around = 8
+    ItemHeight = 28
+    ParentShowHint = False
+    ShowHint = True
+    Style = lbOwnerDrawFixed
+    TabOrder = 0
+    OnDrawItem = DrawMod
+    OnMouseLeave = ModMouseLeave
+    OnMouseMove = ModMouseMove
+    OnSelectionChange = SelectionChange
+  end
+  object StatusBar: TStatusBar
+    Left = 0
+    Height = 22
+    Top = 338
+    Width = 640
+    Panels = <>
+    SimpleText = 'Searching for source mods...'
+  end
+  object MainMenu: TMainMenu
+    Left = 536
+    Top = 144
+    object FileMenu: TMenuItem
+      Caption = '&File'
+      object ExitMenu: TMenuItem
+        Caption = 'E&xit'
+        ShortCut = 32883
+        OnClick = ExitClick
+      end
+    end
+    object SettingsMenu: TMenuItem
+      Caption = '&Settings'
+      object ExitOnLaunchMenu: TMenuItem
+        Caption = 'Exit after launching a source mod'
+        Checked = True
+        ShowAlwaysCheckable = True
+        OnClick = ExitOnLaunchClick
+      end
+    end
+  end
+end

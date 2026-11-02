@@ -18,6 +18,7 @@ tasks:
       - task: build:gmod-description-generator
       - task: build:hammer-launcher
       - task: build:rcalc
+      - task: build:sourcemod-launcher
   build:doom-launcher:
     aliases: ["build:doom", "doom"]
     dir: doom-launcher
@@ -53,3 +54,10 @@ tasks:
       - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default rcalc.lpi'
       - 'mkdir "$PAS_DIST" 2> /dev/null'
       - 'mv rcalc.exe "$PAS_DIST/rcalc.exe"'
+  build:sourcemod-launcher:
+    aliases: ["build:sourcemod", "build:sm", "sourcemod", "sm"]
+    dir: sourcemod-launcher
+    cmds:
+      - '"$PAS_LAZBUILD" --pcp="$PAS_LAZARUS_CONFIG" --build-mode=Default sourcemod_launcher.lpi'
+      - 'mkdir "$PAS_DIST" 2> /dev/null'
+      - 'mv sourcemod_launcher.exe "$PAS_DIST/SourcemodLauncher.exe"'
