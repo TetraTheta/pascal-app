@@ -9,12 +9,14 @@ uses
   Types,
   Forms,
   Controls,
+  Buttons,
   StdCtrls,
   ComCtrls,
   CommCtrl,
   Menus,
   ExtCtrls,
   Graphics,
+  Themes,
   SysUtils,
   UxTheme,
   TmSchema,
@@ -31,10 +33,12 @@ type
   TGalleryForm = class(TForm)
   private
     CheckBox: TCheckBox;
+    ImageButton: TBitBtn;
     ListBox: TListBox;
     ListView: TListView;
     LightColors: Boolean;
     procedure CheckColorSchemes;
+    procedure CheckImageButtonCaption;
     procedure CheckSharedButtonTheme;
     procedure ToggleEnabled(Sender: TObject);
     procedure ToggleScheme(Sender: TObject);
@@ -60,6 +64,7 @@ var
   ScrollBar: TScrollBar;
   StatusBar: TStatusBar;
   TabSheet: TTabSheet;
+  Glyph: Graphics.TBitmap;
 begin
   inherited CreateNew(AOwner, Num);
   Caption := 'DarkTheme control gallery';
@@ -154,6 +159,26 @@ begin
   ScrollBar.Parent := TabSheet;
   ScrollBar.SetBounds(15, 25, 300, 20);
 
+  ImageButton := TBitBtn.Create(Self);
+  ImageButton.Parent := Self;
+  ImageButton.SetBounds(394, 452, 96, 88);
+  ImageButton.Caption := 'Play';
+  ImageButton.Layout := blGlyphTop;
+  Glyph := Graphics.TBitmap.Create;
+  try
+    Glyph.SetSize(32, 32);
+    Glyph.Canvas.Brush.Color := clFuchsia;
+    Glyph.Canvas.FillRect(0, 0, 32, 32);
+    Glyph.Canvas.Brush.Color := clWhite;
+    Glyph.Canvas.Pen.Color := clWhite;
+    Glyph.Canvas.Polygon([Types.Point(8, 4), Types.Point(27, 16), Types.Point(8, 28)]);
+    Glyph.TransparentColor := clFuchsia;
+    Glyph.Transparent := True;
+    ImageButton.Glyph.Assign(Glyph);
+  finally
+    Glyph.Free;
+  end;
+
   StatusBar := TStatusBar.Create(Self);
   StatusBar.Parent := Self;
   StatusBar.SimpleText := 'Check focus, selection, enabled state, menus and colors.';
@@ -166,6 +191,7 @@ var
   BrushData: TLogBrush;
   Cycle: Integer;
   Scheme: TDSColors;
+  ButtonDetails: TThemedElementDetails;
 begin
   CachedBrush := TBrush.Create;
   DormantBrush := TBrush.Create;
@@ -181,12 +207,22 @@ begin
         Scheme := DefaultDark;
       ToggleScheme(nil);
       Application.ProcessMessages;
+      CheckImageButtonCaption;
+      ButtonDetails := ThemeServices.GetElementDetails(tbPushButtonNormal);
+      if ThemeServices.ColorToRGB(clBtnText, @ButtonDetails) <> ColorToRGB(Scheme.SysColor[COLOR_BTNTEXT]) then begin
+        WriteLn(StdErr, 'Themed button text does not match the active palette at cycle ', Cycle);
+        Halt(5);
+      end;
+      if (ThemeServices.ColorToRGB(clGrayText, @ButtonDetails) <> ColorToRGB(Scheme.SysColor[COLOR_GRAYTEXT]))
+          or (ThemeServices.ColorToRGB(clRed, @ButtonDetails) <> ColorToRGB(clRed)) then
+        Halt(5);
       if (GetObject(CachedBrush.Handle, SizeOf(BrushData), @BrushData) = 0)
           or (BrushData.lbColor <> ColorToRGB(Scheme.SysColor[COLOR_WINDOW]))
           or (ColorToRGB(ListBox.Color) <> ColorToRGB(Scheme.SysColor[COLOR_WINDOW]))
           or (ColorToRGB(Color) <> ColorToRGB(Scheme.SysColor[COLOR_BTNFACE]))
           or (ColorToRGB(Font.Color) <> ColorToRGB(Scheme.SysColor[COLOR_BTNTEXT]))
-          or (ListView_GetBkColor(ListView.Handle) <> ColorToRGB(Scheme.SysColor[COLOR_WINDOW])) then begin
+          or (ListView_GetBkColor(ListView.Handle) <> ColorToRGB(Scheme.SysColor[COLOR_WINDOW])) then
+      begin
         WriteLn(StdErr, 'Color scheme did not reach cached brushes and controls at cycle ', Cycle);
         Halt(5);
       end;
@@ -197,6 +233,46 @@ begin
   finally
     DormantBrush.Free;
     CachedBrush.Free;
+  end;
+end;
+
+procedure TGalleryForm.CheckImageButtonCaption;
+var
+  Bitmap: Graphics.TBitmap;
+  Images: BUTTON_IMAGELIST;
+  X, Y, W, H, State: Integer;
+  Expected, Background, Pixel: TColor;
+  FoundText: Boolean;
+begin
+  Images := Default(BUTTON_IMAGELIST);
+  if SendMessage(ImageButton.Handle, BCM_GETIMAGELIST, 0, LPARAM(@Images)) = 0 then
+    Halt(5);
+  ImageList_GetIconSize(Images.himl, W, H);
+  Bitmap := Graphics.TBitmap.Create;
+  try
+    Bitmap.SetSize(W, H);
+    Bitmap.Canvas.Brush.Color := clBtnFace;
+    Expected := ColorToRGB(clBtnText);
+    Background := ColorToRGB(clBtnFace);
+    // Inspect actual caption pixels cached by LCL for normal, hot, pressed and disabled states.
+    for State := 0 to 3 do begin
+      Bitmap.Canvas.FillRect(0, 0, W, H);
+      ImageList_Draw(Images.himl, State, Bitmap.Canvas.Handle, 0, 0, ILD_NORMAL);
+      FoundText := False;
+      for Y := ImageButton.Glyph.Height + ImageButton.Spacing to H - 1 do
+        for X := 0 to W - 1 do begin
+          Pixel := ColorToRGB(Bitmap.Canvas.Pixels[X, Y]);
+          if ((State <> 3) and (Pixel = Expected)) or ((State = 3) and (Pixel <> Background)) then
+            FoundText := True;
+        end;
+      if not FoundText then begin
+        Bitmap.SaveToFile(GetTempDir + 'darktheme-button-text.bmp');
+        WriteLn(StdErr, 'Image button caption color failed for state ', State);
+        Halt(5);
+      end;
+    end;
+  finally
+    Bitmap.Free;
   end;
 end;
 
@@ -260,6 +336,7 @@ end;
 
 procedure TGalleryForm.ToggleEnabled(Sender: TObject);
 begin
+  ImageButton.Enabled := not ImageButton.Enabled;
   ListView.Enabled := not ListView.Enabled;
   ListBox.Enabled := not ListBox.Enabled;
 end;

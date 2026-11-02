@@ -327,6 +327,7 @@ begin
 end;
 
 function GetSysColorBrushDark(nIndex: longint): HBRUSH; stdcall; forward;
+function GetThemeSysColorDark(hTheme: HTHEME; iColorId: Integer): COLORREF; stdcall; forward;
 
 { Set menu background color }
 procedure SetMenuBackground(Menu: HMENU);
@@ -1660,6 +1661,8 @@ begin
 
   DrawThemeText := @DrawThemeTextDark;
   DrawThemeBackground := @DrawThemeBackgroundDark;
+  // LCL image buttons resolve their caption color through the themed API.
+  GetThemeSysColor := @GetThemeSysColorDark;
 
   DefaultWindowInfo.DefWndProc := @WindowProc;
 
@@ -2385,7 +2388,7 @@ begin
   DrawControl := CS.DrawControl;
 end;
 
-procedure RefreshListViews(AControl: TWinControl);
+procedure RefreshControlColors(AControl: TWinControl);
 var
   Index: Integer;
   Child: TControl;
@@ -2397,8 +2400,11 @@ begin
       ListView_SetTextBkColor(TWinControl(Child).Handle, SysColor[COLOR_WINDOW]);
       ListView_SetTextColor(TWinControl(Child).Handle, SysColor[COLOR_WINDOWTEXT]);
     end;
+    // TBitBtn caches caption pixels together with its glyph for every state.
+    if (Child is TCustomBitBtn) and TWinControl(Child).HandleAllocated then
+      DrawBitBtnImage(TCustomBitBtn(Child), TCustomBitBtn(Child).Caption);
     if Child is TWinControl then
-      RefreshListViews(TWinControl(Child));
+      RefreshControlColors(TWinControl(Child));
   end;
 end;
 
@@ -2446,7 +2452,7 @@ begin
     if Screen.Forms[FormIndex].HandleAllocated then begin
       ScreenFormEvent(nil, nil, Screen.Forms[FormIndex]);
       SendMessage(HWND(Screen.Forms[FormIndex].Handle), WM_SYSCOLORCHANGE, 0, 0);
-      RefreshListViews(Screen.Forms[FormIndex]);
+      RefreshControlColors(Screen.Forms[FormIndex]);
       RedrawWindow(HWND(Screen.Forms[FormIndex].Handle), nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_ALLCHILDREN or RDW_FRAME);
     end;
   end;
