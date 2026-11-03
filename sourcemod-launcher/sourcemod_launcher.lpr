@@ -16,7 +16,6 @@ uses
 
 begin
   RequireDerivedFormResource := True;
-  Application.Title := 'Sourcemod Launcher';
   Application.Scaled := True;
   Application.MainFormOnTaskbar := True;
   PreferredAppMode := pamForceDark;

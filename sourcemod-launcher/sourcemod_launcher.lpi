@@ -16,6 +16,7 @@
         <TextName Value="SourcemodLauncher"/>
         <TextDesc Value="Launch Source SDK 2013 singleplayer mods"/>
       </XPManifest>
+      <Icon Value="0"/>
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
