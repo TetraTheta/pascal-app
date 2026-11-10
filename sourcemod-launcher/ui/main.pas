@@ -27,6 +27,9 @@ type
     RefreshButton: TButton;
     StatusBar: TStatusBar;
     MainMenu: TMainMenu;
+    ModMenu: TPopupMenu;
+    PlayMenu: TMenuItem;
+    DeleteMenu: TMenuItem;
     FileMenu: TMenuItem;
     ExitMenu: TMenuItem;
     SettingsMenu: TMenuItem;
@@ -35,6 +38,9 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure RefreshClick(Sender: TObject);
     procedure PlayClick(Sender: TObject);
+    procedure DeleteClick(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure ModContextPopup(Sender: TObject; MousePos: TPoint; var Handled: Boolean);
     procedure ExitOnLaunchClick(Sender: TObject);
     procedure ExitClick(Sender: TObject);
     procedure SelectionChange(Sender: TObject; User: Boolean);
@@ -64,9 +70,48 @@ uses
   Dialogs,
   Process,
   Windows,
+  ComObj,
+  ShellApi,
   mod_service,
   icon_service,
   LCLType;
+
+type
+  IFileOperation = interface(IUnknown)
+    ['{947AAB5F-0A5C-4C13-B4D6-4BF7836FC9F8}']
+    function Advise(Sink: IUnknown; out Cookie: DWORD): HRESULT; stdcall;
+    function Unadvise(Cookie: DWORD): HRESULT; stdcall;
+    function SetOperationFlags(Flags: DWORD): HRESULT; stdcall;
+    function SetProgressMessage(MessageText: PWideChar): HRESULT; stdcall;
+    function SetProgressDialog(Dialog: IUnknown): HRESULT; stdcall;
+    function SetProperties(Properties: IUnknown): HRESULT; stdcall;
+    function SetOwnerWindow(Owner: HWND): HRESULT; stdcall;
+    function ApplyPropertiesToItem(Item: IUnknown): HRESULT; stdcall;
+    function ApplyPropertiesToItems(Items: IUnknown): HRESULT; stdcall;
+    function RenameItem(Item: IUnknown; Name: PWideChar; Sink: IUnknown): HRESULT; stdcall;
+    function RenameItems(Items: IUnknown; Name: PWideChar): HRESULT; stdcall;
+    function MoveItem(Item, Destination: IUnknown; Name: PWideChar; Sink: IUnknown): HRESULT; stdcall;
+    function MoveItems(Items, Destination: IUnknown): HRESULT; stdcall;
+    function CopyItem(Item, Destination: IUnknown; Name: PWideChar; Sink: IUnknown): HRESULT; stdcall;
+    function CopyItems(Items, Destination: IUnknown): HRESULT; stdcall;
+    function DeleteItem(Item, Sink: IUnknown): HRESULT; stdcall;
+    function DeleteItems(Items: IUnknown): HRESULT; stdcall;
+    function NewItem(Destination: IUnknown; Attributes: DWORD; Name, TemplateName: PWideChar; Sink: IUnknown): HRESULT; stdcall;
+    function PerformOperations: HRESULT; stdcall;
+    function GetAnyOperationsAborted(out Aborted: BOOL): HRESULT; stdcall;
+  end;
+
+const
+  CLSID_FileOperation: TGUID = '{3AD05575-8857-4850-9277-11B85BDB8E09}';
+  IID_ShellItem: TGUID = '{43826D1E-E718-42EE-BC55-A1E261C37BFE}';
+  FOFX_RECYCLEONDELETE = $00080000;
+
+function SHCreateItemFromParsingName(
+    Path: PWideChar;
+    BindContext: IUnknown;
+    const IID: TGUID;
+    out Item: IUnknown
+): HRESULT; stdcall; external 'shell32.dll';
 
 procedure TMainForm.ExitClick(Sender: TObject);
 begin
@@ -78,6 +123,7 @@ var
   Args: array of string;
   I: Integer;
   Resource: TResourceStream;
+  DeleteIcon: TPortableNetworkGraphic;
 begin
   FHintIndex := -1;
   FMods := TObjectList.Create(True);
@@ -88,6 +134,14 @@ begin
     FFallback.LoadFromStream(Resource);
   finally
     Resource.Free;
+  end;
+  PlayMenu.Bitmap.Assign(PlayButton.Glyph);
+  DeleteIcon := TPortableNetworkGraphic.Create;
+  try
+    DeleteIcon.LoadFromResourceName(HInstance, 'FOLDER_DELETE');
+    DeleteMenu.Bitmap.Assign(DeleteIcon);
+  finally
+    DeleteIcon.Free;
   end;
   FSettings.ExitOnLaunch := True;
   SetLength(Args, ParamCount);
@@ -204,6 +258,71 @@ begin
   end;
   if FSettings.ExitOnLaunch then
     Close;
+end;
+
+procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if Shift <> [] then
+    Exit;
+  case Key of
+    VK_F5: begin
+      Key := 0;
+      RefreshClick(Sender);
+    end;
+    VK_RETURN: begin
+      Key := 0;
+      PlayClick(Sender);
+    end;
+  end;
+end;
+
+procedure TMainForm.ModContextPopup(Sender: TObject; MousePos: TPoint; var Handled: Boolean);
+var
+  Index: Integer;
+begin
+  if (MousePos.X <> -1) or (MousePos.Y <> -1) then begin
+    Index := ModList.ItemAtPos(MousePos, True);
+    Handled := Index < 0;
+    if Handled then
+      Exit;
+    ModList.ItemIndex := Index;
+  end;
+  Handled := ModList.ItemIndex < 0;
+  ModMouseLeave(nil);
+  UpdatePlayButton;
+  PlayMenu.Enabled := PlayButton.Enabled;
+end;
+
+procedure TMainForm.DeleteClick(Sender: TObject);
+var
+  Directory: string;
+  Item: IUnknown;
+  Operation: IFileOperation;
+  Aborted: BOOL;
+begin
+  if ModList.ItemIndex < 0 then
+    Exit;
+  Directory := TSourceMod(FMods[ModList.ItemIndex]).Directory;
+  if MessageDlg('Delete source mod', 'Move this source mod to the Recycle Bin?' + LineEnding + Directory, mtConfirmation, [mbYes, mbNo], 0, mbNo)
+      <> mrYes then
+    Exit;
+  try
+    OleCheck(SHCreateItemFromParsingName(PWideChar(UTF8Decode(Directory)), nil, IID_ShellItem, Item));
+    Operation := CreateComObject(CLSID_FileOperation) as IFileOperation;
+    OleCheck(Operation.SetOwnerWindow(Handle));
+    OleCheck(Operation.SetOperationFlags(FOFX_RECYCLEONDELETE or FOF_NOCONFIRMATION or FOF_NOERRORUI));
+    OleCheck(Operation.DeleteItem(Item, nil));
+    OleCheck(Operation.PerformOperations);
+    OleCheck(Operation.GetAnyOperationsAborted(Aborted));
+    if Aborted or DirectoryExists(Directory) then
+      raise EInOutError.Create('The folder could not be moved to the Recycle Bin.');
+  except
+    on E: Exception do begin
+      MessageDlg('Recycle Bin error', E.Message, mtError, [mbOK], 0);
+      Exit;
+    end;
+  end;
+  RefreshClick(Sender);
 end;
 
 procedure TMainForm.ExitOnLaunchClick(Sender: TObject);

@@ -1,2 +1,4 @@
-PLAY RCDATA "resource/play.png"
+CONTROL_PLAY RCDATA "resource/silkicons/control_play.png"
+FOLDER_DELETE RCDATA "resource/silkicons/folder_delete.png"
 HL2 RCDATA "resource/hl2.png"
+PLAY RCDATA "resource/play.png"

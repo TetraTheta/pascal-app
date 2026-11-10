@@ -4,27 +4,29 @@ object MainForm: TMainForm
   Top = 0
   Width = 640
   Caption = 'Sourcemod Launcher'
-  ClientHeight = 360
-  ClientWidth = 640
+  ClientHeight = 240
+  ClientWidth = 460
   Constraints.MaxHeight = 240
   Constraints.MaxWidth = 460
   Constraints.MinHeight = 240
   Constraints.MinWidth = 460
   Font.Height = -13
   Font.Name = 'Segoe UI'
+  KeyPreview = True
   Menu = MainMenu
   Position = poScreenCenter
   LCLVersion = '4.8.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
   object ActionPanel: TPanel
-    Left = 528
-    Height = 338
+    Left = 348
+    Height = 218
     Top = 0
     Width = 112
     Align = alRight
     BevelOuter = bvNone
-    ClientHeight = 338
+    ClientHeight = 218
     ClientWidth = 112
     TabOrder = 1
     object PlayButton: TRuntimeResourceBitBtn
@@ -36,8 +38,8 @@ object MainForm: TMainForm
       Layout = blGlyphTop
       TabOrder = 0
       OnClick = PlayClick
-      ResourceName = 'PLAY'
-      SourceFile = 'resource/play.png'
+      ResourceName = 'CONTROL_PLAY'
+      SourceFile = 'resource/silkicons/control_play.png'
     end
     object RefreshButton: TButton
       Left = 8
@@ -51,16 +53,19 @@ object MainForm: TMainForm
   end
   object ModList: TListBox
     Left = 8
-    Height = 322
+    Height = 202
     Top = 8
-    Width = 512
+    Width = 332
     Align = alClient
     BorderSpacing.Around = 8
     ItemHeight = 28
     ParentShowHint = False
+    PopupMenu = ModMenu
     ShowHint = True
     Style = lbOwnerDrawFixed
     TabOrder = 0
+    OnContextPopup = ModContextPopup
+    OnDblClick = PlayClick
     OnDrawItem = DrawMod
     OnMouseLeave = ModMouseLeave
     OnMouseMove = ModMouseMove
@@ -69,10 +74,20 @@ object MainForm: TMainForm
   object StatusBar: TStatusBar
     Left = 0
     Height = 22
-    Top = 338
-    Width = 640
+    Top = 218
+    Width = 460
     Panels = <>
     SimpleText = 'Searching for source mods...'
+  end
+  object ModMenu: TPopupMenu
+    object PlayMenu: TMenuItem
+      Caption = 'Play'
+      OnClick = PlayClick
+    end
+    object DeleteMenu: TMenuItem
+      Caption = 'Delete'
+      OnClick = DeleteClick
+    end
   end
   object MainMenu: TMainMenu
     Left = 536
