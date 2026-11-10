@@ -226,8 +226,6 @@ begin
   AProcess.Parameters.Add('-steam');
   AProcess.Parameters.Add('-game');
   AProcess.Parameters.Add(AModDirectory);
-  AProcess.Parameters.Add('+exec');
-  AProcess.Parameters.Add('autoexec');
 end;
 
 end.
